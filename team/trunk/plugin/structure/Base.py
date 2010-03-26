@@ -25,6 +25,7 @@ class CBase(object):
         return self.__data
     
     def SetData(self, data):
+        #print data
         self.__data = data
         
     def GetData(self):
@@ -35,3 +36,6 @@ class CBase(object):
     
     def __eq__(self, other):
         return (self.GetId() == other.GetId())
+    
+    def __str__(self):
+        return str(self.__id) + ':' + str(self.__type) + ':' + str(self.__data)
