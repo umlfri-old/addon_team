@@ -69,24 +69,29 @@ class CDiffer(object):
             elif (tag == EDiffActions.EQUAL):
                 # ak sa tvaria rovnako, chod do hlbky, porovnaj data
                 for si1, si2 in zip(sequence1[i1:i2], sequence2[j1:j2]):
-                    self.__diffElementsData(si1, si2, result)
+                    result.extend(self.diffElementsData(si1, si2))
                     
 
-    def __diffElementsData(self, el1, el2, result):
+    def diffElementsData(self, el1, el2):
         data1 = el1.GetData()
         data2 = el2.GetData()
         tuple1 = dictToTuple(data1)
         tuple2 = dictToTuple(data2)
+        result = []
         # dictionaries 
         if data1 == data2:
             #klasicke porovnanie dvoch dict, ak nahodou su celkom rovnake
             pass
         else:
             self.__diffData(el1, el2, tuple1, tuple2, result, [])
+        return result
     
     def __diffData(self, el1, el2, tuple1, tuple2, result, dataPath):
         sm = SequenceMatcher(None, tuple1, tuple2)
         op = sm.get_opcodes()
+        print tuple1
+        print tuple2
+        print op
         for tag, i1, i2, j1, j2 in op:
             if (tag == EDiffActions.EQUAL):
                 pass
@@ -125,8 +130,6 @@ class CDiffer(object):
                             result.append(CDiffResult(EDiffActions.MODIFY, el1, seq1, seq2, myPath))
                         else:
                             myPath = copy.deepcopy(dataPath)
-                            print tuple1
-                            print seq1
                             if type(seq1[0]) == type(''):
                                 myPath.append(seq1[0])
                             elif type(tuple1[0]) != type(''):
@@ -140,8 +143,25 @@ class CDiffer(object):
                         elif type(tuple2[0]) != type(''):
                             myPath.append(tuple1.index(seq2))
                         self.__diffData(el1, el2, seq1, seq2, result, myPath)
-#                result.append(CDiffResult(EDiffActions.MODIFY, el1, tuple1[i1:i2], tuple2[j1:j2], dataPath))
-                
-    def __computeVisualDiff(self, diagram):
-        pass
-        
+
+
+
+    def diffElements(self, el1, el2):
+        if el1 is None and el2 is not None:
+            return [CDiffResult(EDiffActions.INSERT, el2)]
+        elif el1 is not None and el2 is None:
+            return [CDiffResult(EDiffActions.DELETE, el1)]
+        else:
+            return self.diffElementsData(el1, el2) 
+                    
+    def computeVisualDiffElements(self, elView1, elView2):
+        if elView1 is None and elView2 is not None:
+            return [CDiffResult(EDiffActions.INSERT, elView2.GetObject())]
+        elif elView1 is not None and elView2 is None:
+            return [CDiffResult(EDiffActions.DELETE, elView1.GetObject())]
+        else:
+            tuple1 = dictToTuple(elView1.GetViewData())
+            tuple2 = dictToTuple(elView2.GetViewData())
+            result = []
+            self.__diffData(elView1.GetObject(), elView2.GetObject(), tuple1, tuple2, result, [])
+            return result

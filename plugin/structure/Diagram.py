@@ -33,3 +33,7 @@ class CDiagram(CBase):
     def AddElementView(self, elementView):
         self.__elementsViews[elementView.GetObject().GetId()] = elementView
         self.__elementViewsOrdered.append(elementView)
+    
+    def GetViewById(self, id):
+        id = id.lstrip('#')
+        return self.__connectionsViews.get(id) or self.__elementsViews.get(id)
