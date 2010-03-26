@@ -7,6 +7,8 @@ Created on 27.2.2010
 from lib.Addons.Plugin.Client.Interface import CInterface
 from lib.Exceptions import *
 from lib.Depend.gtk2 import gtk
+from lib.Depend.gtk2 import pygtk
+import os
 from structure import *
 from support import *
 from zipfile import ZipFile, is_zipfile
@@ -57,14 +59,16 @@ class Plugin(object):
             fileData = file.read()
         myProject1 = CProject(project)
         myProject2 = CProject(None, fileData)
-        self.interface.DisplayWarning(str(myProject1))
-        self.interface.DisplayWarning(str(myProject2))
+        
         differ = CDiffer(myProject2, myProject1)
-        differ.diffProjects()
+        res = differ.diffProjects()
+        for dr in res:
+            self.interface.DisplayWarning(dr)
         
             
                 
     def DiffDiagram(self, *args):
+        
         pass
         
     def DiffElement(self, *args):
