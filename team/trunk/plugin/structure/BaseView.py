@@ -15,9 +15,13 @@ class CBaseView(object):
         Constructor
         '''
         self.__objectRepresentation = objectRepresentation
+        self.viewData = {}
         
     def GetObject(self):
         return self.__objectRepresentation
+        
+    def GetViewData(self):
+        return self.viewData
     
     def __str__(self):
         return self.__objectRepresentation.GetId()

@@ -12,7 +12,11 @@ def dictToTuple(data):
         # zoradit, aby sa to dalo porovnavat
         items.sort()
         return tuple([(item[0], dictToTuple(item[1])) for item in items])
-    elif type(data) == type([]):
+    elif type(data) == type([]) or type(data) == type(()):
         return tuple([dictToTuple(item) for item in data])
     else:
-        return unicode(data or '')
+        try:
+            result = unicode(round(float(data),10))
+        except:
+            result = unicode(data or '') 
+        return result

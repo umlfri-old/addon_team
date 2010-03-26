@@ -37,6 +37,7 @@ class CProject(object):
             self.__LoadProjectRecursive(root, None)
    
     def __LoadProjectRecursive(self, root, treeParent):
+        print root.GetClass()
         if root is not None:
             if root.GetClass().find('Element') != -1:
                 # ak je to element
@@ -66,7 +67,9 @@ class CProject(object):
                 for ve in visualElements:
                     # nacitaj vizualne elementy
                     veo = ve.GetObject()
-                    newElementView = CElementView(self.GetById(veo.GetId().lstrip('#')), ve.GetPosition(), ve.GetSize())
+                    size = (ve.GetSize()[0] - ve.GetMinimalSize()[0],ve.GetSize()[1] - ve.GetMinimalSize()[1])
+                    #size = ve.GetSize()
+                    newElementView = CElementView(self.GetById(veo.GetId().lstrip('#')), ve.GetPosition(), size)
                     newDiagram.AddElementView(newElementView)
                     
                 visualConnections = root.GetConnections()
@@ -187,8 +190,8 @@ class CProject(object):
             # nacitaj elementy a spojenia z diagramu
             if item.tag == UMLPROJECT_NAMESPACE+ 'element':
             #nacitaj element
-                position = (item.get('x'), item.get('y'))
-                size = (item.get('dw'), item.get('dh'))
+                position = (int(item.get('x')), int(item.get('y')))
+                size = (int(item.get('dw')), int(item.get('dh')))
                 elId = item.get('id')
                 elementView = CElementView(self.GetById(elId), position, size)
                 diagram.AddElementView(elementView)
@@ -199,10 +202,10 @@ class CProject(object):
                 for subitem in item:
                     #nacitaj sprostosti zo spojenia
                     if subitem.tag == UMLPROJECT_NAMESPACE + 'point':
-                        point = (subitem.get('x'), subitem.get('y'))
+                        point = (int(subitem.get('x')), int(subitem.get('y')))
                         connectionView.AddPoint(point)
                     elif subitem.tag == UMLPROJECT_NAMESPACE + 'label':
-                        label = dict(zip(subitem.keys(), subitem.values()))
+                        label = dict(zip(subitem.keys(), [float(value) for value in subitem.values()]))
                         label.pop('num')
                         connectionView.AddLabel(label)
                 diagram.AddConnectionView(connectionView)
@@ -211,6 +214,7 @@ class CProject(object):
     
     
     def GetById(self, id):
+        id = id.lstrip('#')
         return self.__elements.get(id) or self.__connections.get(id) or self.__diagrams.get(id)
     
     def GetProjectTreeRoot(self):

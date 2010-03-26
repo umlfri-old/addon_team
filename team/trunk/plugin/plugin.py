@@ -68,11 +68,38 @@ class Plugin(object):
             
                 
     def DiffDiagram(self, *args):
-        
         pass
         
     def DiffElement(self, *args):
-        pass    
+        project = self.__LoadProject()
+        if project is None:
+            self.interface.DisplayWarning('No project loaded')
+            return
+        
+        prFile = project.GetFileName()
+        if (is_zipfile(prFile)):
+            file = ZipFile(prFile,'r')
+            fileData = file.read('content.xml')
+        else :
+            file = open(prFile, 'r')
+            fileData = file.read()
+        
+        myProject1 = CProject(project)
+        myProject2 = CProject(None, fileData)
+        
+        
+          
+        
+        differ = CDiffer(myProject2, myProject1)
+        diag = self.interface.GetAdapter().GetCurrentDiagram()
+        selected = diag.GetSelected()
+        for sel in selected:
+            elView1 = myProject1.GetById(diag.GetId()).GetViewById(sel.GetObject().GetId())
+            elView2 = myProject2.GetById(diag.GetId()).GetViewById(sel.GetObject().GetId())
+            res = differ.computeVisualDiffElements(elView2, elView1)
+            for dr in res:
+                self.interface.DisplayWarning(dr)
+        
         
         
 # select plugin main object
