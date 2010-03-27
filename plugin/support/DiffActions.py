@@ -15,3 +15,4 @@ class EDiffActions(object):
     DELETE = 'delete'
     REPLACE = 'replace'
     MODIFY = 'modify'
+    MOVE = 'move'

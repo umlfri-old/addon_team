@@ -16,10 +16,10 @@ class CDiffResult(object):
         Constructor
         '''
         self.__action = action
-        self.__elementId = element.GetId()
+        self.__element = element
         self.__previousState = previousState
         self.__newState = newState
         self.__dataPath = dataPath
         
     def __str__(self):
-        return str(self.__action) + ' : ' + str(self.__elementId) + ' : ' +str(self.__previousState) + ' : ' + str(self.__newState) + ' : ' + str(self.__dataPath)
+        return str(self.__action) + ' : ' + str(self.__element) + ' : ' +str(self.__previousState) + ' : ' + str(self.__newState) + ' : ' + str(self.__dataPath)

@@ -11,11 +11,11 @@ class CConnectionView(CBaseView):
     '''
 
 
-    def __init__(self, connection):
+    def __init__(self, connection, parentDiagram):
         '''
         Constructor
         '''
-        super(CConnectionView, self).__init__(connection)
+        super(CConnectionView, self).__init__(connection, parentDiagram)
         self.__points = []
         self.__labels = []
         self.viewData = {'points':[], 'labels':[]}
