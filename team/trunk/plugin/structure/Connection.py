@@ -25,3 +25,8 @@ class CConnection(CBase):
     
     def GetDestination(self):
         return self.__destination
+    
+    def SetData(self, data):
+        super(CConnection, self).SetData(data)
+        self.data['source'] = self.__source.GetId()
+        self.data['destination'] = self.__destination.GetId()

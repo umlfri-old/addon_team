@@ -26,20 +26,29 @@ class CDiffer(object):
     def diffProjects(self):
         result = []
         elements1 = self.__project1.GetElements().values()
+        elements1.sort()
         elements2 = self.__project2.GetElements().values()
+        elements2.sort()
         smElements = SequenceMatcher(None, elements1, elements2)
         
         diagrams1 = self.__project1.GetDiagrams().values()
+        diagrams1.sort()
         diagrams2 = self.__project2.GetDiagrams().values()
+        diagrams2.sort()
         smDiagrams = SequenceMatcher(None, diagrams1, diagrams2)
         
         connections1 = self.__project1.GetConnections().values()
+        connections1.sort()
         connections2 = self.__project2.GetConnections().values()
+        connections2.sort()
         smConnections = SequenceMatcher(None, connections1, connections2)
         
         diagramsOpcodes = smDiagrams.get_opcodes()
+        
         elementsOpcodes = smElements.get_opcodes()
+        
         connectionsOpcodes = smConnections.get_opcodes()
+        
         self.__computeDiff(diagramsOpcodes, diagrams1, diagrams2, result)
         self.__computeDiff(elementsOpcodes, elements1, elements2, result)
         self.__computeDiff(connectionsOpcodes, connections1, connections2, result)
@@ -69,10 +78,10 @@ class CDiffer(object):
             elif (tag == EDiffActions.EQUAL):
                 # ak sa tvaria rovnako, chod do hlbky, porovnaj data
                 for si1, si2 in zip(sequence1[i1:i2], sequence2[j1:j2]):
-                    result.extend(self.diffElementsData(si1, si2))
+                    result.extend(self.__diffElementsData(si1, si2))
                     
 
-    def diffElementsData(self, el1, el2):
+    def __diffElementsData(self, el1, el2):
         data1 = el1.GetData()
         data2 = el2.GetData()
         tuple1 = dictToTuple(data1)
@@ -146,22 +155,47 @@ class CDiffer(object):
 
 
 
-    def diffElements(self, el1, el2):
+    def diffElementsLogical(self, el1, el2):
         if el1 is None and el2 is not None:
             return [CDiffResult(EDiffActions.INSERT, el2)]
         elif el1 is not None and el2 is None:
             return [CDiffResult(EDiffActions.DELETE, el1)]
         else:
-            return self.diffElementsData(el1, el2) 
+            return self.__diffElementsData(el1, el2) 
                     
-    def computeVisualDiffElements(self, elView1, elView2):
+    def diffElementsVisual(self, elView1, elView2):
         if elView1 is None and elView2 is not None:
-            return [CDiffResult(EDiffActions.INSERT, elView2.GetObject())]
+            return [CDiffResult(EDiffActions.INSERT, elView2)]
         elif elView1 is not None and elView2 is None:
-            return [CDiffResult(EDiffActions.DELETE, elView1.GetObject())]
+            return [CDiffResult(EDiffActions.DELETE, elView1)]
         else:
             tuple1 = dictToTuple(elView1.GetViewData())
             tuple2 = dictToTuple(elView2.GetViewData())
             result = []
-            self.__diffData(elView1.GetObject(), elView2.GetObject(), tuple1, tuple2, result, [])
+            self.__diffData(elView1, elView2, tuple1, tuple2, result, [])
             return result
+    
+    def diffProjectTree(self, root1 = None, root2 = None):
+        if root1 is None:
+            root1 = self.__project1.GetProjectTreeRoot()
+        if root2 is None:
+            root2 = self.__project2.GetProjectTreeRoot()
+    
+        map1 = self.__treeNodesParents(self.__project1)
+        map2 = self.__treeNodesParents(self.__project2)
+        result = []
+        for e in set(map1.keys()+map2.keys()):
+            if e not in map1:
+                result.append(CDiffResult(EDiffActions.INSERT, e))
+            elif e not in map2:
+                result.append(CDiffResult(EDiffActions.DELETE, e))
+            elif map2[e] != map1[e]:
+                result.append(CDiffResult(EDiffActions.MOVE, e))
+        return result
+        
+    def __treeNodesParents(self, project):
+        nodes = project.GetProjectTreeNodes()
+        result = {}
+        for node in nodes:
+            result[node] = node.GetParent()
+        return result

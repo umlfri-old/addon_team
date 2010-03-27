@@ -37,16 +37,19 @@ class CProject(object):
             self.__LoadProjectRecursive(root, None)
    
     def __LoadProjectRecursive(self, root, treeParent):
-        print root.GetClass()
         if root is not None:
+            
             if root.GetClass().find('Element') != -1:
                 # ak je to element
                 
                 id = root.GetId().lstrip('#')
-                newElement = CElement(id, root.GetType())
-                newElement.SetData(root.GetSaveInfo())
-                self.__elements[id] = newElement
-                newProjectTreeNode = CProjectTreeNode(newElement)
+                if self.GetById(id) is None:
+                    newElement = CElement(id, root.GetType())
+                    newElement.SetData(root.GetSaveInfo())
+                    self.__elements[id] = newElement
+                else:
+                    newElement = self.GetById(id)
+                newProjectTreeNode = CProjectTreeNode(newElement, treeParent)
                 if treeParent is None:
                     self.__projectTreeRoot = newProjectTreeNode
                 else :
@@ -54,29 +57,43 @@ class CProject(object):
                 childs = root.GetChilds()
                 diagrams = root.GetDiagrams()
                 connections = root.GetConnections()
+                
                 for e in childs+connections+diagrams:
+                    
                     self.__LoadProjectRecursive(e, newProjectTreeNode)
             elif root.GetClass().find('Diagram') != -1:
                 #ak je to diagram
                 id = root.GetId().lstrip('#')
                 newDiagram = CDiagram(id, root.GetType())
                 newDiagram.SetData(root.GetSaveInfo())
-                newProjectTreeNode = CProjectTreeNode(newDiagram)
+                newProjectTreeNode = CProjectTreeNode(newDiagram, treeParent)
                 treeParent.AppendChildDiagram(newProjectTreeNode)
                 visualElements = root.GetElements()
                 for ve in visualElements:
                     # nacitaj vizualne elementy
                     veo = ve.GetObject()
                     size = (ve.GetSize()[0] - ve.GetMinimalSize()[0],ve.GetSize()[1] - ve.GetMinimalSize()[1])
-                    #size = ve.GetSize()
-                    newElementView = CElementView(self.GetById(veo.GetId().lstrip('#')), ve.GetPosition(), size)
+                    
+                    elementViewObject = self.GetById(veo.GetId().lstrip('#'))
+                    if elementViewObject is None:
+                        evoId = veo.GetId().lstrip('#')
+                        elementViewObject = CElement(evoId, veo.GetType())
+                        elementViewObject.SetData(veo.GetSaveInfo())
+                        self.__elements[evoId] = elementViewObject
+                    newElementView = CElementView(elementViewObject, newDiagram, ve.GetPosition(), size)
                     newDiagram.AddElementView(newElementView)
                     
                 visualConnections = root.GetConnections()
                 for vc in visualConnections:
                     #nacitaj vizualne spojenia
                     vco = vc.GetObject()
-                    newConnectionView = CConnectionView(self.GetById(vco.GetId().lstrip('#')))
+                    connectionViewObject = self.GetById(vco.GetId().lstrip('#'))
+                    if connectionViewObject is None:
+                        cvoId = vco.GetId().lstrip('#')
+                        connectionViewObject = CConnection(cvoId, vco.GetType(), self.GetById(vco.GetSource().GetId().lstrip('#')), self.GetById(vco.GetDestination().GetId().lstrip('#')))
+                        connectionViewObject.SetData(vco.GetSaveInfo())
+                        self.__connections[cvoId] = connectionViewObject
+                    newConnectionView = CConnectionView(connectionViewObject, newDiagram)
                     for point in vc.GetPoints()[1:len(vc.GetPoints())-1]:
                         newConnectionView.AddPoint(point)
                     for label in vc.GetAllLabelPositions():
@@ -86,11 +103,30 @@ class CProject(object):
                 self.__diagrams[id] = newDiagram
             elif root.GetClass().find('Connection') != -1:
                 id = root.GetId().lstrip('#')
-                source = root.GetSource()
-                dest = root.GetDestination()
-                newConnection = CConnection(id, root.GetType(), self.GetById(source.GetId().lstrip('#')), self.GetById(dest.GetId().lstrip('#')))
-                newConnection.SetData(root.GetSaveInfo())
-                self.__connections[id] = newConnection 
+                if self.GetById(id) is None:
+                    source = root.GetSource()
+                    
+                    dest = root.GetDestination()
+                    
+                    mySource = self.GetById(source.GetId().lstrip('#'))
+                    
+                    if mySource is None:
+                        sourceId = source.GetId().lstrip('#')
+                        mySource = CElement(sourceId, source.GetType())
+                        mySource.SetData(source.GetSaveInfo())
+                        
+                        self.__elements[sourceId] = mySource
+                    myDest = self.GetById(dest.GetId().lstrip('#'))
+                    
+                    if myDest is None:
+                        destId = dest.GetId().lstrip('#')
+                        myDest = CElement(destId, dest.GetType())
+                        myDest.SetData(dest.GetSaveInfo())
+                        
+                        self.__elements[destId] = myDest
+                    newConnection = CConnection(id, root.GetType(), mySource, myDest)
+                    newConnection.SetData(root.GetSaveInfo())
+                    self.__connections[id] = newConnection 
             
            
    
@@ -142,21 +178,21 @@ class CProject(object):
             # ak nemame koren
             if (element.tag == UMLPROJECT_NAMESPACE+'node'):
                 id = element.get('id')
-                newProjectTreeNode = CProjectTreeNode(self.GetById(id))
+                newProjectTreeNode = CProjectTreeNode(self.GetById(id), parent)
                 self.__projectTreeRoot = newProjectTreeNode
                 for child in self.__GetNodeChilds(element):
                     self.__CreateProjectTree(child, newProjectTreeNode)
         else:
             if (element.tag == UMLPROJECT_NAMESPACE+'node'):
                 id = element.get('id')
-                newProjectTreeNode = CProjectTreeNode(self.GetById(id))
+                newProjectTreeNode = CProjectTreeNode(self.GetById(id), parent)
                 parent.AppendChildElement(newProjectTreeNode)
                 for child in self.__GetNodeChilds(element):
                     self.__CreateProjectTree(child, newProjectTreeNode)
             elif (element.tag == UMLPROJECT_NAMESPACE+'diagram'):
                 id = element.get('id')
                 self.__LoadDiagram(element)
-                newProjectTreeNode = CProjectTreeNode(self.GetById(id))
+                newProjectTreeNode = CProjectTreeNode(self.GetById(id), parent)
                 parent.AppendChildDiagram(newProjectTreeNode)
                  
     
@@ -193,12 +229,12 @@ class CProject(object):
                 position = (int(item.get('x')), int(item.get('y')))
                 size = (int(item.get('dw')), int(item.get('dh')))
                 elId = item.get('id')
-                elementView = CElementView(self.GetById(elId), position, size)
+                elementView = CElementView(self.GetById(elId), diagram ,position, size)
                 diagram.AddElementView(elementView)
             elif item.tag == UMLPROJECT_NAMESPACE + 'connection':
             #nacitaj spojenie
                 conId = item.get('id')
-                connectionView = CConnectionView(self.GetById(conId))
+                connectionView = CConnectionView(self.GetById(conId), diagram)
                 for subitem in item:
                     #nacitaj sprostosti zo spojenia
                     if subitem.tag == UMLPROJECT_NAMESPACE + 'point':
@@ -229,5 +265,26 @@ class CProject(object):
     def GetConnections(self):
         return self.__connections
     
+    def GetProjectTreeNodes(self, root = None):
+        if root is None:
+            root = self.__projectTreeRoot
+        stack = [root]
+        result = []
+        while len(stack) > 0:
+            stack.extend(root.GetChildsOrdered())
+            root = stack.pop()
+            result.append(root)
+        return result
+    
+    def GetProjectTreeNodeById(self, id, root = None):
+        if root is None:
+            root = self.__projectTreeRoot
+        stack = [root]
+        while not(root.GetId() == id or len(stack) == 0):
+            stack.extend(root.GetChildsOrdered())
+            root = stack.pop()
+        return root
+        
+            
     def __str__(self):
         return str(self.__diagrams.keys())+str(self.__elements.keys())+str(self.__connections.keys())

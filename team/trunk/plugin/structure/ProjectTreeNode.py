@@ -10,7 +10,7 @@ class CProjectTreeNode(object):
     '''
 
 
-    def __init__(self, objectRepresentation):
+    def __init__(self, objectRepresentation, parent=None):
         '''
         Constructor
         '''
@@ -20,6 +20,7 @@ class CProjectTreeNode(object):
         self.__childDiagrams = {}
         self.__childDiagramsOrdered = []
         self.__objectRepresentation = objectRepresentation
+        self.__parent = parent
         
     def GetId(self):
         return self.__id
@@ -45,3 +46,15 @@ class CProjectTreeNode(object):
     
     def GetObject(self):
         return self.__objectRepresentation
+    
+    def GetParent(self):
+        return self.__parent
+    
+    def __str__(self):
+        return 'Tree node '+str(self.__objectRepresentation)
+    
+    def __hash__(self):
+        return hash(self.GetId())
+    
+    def __cmp__(self, other):
+        return cmp(self.GetId(), other.GetId())

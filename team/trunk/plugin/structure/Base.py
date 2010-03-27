@@ -16,20 +16,20 @@ class CBase(object):
         '''
         self.__id = id
         self.__type = type
-        self.__data = {}
+        self.data = {}
         
     def GetId(self):
         return self.__id
     
     def GetType(self):
-        return self.__data
+        return self.data
     
     def SetData(self, data):
         #print data
-        self.__data = data
+        self.data = data
         
     def GetData(self):
-        return self.__data
+        return self.data
     
     def __hash__(self):
         return hash(self.GetId())
@@ -38,4 +38,7 @@ class CBase(object):
         return (self.GetId() == other.GetId())
     
     def __str__(self):
-        return str(self.__id) + ':' + str(self.__type) + ':' + str(self.__data)
+        return str(self.__id)
+    
+    def __cmp__(self, other):
+        return cmp(self.GetId(), other.GetId())

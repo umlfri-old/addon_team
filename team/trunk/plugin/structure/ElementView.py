@@ -12,11 +12,11 @@ class CElementView(CBaseView):
     '''
 
 
-    def __init__(self, element, position = None, size = None):
+    def __init__(self, element, parentDiagram, position = None, size = None):
         '''
         Constructor
         '''
-        super(CElementView, self).__init__(element)
+        super(CElementView, self).__init__(element, parentDiagram)
         self.__element = element
         self.__position = position
         self.__size = size

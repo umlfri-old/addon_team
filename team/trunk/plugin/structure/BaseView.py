@@ -10,12 +10,16 @@ class CBaseView(object):
     '''
 
 
-    def __init__(self, objectRepresentation):
+    def __init__(self, objectRepresentation, parentDiagram):
         '''
         Constructor
         '''
         self.__objectRepresentation = objectRepresentation
+        self.__parentDiagram = parentDiagram
         self.viewData = {}
+        
+    def GetParentDiagram(self):
+        return self.__parentDiagram
         
     def GetObject(self):
         return self.__objectRepresentation
@@ -24,4 +28,4 @@ class CBaseView(object):
         return self.viewData
     
     def __str__(self):
-        return self.__objectRepresentation.GetId()
+        return self.__parentDiagram.GetId()+" : "+self.__objectRepresentation.GetId()
