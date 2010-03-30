@@ -6,3 +6,5 @@ Created on 6.3.2010
 from Differ import CDiffer
 from DiffResult import CDiffResult
 from DiffActions import EDiffActions
+from Conflict import CConflict
+from Updater import CUpdater

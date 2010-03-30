@@ -49,13 +49,53 @@ class CDiffer(object):
         
         connectionsOpcodes = smConnections.get_opcodes()
         
+        # logicky diff
         self.__computeDiff(diagramsOpcodes, diagrams1, diagrams2, result)
         self.__computeDiff(elementsOpcodes, elements1, elements2, result)
         self.__computeDiff(connectionsOpcodes, connections1, connections2, result)
         
-        return result
+        # diff projektoveho stromu
+        result.extend(self.diffProjectTree())
+        
+        # vizualny diff vsetkych elementov
+        for id,diagrams in self.__matchingDiagrams().items():
+            matchingViews = self.__matchingViews(diagrams[0], diagrams[1])
+            for id, views in matchingViews.items():
+                result.extend(self.diffElementsVisual(views[0], views[1]))
+        
+        rezult = {}
+        for res in result:
+            if res.GetAction() not in rezult:
+                rezult[res.GetAction()] = [res]
+            else:
+                rezult[res.GetAction()].append(res)
+        return rezult
         
 
+    def __matchingDiagrams(self):
+        uniqueDiagramIds = list(set(self.__project1.GetDiagrams().keys()+self.__project2.GetDiagrams().keys()))
+        result = {}
+        for id in uniqueDiagramIds:
+            result[id] = (self.__project1.GetById(id), self.__project2.GetById(id))
+        return result
+    
+    def __matchingViews(self, diagram1, diagram2):
+        result = {}
+        if diagram1 is None:
+            diag2ViewIds = diagram2.GetViews().keys()
+            for id in diag2ViewIds:
+                result[id] = (None, diagram2.GetViewById(id))
+        elif diagram2 is None:
+            diag1ViewIds = diagram1.GetViews().keys()
+            for id in diag1ViewIds:
+                result[id] = (diagram1.GetViewById(id), None)
+        else:
+            uniqueViewIds = list(set(diagram1.GetViews().keys()+diagram2.GetViews().keys()))
+            for id in uniqueViewIds:
+                result[id] = (diagram1.GetViewById(id), diagram2.GetViewById(id))
+            
+        return result
+        
     def __computeDiff(self, opcodes, sequence1, sequence2, result):
         for tag, i1, i2, j1, j2 in opcodes:
             if (tag == EDiffActions.DELETE):
@@ -98,9 +138,7 @@ class CDiffer(object):
     def __diffData(self, el1, el2, tuple1, tuple2, result, dataPath):
         sm = SequenceMatcher(None, tuple1, tuple2)
         op = sm.get_opcodes()
-        print tuple1
-        print tuple2
-        print op
+        
         for tag, i1, i2, j1, j2 in op:
             if (tag == EDiffActions.EQUAL):
                 pass
@@ -186,13 +224,22 @@ class CDiffer(object):
         result = []
         for e in set(map1.keys()+map2.keys()):
             if e not in map1:
-                result.append(CDiffResult(EDiffActions.INSERT, e))
+                result.append(CDiffResult(EDiffActions.INSERT, e, None, e.GetParent()))
             elif e not in map2:
-                result.append(CDiffResult(EDiffActions.DELETE, e))
+                result.append(CDiffResult(EDiffActions.DELETE, e, e.GetParent()))
             elif map2[e] != map1[e]:
-                result.append(CDiffResult(EDiffActions.MOVE, e))
+                result.append(CDiffResult(EDiffActions.MOVE, e, self.__project1.GetProjectTreeNodeById(e.GetId()).GetParent(), self.__project2.GetProjectTreeNodeById(e.GetId()).GetParent()))
         return result
         
+        
+    def diffDiagrams(self, diagram1, diagram2):
+        result = []
+        matchingViews = self.__matchingViews(diagram1, diagram2)
+        for id, views in matchingViews.items():
+            result.extend(self.diffElementsVisual(views[0], views[1]))
+        return result
+    
+    
     def __treeNodesParents(self, project):
         nodes = project.GetProjectTreeNodes()
         result = {}
