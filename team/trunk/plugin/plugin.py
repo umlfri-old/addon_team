@@ -6,12 +6,14 @@ Created on 27.2.2010
 
 from lib.Addons.Plugin.Client.Interface import CInterface
 from lib.Exceptions import *
-from lib.Depend.gtk2 import gtk
-from lib.Depend.gtk2 import pygtk
+from gui import Gui
 import os
 from structure import *
 from support import *
 from zipfile import ZipFile, is_zipfile
+import implementation
+import time
+import inspect
 
 class Plugin(object):
     '''
@@ -25,18 +27,52 @@ class Plugin(object):
         '''
         # load interface
         self.interface = interface
+        
+        
+        #pockaj, kym sa nacita projekt
+        while not self.__canRunPlugin():
+            time.sleep(5)
+        # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
         self.interface.StartAutocommit()
+        self.gui = Gui()
+        self.implementation = self.__chooseCorrectImplementation()
         try:
             # add menu
-            self.interface.AddMenu('MenuItem', 'mnuMenubar', 'team', None, text = 'Team')
-            self.interface.AddMenu('submenu', 'mnuMenubar/team', None, None)
-            self.interface.AddMenu('MenuItem', 'mnuMenubar/team', 'DiffProject', self.DiffProject, text = 'Diff project logical')
-            #self.interface.AddMenu('MenuItem', 'mnuMenubar/team', 'DiffDiagram', self.DiffDiagram, text = 'Diff diagram')
-            self.interface.AddMenu('MenuItem', 'mnuMenubar/team', 'DiffElement', self.DiffElement, text = 'Diff element visual')
-            self.interface.AddMenu('MenuItem', 'mnuMenubar/team', 'DiffProjectTree', self.DiffProjectTree, text = 'Diff project tree')
+            self.interface.GetAdapter().GetMainMenu().AddMenuItem(None, (len(self.interface.GetAdapter().GetMainMenu().GetItems())-1),'Team',None,None)
+            
+            #position in menu
+            self.mp = (len(self.interface.GetAdapter().GetMainMenu().GetItems())-2)
+            
+            self.interface.GetAdapter().GetMainMenu().GetItems()[self.mp].AddSubmenu()                    
+            self.interface.GetAdapter().GetMainMenu().GetItems()[self.mp].GetSubmenu().AddMenuItem(self.DiffProject,0,'Diff project',None,None)
+            self.interface.GetAdapter().GetMainMenu().GetItems()[self.mp].GetSubmenu().AddMenuItem(self.Update,1,'Update',None,None)
+            self.interface.GetAdapter().GetMainMenu().GetItems()[self.mp].GetSubmenu().AddMenuItem(self.Checkin,2,'Checkin',None,None)
+#            
         except PluginInvalidParameter:
             pass
         
+    def __canRunPlugin(self):
+        p = self.__LoadProject()
+        if p is None:
+            return False
+        else:
+            return not is_zipfile(p.GetFileName())
+        
+    def __chooseCorrectImplementation(self):
+        result = None
+        # vyber nejaky
+        for name in dir(implementation):
+            obj = getattr(implementation, name)
+            if inspect.isclass(obj):
+                r = obj(self.__LoadProject().GetFileName())
+                if r.IsProjectVersioned():
+                    return r
+        # ak nenajdes, zober dummy implementation
+        if result is None:
+            
+            result = implementation.CDummyImplementation(self.__LoadProject().GetFileName())
+        return result
+    
     
     def __LoadProject(self):
         '''
@@ -46,25 +82,22 @@ class Plugin(object):
     
     
     def DiffProject(self, *args):
+        
         project = self.__LoadProject()
         if project is None:
             self.interface.DisplayWarning('No project loaded')
             return
         
-        prFile = project.GetFileName()
-        if (is_zipfile(prFile)):
-            file = ZipFile(prFile,'r')
-            fileData = file.read('content.xml')
-        else :
-            file = open(prFile, 'r')
-            fileData = file.read()
+        
         myProject1 = CProject(project)
+        fileData = self.implementation.GetFileData()
         myProject2 = CProject(None, fileData)
         
         differ = CDiffer(myProject2, myProject1)
         res = differ.diffProjects()
-        for dr in res:
-            self.interface.DisplayWarning(dr)
+        for dr in res.values():
+            for d in dr:
+                self.interface.DisplayWarning(d)
         
             
                 
@@ -77,14 +110,7 @@ class Plugin(object):
             self.interface.DisplayWarning('No project loaded')
             return
         
-        prFile = project.GetFileName()
-        if (is_zipfile(prFile)):
-            file = ZipFile(prFile,'r')
-            fileData = file.read('content.xml')
-        else :
-            file = open(prFile, 'r')
-            fileData = file.read()
-        
+        fileData = self.implementation.GetFileData()
         myProject1 = CProject(project)
         myProject2 = CProject(None, fileData)
         
@@ -107,13 +133,7 @@ class Plugin(object):
             self.interface.DisplayWarning('No project loaded')
             return
         
-        prFile = project.GetFileName()
-        if (is_zipfile(prFile)):
-            file = ZipFile(prFile,'r')
-            fileData = file.read('content.xml')
-        else :
-            file = open(prFile, 'r')
-            fileData = file.read()
+        fileData = self.implementation.GetFileData()
         
         myProject1 = CProject(project)
         myProject2 = CProject(None, fileData)
@@ -125,6 +145,30 @@ class Plugin(object):
         res = differ.diffProjectTree()
         for dr in res:
             self.interface.DisplayWarning(dr)
+            
+    def Update(self, *args):
+        project = self.__LoadProject()
+        if project is None:
+            self.interface.DisplayWarning('No project loaded')
+            return
         
+        self.implementation.Update()
+#        wcProject = CProject(project)
+#        fileData = self.implementation.GetFileData()
+#        coProject = CProject(None, fileData)
+#        fileData2 = self.implementation.GetFileData2()
+#        upProject = CProject(None, fileData2)
+#        updater = CUpdater(coProject, wcProject, upProject)
+    
+    def Checkin(self, *args):
+        project = self.__LoadProject()
+        if project is None:
+            self.interface.DisplayWarning('No project loaded')
+            return
+        msg = self.gui.CheckinMessageDialog()
+        if msg is not None:
+            self.implementation.Checkin(msg)
+        
+            
 # select plugin main object
 pluginMain = Plugin

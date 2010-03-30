@@ -38,7 +38,7 @@ class CBase(object):
         return (self.GetId() == other.GetId())
     
     def __str__(self):
-        return str(self.__id)
+        return "Object: " + str(self.__id)
     
     def __cmp__(self, other):
         return cmp(self.GetId(), other.GetId())

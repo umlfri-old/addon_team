@@ -37,3 +37,8 @@ class CDiagram(CBase):
     def GetViewById(self, id):
         id = id.lstrip('#')
         return self.__connectionsViews.get(id) or self.__elementsViews.get(id)
+    
+    def GetViews(self):
+        result = self.__elementsViews.copy()
+        result.update(self.__connectionsViews)
+        return result
