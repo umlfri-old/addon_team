@@ -42,3 +42,6 @@ class CDiagram(CBase):
         result = self.__elementsViews.copy()
         result.update(self.__connectionsViews)
         return result
+    
+    def GetElementViewsOrdered(self):
+        return self.__elementViewsOrdered

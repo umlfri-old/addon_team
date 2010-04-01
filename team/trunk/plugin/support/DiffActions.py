@@ -16,3 +16,4 @@ class EDiffActions(object):
     REPLACE = 'replace'
     MODIFY = 'modify'
     MOVE = 'move'
+    ORDER_CHANGE = 'change order'

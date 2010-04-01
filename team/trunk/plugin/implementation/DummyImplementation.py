@@ -33,6 +33,10 @@ class CDummyImplementation(object):
             fileData = file.read()
         return fileData
     
+    def GetFileName(self):
+        return self.__fileName
+    
+    
     def Update(self, revision = None):
         print 'Dummy implementation update'
         pass
@@ -41,7 +45,7 @@ class CDummyImplementation(object):
         print 'Dummy implementation commit'
         pass
     
-    def Revert(self, revision = None):
+    def Revert(self):
         print 'Dummy implementation revert'
         pass
     
@@ -53,6 +57,3 @@ class CDummyImplementation(object):
         print 'Dummy implementation status'
         pass
     
-    def GetFileData2(self):
-        file = open('C:\\users\\peterko\\Desktop\\abc.xml')
-        return file.read()

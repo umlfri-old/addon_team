@@ -27,6 +27,9 @@ class CSubversionImplementation(object):
         else:
             revnum = pysvn.Revision( pysvn.opt_revision_kind.number, revision )
         return self.__client.cat(self.__fileName, revnum)
+    
+    def GetFileName(self):
+        return self.__fileName
         
     # zisti, ci je projekt pod tymto verzovacim systemom    
     def IsProjectVersioned(self):
@@ -55,4 +58,15 @@ class CSubversionImplementation(object):
     def Checkin(self, message=''):
         print 'trynig svn commit'
         print self.__client.checkin(self.__fileName, message)
-            
+        
+    def Revert(self):
+        print 'trying svn revert'
+        print self.__client.revert(self.__fileName)
+        
+    def Checkout(self, url, directory, revision = None):
+        print 'trying svn checkout'
+        if revision is None:
+            print self.__client.checkout(url,directory)
+        else:
+            print self.__client.checkout(url,directory, revision=pysvn.Revision(pysvn.opt_revision_kind.number, revision))
+        
