@@ -59,6 +59,12 @@ class CDiffer(object):
         
         # vizualny diff vsetkych elementov
         for id,diagrams in self.__matchingDiagrams().items():
+            # pozri zmenu poradia
+            elViews1 = diagrams[0].GetElementViewsOrdered()
+            elViews2 = diagrams[1].GetElementViewsOrdered()
+            result.extend(self.__diffOrder(elViews1, elViews2))
+            
+            # pozri pridane, odobrane prvky a zmenu pozicii
             matchingViews = self.__matchingViews(diagrams[0], diagrams[1])
             for id, views in matchingViews.items():
                 result.extend(self.diffElementsVisual(views[0], views[1]))
@@ -221,6 +227,8 @@ class CDiffer(object):
     
         map1 = self.__treeNodesParents(self.__project1)
         map2 = self.__treeNodesParents(self.__project2)
+        
+        # najdi nove, vymazane a presunute pod ineho rodica
         result = []
         for e in set(map1.keys()+map2.keys()):
             if e not in map1:
@@ -229,15 +237,55 @@ class CDiffer(object):
                 result.append(CDiffResult(EDiffActions.DELETE, e, e.GetParent()))
             elif map2[e] != map1[e]:
                 result.append(CDiffResult(EDiffActions.MOVE, e, self.__project1.GetProjectTreeNodeById(e.GetId()).GetParent(), self.__project2.GetProjectTreeNodeById(e.GetId()).GetParent()))
+        for parent in set(map1.values()+map2.values()):
+            if parent is not None:
+                print '---'
+                childs1 = self.__project1.GetProjectTreeNodeById(parent.GetId()).GetChildsOrdered()
+                
+                childs2 = self.__project2.GetProjectTreeNodeById(parent.GetId()).GetChildsOrdered()
+                result.extend(self.__diffOrder(childs1, childs2))
+                
         return result
         
         
-    def diffDiagrams(self, diagram1, diagram2):
+    def __diffOrder(self, list1, list2):
+        reducedChilds1 = [c for c in list1 if c in list2]
+                
+        reducedChilds2 = [c for c in list2 if c in list1]
+        
         result = []
-        matchingViews = self.__matchingViews(diagram1, diagram2)
-        for id, views in matchingViews.items():
-            result.extend(self.diffElementsVisual(views[0], views[1]))
+        
+        movesUp = []
+        movesDown = []
+        for rc in reducedChilds1:
+            index1 = reducedChilds1.index(rc)
+            index2 = reducedChilds2.index(rc)
+            print rc, index1, index2
+            if index1 < index2:
+                movesUp.append((rc, index1, index2))
+            elif index1 > index2:
+                movesDown.append((rc, index1, index2))
+        
+        if len(movesDown) == 0 and len(movesUp) == 0:
+            print 'no moves'
+        elif len(movesDown) < len(movesUp):
+            print 'moves',len(movesDown)
+            for m in movesDown:
+                result.append(CDiffResult(EDiffActions.ORDER_CHANGE, m[0], list1.index(m[0]), list2.index(m[0])))
+        else :
+            print 'moves',len(movesUp)
+            for m in movesUp:
+                result.append(CDiffResult(EDiffActions.ORDER_CHANGE, m[0], list1.index(m[0]), list2.index(m[0])))
+        print '---'
         return result
+                
+                
+#    def diffDiagrams(self, diagram1, diagram2):
+#        result = []
+#        matchingViews = self.__matchingViews(diagram1, diagram2)
+#        for id, views in matchingViews.items():
+#            result.extend(self.diffElementsVisual(views[0], views[1]))
+#        return result
     
     
     def __treeNodesParents(self, project):

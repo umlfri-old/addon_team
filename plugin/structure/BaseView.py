@@ -31,4 +31,7 @@ class CBaseView(object):
         return "View: "+ self.__parentDiagram.GetId()+" : "+self.__objectRepresentation.GetId()
     
     def __cmp__(self, other):
-        return cmp(self.GetObject(), other.GetObject()) and cmp(self.GetParentDiagram(), other.GetParentDiagram())
+        return cmp(hash(self), hash(other))
+    
+    def __hash__(self):
+        return hash(hash(self.GetObject())+hash(self.GetParentDiagram()))
