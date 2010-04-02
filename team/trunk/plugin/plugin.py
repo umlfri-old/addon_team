@@ -20,8 +20,7 @@ class Plugin(object):
     '''
     classdocs
     '''
-
-
+    
     def __init__(self, interface):
         '''
         Constructor
@@ -30,43 +29,56 @@ class Plugin(object):
         self.interface = interface
         self.interface.SetGtkMainloop()
         
-        #pockaj, kym sa nacita projekt
-        while not self.__canRunPlugin():
-            time.sleep(5)
-        # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
-        self.interface.StartAutocommit()
         self.gui = Gui()
-        self.implementation = self.__chooseCorrectImplementation()
+        
+        
+        
+#        self.interface.StartAutocommit()
+        self.interface.GetAdapter().AddNotification('project-opened', lambda:self.ProjectOpened())
+        
         try:
             # add menu
-            self.__teamMenuItemId = str(uuid.uuid1())
-            self.interface.GetAdapter().GetMainMenu().AddMenuItem(self.__teamMenuItemId ,None, (len(self.interface.GetAdapter().GetMainMenu().GetItems())-1),'Team',None,None)
             
-            #najdi team menu v hlavnom menu
-            self.__teamMenu = None
-            for item in self.interface.GetAdapter().GetMainMenu().GetItems():
-                if item.GetGuiId() == self.__teamMenuItemId:
-                    self.__teamMenu = item
+            self.teamMenuRoot = self.interface.GetAdapter().GetMainMenu().AddMenuItem(str(uuid.uuid1()) ,None, -2,'Team',None,None)
+            
+            
             
             #add submenu
-            self.__teamMenu.AddSubmenu()                    
-            self.__teamMenu.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.DiffProject,0,'Diff project',None,None)
-            self.__teamMenu.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Update,1,'Update',None,None)
-            self.__teamMenu.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Checkin,2,'Checkin',None,None)
-            self.__teamMenu.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Revert,3,'Revert',None,None)
-            self.__teamMenu.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Checkout,4,'Checkout',None,None)
+            self.teamMenuRoot.AddSubmenu()
+            self.teamMenuSubmenu = self.teamMenuRoot.GetSubmenu()
+            #self.teamMenuRoot.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Checkout,4,'Checkout',None,None)                    
+            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()), lambda x:self.SolveConflicts(x) ,5,'Solve conflicts',None,None)
+            
 #            
         except PluginInvalidParameter:
             pass
         
-    def __canRunPlugin(self):
+      
+      
+    def ProjectOpened(self):
+        # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
+        if self.__CanRunPlugin():
+            
+            self.implementation = self.__ChooseCorrectImplementation()
+            
+            try:
+                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.DiffProject(x),0,'Diff project',None,None)
+                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Update(x),1,'Update',None,None)
+                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Checkin(x),2,'Checkin',None,None)
+                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Revert(x),3,'Revert',None,None)
+            except PluginInvalidParameter:
+                pass
+  
+      
+          
+    def __CanRunPlugin(self):
         p = self.__LoadProject()
         if p is None:
             return False
         else:
             return not is_zipfile(p.GetFileName())
         
-    def __chooseCorrectImplementation(self):
+    def __ChooseCorrectImplementation(self):
         result = None
         # vyber nejaky
         for name in dir(implementation):
@@ -89,7 +101,7 @@ class Plugin(object):
         return self.interface.GetAdapter().GetProject()
     
     
-    def DiffProject(self, *args):
+    def DiffProject(self, arg):
         
         project = self.__LoadProject()
         if project is None:
@@ -155,7 +167,7 @@ class Plugin(object):
 #        for dr in res:
 #            self.interface.DisplayWarning(dr)
             
-    def Update(self, *args):
+    def Update(self, arg):
         project = self.__LoadProject()
         if project is None:
             self.interface.DisplayWarning('No project loaded')
@@ -163,7 +175,7 @@ class Plugin(object):
         
         self.implementation.Update()
     
-    def Checkin(self, *args):
+    def Checkin(self, arg):
         project = self.__LoadProject()
         if project is None:
             self.interface.DisplayWarning('No project loaded')
@@ -172,7 +184,7 @@ class Plugin(object):
         if msg is not None:
             self.implementation.Checkin(msg)
             
-    def Revert(self, *args):
+    def Revert(self, arg):
         project = self.__LoadProject()
         if project is None:
             self.interface.DisplayWarning('No project loaded')
@@ -182,10 +194,14 @@ class Plugin(object):
         self.implementation.Revert()
         
         
-    def Checkout(self, *args):
+    def Checkout(self, arg):
         result = self.gui.CheckoutDialog()
         if result is not None:
             self.implementation.Checkout(result[0], result[1], result[2])
             
+            
+    def SolveConflicts(self, arg):
+        print 'solve conflict'
+        print arg
 # select plugin main object
 pluginMain = Plugin
