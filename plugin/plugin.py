@@ -34,7 +34,7 @@ class Plugin(object):
         
         
 #        self.interface.StartAutocommit()
-        self.interface.GetAdapter().AddNotification('project-opened', lambda:self.ProjectOpened())
+        self.interface.GetAdapter().AddNotification('project-opened', self.ProjectOpened)
         
         try:
             # add menu
@@ -47,20 +47,7 @@ class Plugin(object):
             self.teamMenuRoot.AddSubmenu()
             self.teamMenuSubmenu = self.teamMenuRoot.GetSubmenu()
             #self.teamMenuRoot.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Checkout,4,'Checkout',None,None)                    
-            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()), lambda x:self.SolveConflicts(x) ,5,'Solve conflicts',None,None)
-#            while not self.__CanRunPlugin():
-#                time.sleep(5)
-#        
-#            fileName = self.__LoadProject().GetFileName()
-#            self.implementation = self.__ChooseCorrectImplementation(fileName)
-#            
-#            try:
-#                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.DiffProject(x),0,'Diff project',None,None)
-#                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Update(x),1,'Update',None,None)
-#                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Checkin(x),2,'Checkin',None,None)
-#                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Revert(x),3,'Revert',None,None)
-#            except PluginInvalidParameter:
-#                pass
+            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()), self.SolveConflicts ,5,'Solve conflicts',None,None)
             
         except PluginInvalidParameter:
             pass
@@ -68,18 +55,17 @@ class Plugin(object):
       
       
     def ProjectOpened(self):
-        # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
-        while not self.__CanRunPlugin():
-            time.sleep(5)
+        
         if self.__CanRunPlugin():
             fileName = self.__LoadProject().GetFileName()
+            # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
             self.implementation = self.__ChooseCorrectImplementation(fileName)
             
             try:
-                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.DiffProject(x),0,'Diff project',None,None)
-                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Update(x),1,'Update',None,None)
-                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Checkin(x),2,'Checkin',None,None)
-                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Revert(x),3,'Revert',None,None)
+                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.DiffProject,0,'Diff project',None,None)
+                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Update,1,'Update',None,None)
+                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkin,2,'Checkin',None,None)
+                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Revert,3,'Revert',None,None)
             except PluginInvalidParameter:
                 pass
   
