@@ -10,11 +10,11 @@ from gui import Gui
 import os
 from structure import *
 from support import *
-from zipfile import ZipFile, is_zipfile
+from zipfile import is_zipfile
 import implementation
-import time
 import inspect
 import uuid
+import time
 
 class Plugin(object):
     '''
@@ -48,8 +48,20 @@ class Plugin(object):
             self.teamMenuSubmenu = self.teamMenuRoot.GetSubmenu()
             #self.teamMenuRoot.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Checkout,4,'Checkout',None,None)                    
             self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()), lambda x:self.SolveConflicts(x) ,5,'Solve conflicts',None,None)
-            
+#            while not self.__CanRunPlugin():
+#                time.sleep(5)
+#        
+#            fileName = self.__LoadProject().GetFileName()
+#            self.implementation = self.__ChooseCorrectImplementation(fileName)
 #            
+#            try:
+#                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.DiffProject(x),0,'Diff project',None,None)
+#                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Update(x),1,'Update',None,None)
+#                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Checkin(x),2,'Checkin',None,None)
+#                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.Revert(x),3,'Revert',None,None)
+#            except PluginInvalidParameter:
+#                pass
+            
         except PluginInvalidParameter:
             pass
         
@@ -57,9 +69,11 @@ class Plugin(object):
       
     def ProjectOpened(self):
         # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
+        while not self.__CanRunPlugin():
+            time.sleep(5)
         if self.__CanRunPlugin():
-            
-            self.implementation = self.__ChooseCorrectImplementation()
+            fileName = self.__LoadProject().GetFileName()
+            self.implementation = self.__ChooseCorrectImplementation(fileName)
             
             try:
                 self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),lambda x:self.DiffProject(x),0,'Diff project',None,None)
@@ -78,19 +92,19 @@ class Plugin(object):
         else:
             return not is_zipfile(p.GetFileName())
         
-    def __ChooseCorrectImplementation(self):
+    def __ChooseCorrectImplementation(self, fileName):
         result = None
         # vyber nejaky
         for name in dir(implementation):
             obj = getattr(implementation, name)
             if inspect.isclass(obj):
-                r = obj(self.__LoadProject().GetFileName())
+                r = obj(fileName)
                 if r.IsProjectVersioned():
                     return r
         # ak nenajdes, zober dummy implementation
         if result is None:
             
-            result = implementation.CDummyImplementation(self.__LoadProject().GetFileName())
+            result = implementation.CDummyImplementation(fileName)
         return result
     
     
@@ -114,58 +128,9 @@ class Plugin(object):
         myProject2 = CProject(None, fileData)
         
         differ = CDiffer(myProject2, myProject1)
-        res = differ.diffProjects()
+        res = differ.projectTreeDiff + differ.visualDiff + differ.dataDiff
         self.gui.DiffResultsDialog(res)
-#        for dr in res.values():
-#            for d in dr:
-#                self.interface.DisplayWarning(d)
-        
-            
-                
-#    def DiffDiagram(self, *args):
-#        pass
-#        
-#    def DiffElement(self, *args):
-#        project = self.__LoadProject()
-#        if project is None:
-#            self.interface.DisplayWarning('No project loaded')
-#            return
-#        
-#        fileData = self.implementation.GetFileData()
-#        myProject1 = CProject(project)
-#        myProject2 = CProject(None, fileData)
-#        
-#        
-#          
-#        
-#        differ = CDiffer(myProject2, myProject1)
-#        diag = self.interface.GetAdapter().GetCurrentDiagram()
-#        selected = diag.GetSelected()
-#        for sel in selected:
-#            elView1 = myProject1.GetById(diag.GetId()).GetViewById(sel.GetObject().GetId())
-#            elView2 = myProject2.GetById(diag.GetId()).GetViewById(sel.GetObject().GetId())
-#            res = differ.diffElementsVisual(elView2, elView1)
-#            for dr in res:
-#                self.interface.DisplayWarning(dr)
-#        
-#    def DiffProjectTree(self, *args):
-#        project = self.__LoadProject()
-#        if project is None:
-#            self.interface.DisplayWarning('No project loaded')
-#            return
-#        
-#        fileData = self.implementation.GetFileData()
-#        
-#        myProject1 = CProject(project)
-#        myProject2 = CProject(None, fileData)
-#        
-#        
-#          
-#        
-#        differ = CDiffer(myProject2, myProject1)
-#        res = differ.diffProjectTree()
-#        for dr in res:
-#            self.interface.DisplayWarning(dr)
+#       
             
     def Update(self, arg):
         project = self.__LoadProject()
@@ -201,7 +166,17 @@ class Plugin(object):
             
             
     def SolveConflicts(self, arg):
-        print 'solve conflict'
-        print arg
+        prFile = self.gui.OpenConflictProjectDialog()
+        if prFile is not None:
+            self.implementation = self.__ChooseCorrectImplementation(prFile)
+            triple = self.implementation.GetConflictTriple()
+            if triple is not None:
+                newProject = CProject(None, triple[0])
+                oldProject = CProject(None, triple[1])
+                workProject = CProject(None, triple[2])
+                conflicter = CConflicter(newProject, oldProject, workProject)
+                
+        
+        
 # select plugin main object
 pluginMain = Plugin
