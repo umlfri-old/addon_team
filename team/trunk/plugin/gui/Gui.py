@@ -6,6 +6,7 @@ Created on 28.3.2010
 
 from lib.Depend.gtk2 import gtk
 from lib.Depend.gtk2 import pygtk
+from lib.consts import PROJECT_CLEARXML_EXTENSION
 
 class Gui(object):
     '''
@@ -50,9 +51,8 @@ class Gui(object):
         text = self.wTree.get_widget('diffResultsTxt')
         buf = text.get_buffer()
         text = ''
-        for res in results.values():
-            for r in res:
-                text += str(r)+'\n'
+        for r in results:
+            text += str(r)+'\n'
         buf.set_text(text)
         response = wid.run()
         
@@ -74,8 +74,31 @@ class Gui(object):
         else:
             return None
         
+    def OpenConflictProjectDialog(self):
+        dialog = gtk.FileChooserDialog("Open..",
+                               None,
+                               gtk.FILE_CHOOSER_ACTION_OPEN,
+                               (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        dialog.set_default_response(gtk.RESPONSE_OK)
+
+
+#        filter = gtk.FileFilter()
+#        filter.set_name("UML .FRI Clear XML Projects")
+#        filter.add_pattern('*'+PROJECT_CLEARXML_EXTENSION)
+#        dialog.add_filter(filter)
         
         
-    def quit(self, widget, data = None):
-#        widget.hide()
-        return True
+        filter = gtk.FileFilter()
+        filter.set_name("All files")
+        filter.add_pattern("*")
+        dialog.add_filter(filter)
+        
+        
+        response = dialog.run()
+        if response == gtk.RESPONSE_OK:
+            result = dialog.get_filename()
+        elif response == gtk.RESPONSE_CANCEL:
+            result = None
+        dialog.destroy()
+        return result

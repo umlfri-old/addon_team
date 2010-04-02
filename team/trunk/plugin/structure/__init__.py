@@ -8,3 +8,4 @@ from Diagram import CDiagram
 from Connection import CConnection
 from Element import CElement
 from Base import CBase
+from ProjectTreeNode import CProjectTreeNode
