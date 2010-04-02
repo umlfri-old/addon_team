@@ -96,9 +96,9 @@ class Gui(object):
         
         
         response = dialog.run()
+        result = None
         if response == gtk.RESPONSE_OK:
             result = dialog.get_filename()
-        elif response == gtk.RESPONSE_CANCEL:
-            result = None
+        
         dialog.destroy()
         return result
