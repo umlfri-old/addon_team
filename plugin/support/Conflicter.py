@@ -25,7 +25,13 @@ class CConflicter(object):
         self.__oldNewDiffer = CDiffer(self.__old, self.__new)
         self.__oldWorkDiffer = CDiffer(self.__old, self.__work)
         
+        self.merging = []
+        
+        self.conflicting = []
+        
         self.__TryConflictSolve()
+        
+        
         
     def __TryConflictSolve(self):
         # pokus sa zakomponovat zmeny z new do worku
@@ -111,11 +117,12 @@ class CConflicter(object):
        
     def __MergeProjectTreeDiff(self, diff):
         print 'merging possible project tree diff'
-        print diff
+        self.merging.append(diff)
+        
     
     def __ProjectTreeConflict(self, diff):
         print 'project tree conflict'
-        print diff
+        self.conflicting.append(diff)
     
     def __PossibleToMergeVisualDiff(self, diff):
         if diff.GetAction() == EDiffActions.INSERT:
@@ -149,11 +156,11 @@ class CConflicter(object):
     
     def __MergeVisualDiff(self, diff):
         print 'merging possible visual diff'
-        print diff
+        self.merging.append(diff)
     
     def __VisualConflict(self, diff):
         print 'visual conflict'
-        print diff
+        self.conflicting.append(diff)
         
         
         
@@ -173,11 +180,11 @@ class CConflicter(object):
     
     def __MergeDataDiff(self, diff):
         print 'merging possible data diff'
-        print diff
+        self.merging.append(diff)
     
     def __DataConflict(self, diff):
         print 'data conflict'
-        print diff
+        self.conflicting.append(diff)
         
         
         
