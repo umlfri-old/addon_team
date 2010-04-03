@@ -33,7 +33,11 @@ class CSubversionImplementation(object):
         
     # zisti, ci je projekt pod tymto verzovacim systemom    
     def IsProjectVersioned(self):
-        return self.__client.status(self.__fileName)[0]['is_versioned'] == 1
+        try:
+            return self.__client.status(self.__fileName)[0]['is_versioned'] == 1
+        except:
+            return False
+        
      
     def GetConflictTriple(self):
         status = self.__client.status(self.__fileName)[0]

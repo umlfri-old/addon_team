@@ -46,8 +46,15 @@ class Plugin(object):
             #add submenu
             self.teamMenuRoot.AddSubmenu()
             self.teamMenuSubmenu = self.teamMenuRoot.GetSubmenu()
-            #self.teamMenuRoot.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Checkout,4,'Checkout',None,None)                    
+            #self.teamMenuRoot.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Checkout,4,'Checkout',None,None)
+            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.DiffProject,0,'Diff project',None,None)
+            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Update,1,'Update',None,None)
+            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkin,2,'Checkin',None,None)
+            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Revert,3,'Revert',None,None)                    
             self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()), self.SolveConflicts ,5,'Solve conflicts',None,None)
+            
+            self.ProjectOpened()
+                    
             
         except PluginInvalidParameter:
             pass
@@ -60,14 +67,6 @@ class Plugin(object):
             fileName = self.__LoadProject().GetFileName()
             # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
             self.implementation = self.__ChooseCorrectImplementation(fileName)
-            
-            try:
-                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.DiffProject,0,'Diff project',None,None)
-                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Update,1,'Update',None,None)
-                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkin,2,'Checkin',None,None)
-                self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Revert,3,'Revert',None,None)
-            except PluginInvalidParameter:
-                pass
   
       
           
@@ -124,7 +123,7 @@ class Plugin(object):
             self.interface.DisplayWarning('No project loaded')
             return
         
-        self.implementation.Update()
+        print self.implementation.Update()
     
     def Checkin(self, arg):
         project = self.__LoadProject()

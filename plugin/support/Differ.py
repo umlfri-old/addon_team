@@ -153,10 +153,10 @@ class CDiffer(object):
             elif (tag == EDiffActions.DELETE):
                 # nieco bolo vymazane
                 for seq in tuple1[i1:i2]:
-                    result.append(CDiffResult(EDiffActions.DELETE, el1, seq, None, dataPath))
+                    result.append(CDiffResult(EDiffActions.MODIFY, el1, seq, None, dataPath))
             elif (tag == EDiffActions.INSERT):
                 for seq in tuple2[j1:j2]:
-                    result.append(CDiffResult(EDiffActions.INSERT, el2, None, seq, dataPath))
+                    result.append(CDiffResult(EDiffActions.MODIFY, el2, None, seq, dataPath))
                 # nieco bolo pridane
                 pass
             elif (tag == EDiffActions.REPLACE):
@@ -241,7 +241,7 @@ class CDiffer(object):
                 result.append(CDiffResult(EDiffActions.MOVE, e, self.__project1.GetProjectTreeNodeById(e.GetId()).GetParent(), self.__project2.GetProjectTreeNodeById(e.GetId()).GetParent()))
         for parent in set(map1.values()+map2.values()):
             if parent is not None:
-                print '---'
+                
                 childs1 = self.__project1.GetProjectTreeNodeById(parent.GetId()).GetChildsOrdered()
                 
                 childs2 = self.__project2.GetProjectTreeNodeById(parent.GetId()).GetChildsOrdered()
