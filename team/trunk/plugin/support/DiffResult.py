@@ -27,6 +27,15 @@ class CDiffResult(object):
     def GetElement(self):
         return self.__element
     
+    def GetPreviousState(self):
+        return self.__previousState
+    
+    def GetNewState(self):
+        return self.__newState
+    
+    def GetDataPath(self):
+        return self.__dataPath
+    
     def __str__(self):
         return str(self.__action) + ' : ' + str(self.__element) + ' : ' +str(self.__previousState) + ' : ' + str(self.__newState) + ' : ' + str(self.__dataPath)
     
