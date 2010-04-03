@@ -58,6 +58,21 @@ class Gui(object):
         
         wid.hide()
         
+        
+    def ConflictSolvingDialog(self, merging, conflicts):
+        wid = self.wTree.get_widget('conflictSolvingDlg')
+        text = self.wTree.get_widget('conflictsResultsTxt')
+        buf = text.get_buffer()
+        text = 'MERGING CHANGES\n'
+        for m in merging:
+            text += str(m) +'\n'
+        text += 'CONFLICTING CHANGES\n'
+        for c in conflicts:
+            text += str(c) +'\n'
+        buf.set_text(text)
+        response = wid.run()
+        wid.hide()
+            
     def CheckoutDialog(self):
         wid = self.wTree.get_widget('checkoutDlg')
         response = wid.run()

@@ -160,6 +160,7 @@ class Plugin(object):
                 oldProject = CProject(None, triple[1])
                 workProject = CProject(None, triple[2])
                 conflicter = CConflicter(newProject, oldProject, workProject)
+                self.gui.ConflictSolvingDialog(conflicter.merging, conflicter.conflicting)
                 
         
         
