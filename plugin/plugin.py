@@ -135,6 +135,7 @@ class Plugin(object):
         updater = CUpdater(mine, base, upd)
         
         newFileData = updater.GetNewXml()
+        #print newFileData
         
         self.implementation.Update(newFileData)
         self.pluginAdapter.LoadProject(self.implementation.GetFileName())
