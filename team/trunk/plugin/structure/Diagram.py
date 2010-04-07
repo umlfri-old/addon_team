@@ -26,13 +26,21 @@ class CDiagram(CBase):
         
         
         
-    def AddConnectionView(self, connectionView):
+    def AddConnectionView(self, connectionView, index = None):
         self.__connectionsViews[connectionView.GetObject().GetId()] = connectionView
-        self.__connectionsViewsOrdered.append(connectionView)
+        if index is not None:
+            self.__connectionsViewsOrdered.insert(index, connectionView)
+        else:
+            self.__connectionsViewsOrdered.append(connectionView)
+        connectionView.SetIndex(index or len(self.__connectionsViewsOrdered)-1)
         
-    def AddElementView(self, elementView):
+    def AddElementView(self, elementView, index = None):
         self.__elementsViews[elementView.GetObject().GetId()] = elementView
-        self.__elementViewsOrdered.append(elementView)
+        if index is not None:
+            self.__elementViewsOrdered.insert(index, elementView)
+        else:
+            self.__elementViewsOrdered.append(elementView)
+        elementView.SetIndex(index or len(self.__elementViewsOrdered)-1)
     
     def GetViewById(self, id):
         id = id.lstrip('#')
@@ -54,15 +62,19 @@ class CDiagram(CBase):
     
     def DeleteView(self, view):
         try:
-            self.__elementsView.pop(view.GetId())
+            self.__elementsViews.pop(view.GetObject().GetId())
             self.__elementViewsOrdered.remove(view)
         except:
             pass
-        try:
-            self.__connectionsViews.pop(view.GetId())
+        try:    
+            self.__connectionsViews.pop(view.GetObject().GetId())
             self.__connectionsViewsOrdered.remove(view)
         except:
             pass
+        
+        
+        
+        
         
     def DeleteViewById(self, id):
         view = self.GetViewById(id)

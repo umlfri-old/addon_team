@@ -21,17 +21,33 @@ class CProjectTreeNode(object):
         self.__childDiagramsOrdered = []
         self.__objectRepresentation = objectRepresentation
         self.__parent = parent
+        self.__index = 0
+    
+    def SetIndex(self, index):
+        self.__index = index
+        
+    def GetIndex(self):
+        return self.__index
         
     def GetId(self):
         return self.__id
     
-    def AppendChildElement(self, child):
+    def AddChildElement(self, child, index = None):
         self.__childElements[child.GetId()] = child
-        self.__childElementsOrdered.append(child)
+        if index is not None:
+            self.__childElementsOrdered.insert(index, child)
+        else:
+            self.__childElementsOrdered.append(child)
+        child.SetIndex(index or len(self.__childElementsOrdered)-1)
     
-    def AppendChildDiagram(self, child):
+    def AddChildDiagram(self, child, index = None):
         self.__childDiagrams[child.GetId()] = child
-        self.__childDiagramsOrdered.append(child)
+        if index is not None:
+            self.__childDiagramsOrdered.insert(index,child)
+        else:
+            self.__childDiagramsOrdered.append(child)
+            
+        child.SetIndex(index or len(self.__childDiagramsOrdered)-1)
         
     def GetChild(self, id):
         return self.__childElements.get(id) or self.__childDiagrams.get(id)

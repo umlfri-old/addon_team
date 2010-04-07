@@ -17,6 +17,13 @@ class CBaseView(object):
         self.__objectRepresentation = objectRepresentation
         self.__parentDiagram = parentDiagram
         self.viewData = {}
+        self.__index = 0
+        
+    def GetIndex(self):
+        return self.__index
+    
+    def SetIndex(self, index):
+        self.__index = index
         
     def GetParentDiagram(self):
         return self.__parentDiagram

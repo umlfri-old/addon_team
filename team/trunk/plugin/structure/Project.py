@@ -65,7 +65,7 @@ class CProject(object):
                 if treeParent is None:
                     self.__projectTreeRoot = newProjectTreeNode
                 else :
-                    treeParent.AppendChildElement(newProjectTreeNode)
+                    treeParent.AddChildElement(newProjectTreeNode)
                 childs = root.GetChilds()
                 diagrams = root.GetDiagrams()
                 connections = root.GetConnections()
@@ -79,7 +79,7 @@ class CProject(object):
                 newDiagram = CDiagram(id, root.GetType())
                 newDiagram.SetData(root.GetSaveInfo())
                 newProjectTreeNode = CProjectTreeNode(newDiagram, treeParent)
-                treeParent.AppendChildDiagram(newProjectTreeNode)
+                treeParent.AddChildDiagram(newProjectTreeNode)
                 visualElements = root.GetElements()
                 for ve in visualElements:
                     # nacitaj vizualne elementy
@@ -214,14 +214,14 @@ class CProject(object):
             if (element.tag == UMLPROJECT_NAMESPACE+'node'):
                 id = element.get('id')
                 newProjectTreeNode = CProjectTreeNode(self.GetById(id), parent)
-                parent.AppendChildElement(newProjectTreeNode)
+                parent.AddChildElement(newProjectTreeNode)
                 for child in self.__GetNodeChilds(element):
                     self.__CreateProjectTree(child, newProjectTreeNode)
             elif (element.tag == UMLPROJECT_NAMESPACE+'diagram'):
                 id = element.get('id')
                 self.__LoadDiagram(element)
                 newProjectTreeNode = CProjectTreeNode(self.GetById(id), parent)
-                parent.AppendChildDiagram(newProjectTreeNode)
+                parent.AddChildDiagram(newProjectTreeNode)
                  
     
     def __GetNodeChilds(self, element):
@@ -372,11 +372,11 @@ class CProject(object):
         
         if isinstance(obj, CDiagram):
             # ak je to diagram, pridaj diagram
-            parent.AppendChildDiagram(newProjectTreeNode)
+            parent.AddChildDiagram(newProjectTreeNode, treeNode.GetIndex())
             
         elif isinstance(obj, CElement):
             # ak je to element, pridaj element
-            parent.AppendChildElement(newProjectTreeNode)
+            parent.AddChildElement(newProjectTreeNode, treeNode.GetIndex())
         
     def AddView(self, view):
         
@@ -390,7 +390,7 @@ class CProject(object):
             # vytvor novy element view
             newView = CElementView(obj, diagram, view.GetPosition(), view.GetSize())
             # pridaj ho do diagramu
-            diagram.AddElementView(newView)
+            diagram.AddElementView(newView, view.GetIndex())
         elif isinstance(obj, CConnection):
             # ak je to spojenie
             
@@ -404,7 +404,7 @@ class CProject(object):
             for label in view.GetLabels():
                 newView.AddLabel(label)
             # pridaj do diagramu
-            diagram.AddConnectionView(newView)
+            diagram.AddConnectionView(newView, view.GetIndex())
     
     def DeleteObject(self, obj):
         if isinstance(obj, CElement):
@@ -448,7 +448,7 @@ class CProject(object):
         # najdi diagram, do ktoreho patri
         diagram = self.GetById(view.GetParentDiagram().GetId())
         # vymaz ho z daneho diagramu
-        diagram.DeleteView(view)
+        diagram.DeleteViewById(view.GetObject().GetId())
 
 
     def MoveProjectTreeNode(self, node, oldParent, newParent):
@@ -462,10 +462,10 @@ class CProject(object):
         
         if isinstance(node.GetObject(), CDiagram):
             # ak je to diagram
-            newParent.AppendChildDiagram(node)
+            newParent.AddChildDiagram(node)
         elif isinstance(node.GetObject(), CElement):
             # ak je to element
-            newParent.AppendChildElement(node)
+            newParent.AddChildElement(node)
         
         # vymaz ho zo stareho rodica
         oldParent.DeleteChild(node)
