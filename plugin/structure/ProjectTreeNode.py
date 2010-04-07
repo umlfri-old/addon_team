@@ -41,6 +41,13 @@ class CProjectTreeNode(object):
         result.update(self.__childElements)
         return result
     
+    def GetChildNodes(self):
+        return self.__childElementsOrdered
+    
+    def GetChildDiagrams(self):
+        return self.__childDiagramsOrdered
+    
+    
     def GetChildsOrdered(self):
         return self.__childDiagramsOrdered + self.__childElementsOrdered
     
@@ -49,6 +56,26 @@ class CProjectTreeNode(object):
     
     def GetParent(self):
         return self.__parent
+    
+    def DeleteChild(self, child):
+        #vymaze child a vrati vsetky jeho deti, aby mohli byt vymazane
+        result = [child]
+        ch = child.GetChildsOrdered()
+        
+        while len(ch) > 0:
+            r = ch.pop()
+            result.append(r)
+            ch.extend(r.GetChildsOrdered())
+            
+        try:
+            self.__childElements.pop(child.GetId())
+            self.__childElementsOrdered.remove(child)
+            self.__childDiagrams.pop(child.GetId())
+            self.__childDiagramsOrdered.remove(child)
+            
+        except:
+            pass
+        return result
     
     def __str__(self):
         return 'Tree node '+str(self.__objectRepresentation)

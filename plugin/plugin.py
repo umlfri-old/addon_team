@@ -28,30 +28,33 @@ class Plugin(object):
         # load interface
         self.interface = interface
         self.interface.SetGtkMainloop()
+        self.pluginAdapter = self.interface.GetAdapter()
+        self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
         
         self.gui = Gui()
         
         
         
 #        self.interface.StartAutocommit()
-        self.interface.GetAdapter().AddNotification('project-opened', self.ProjectOpened)
+        self.pluginAdapter.AddNotification('project-opened', self.ProjectOpened)
         
         try:
             # add menu
             
-            self.teamMenuRoot = self.interface.GetAdapter().GetMainMenu().AddMenuItem(str(uuid.uuid1()) ,None, -2,'Team',None,None)
+            self.teamMenuRoot = self.pluginGuiManager.GetMainMenu().AddMenuItem(str(uuid.uuid1()) ,None, -2,'Team',None,None)
             
             
             
             #add submenu
             self.teamMenuRoot.AddSubmenu()
             self.teamMenuSubmenu = self.teamMenuRoot.GetSubmenu()
-            #self.teamMenuRoot.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Checkout,4,'Checkout',None,None)
+            
             self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.DiffProject,0,'Diff project',None,None)
             self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Update,1,'Update',None,None)
             self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkin,2,'Checkin',None,None)
             self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Revert,3,'Revert',None,None)                    
-            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()), self.SolveConflicts ,5,'Solve conflicts',None,None)
+            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()), self.SolveConflicts ,4,'Solve conflicts',None,None)
+            self.teamMenuRoot.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Checkout,5,'Checkout',None,None)
             
             self.ProjectOpened()
                     
@@ -73,6 +76,8 @@ class Plugin(object):
     def __CanRunPlugin(self):
         p = self.__LoadProject()
         if p is None:
+            return False
+        elif p.GetFileName() is None:
             return False
         else:
             return not is_zipfile(p.GetFileName())
@@ -97,14 +102,14 @@ class Plugin(object):
         '''
         Load project
         '''
-        return self.interface.GetAdapter().GetProject()
+        return self.pluginAdapter.GetProject()
     
     
     def DiffProject(self, arg):
         
         project = self.__LoadProject()
         if project is None:
-            self.interface.DisplayWarning('No project loaded')
+            self.pluginGuiManager.DisplayWarning('No project loaded')
             return
         
         
@@ -119,17 +124,24 @@ class Plugin(object):
             
     def Update(self, arg):
         project = self.__LoadProject()
+        
         if project is None:
-            self.interface.DisplayWarning('No project loaded')
+            self.pluginGuiManager.DisplayWarning('No project loaded')
             return
         
-        print self.implementation.Update()
+        project.Save()
+        mine, base, upd = self.implementation.BeforeUpdate()
+        updater = CUpdater(mine, base, upd)
+        
+        #print self.implementation.Update()
     
     def Checkin(self, arg):
         project = self.__LoadProject()
         if project is None:
-            self.interface.DisplayWarning('No project loaded')
+            self.pluginGuiManager.DisplayWarning('No project loaded')
             return
+        
+        project.Save()
         msg = self.gui.CheckinMessageDialog()
         if msg is not None:
             self.implementation.Checkin(msg)
@@ -137,7 +149,7 @@ class Plugin(object):
     def Revert(self, arg):
         project = self.__LoadProject()
         if project is None:
-            self.interface.DisplayWarning('No project loaded')
+            self.interface.GetAdapter().DisplayWarning('No project loaded')
             return
         
         
@@ -145,9 +157,15 @@ class Plugin(object):
         
         
     def Checkout(self, arg):
-        result = self.gui.CheckoutDialog()
+        impls = []
+        for name in dir(implementation):
+            obj = getattr(implementation, name)
+            if inspect.isclass(obj):
+                impls.append(obj)
+        result = self.gui.CheckoutDialog(impls)
         if result is not None:
-            self.implementation.Checkout(result[0], result[1], result[2])
+            self.implementation = result[0]
+            self.implementation.Checkout(result[1], result[2], result[3])
             
             
     def SolveConflicts(self, arg):

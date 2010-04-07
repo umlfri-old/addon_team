@@ -45,3 +45,18 @@ class CDiagram(CBase):
     
     def GetElementViewsOrdered(self):
         return self.__elementViewsOrdered
+    
+    def GetElementViews(self):
+        return self.__elementViewsOrdered
+    
+    def GetConnectionViews(self):
+        return self.__connectionsViewsOrdered
+    
+    def DeleteView(self, view):
+        try:
+            self.__elementsView.pop(view.GetId())
+            self.__elementViewsOrdered.remove(view)
+            self.__connectionsViews.pop(view.GetId())
+            self.__connectionsViewsOrdered.remove(view)
+        except:
+            pass

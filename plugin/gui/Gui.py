@@ -4,7 +4,7 @@ Created on 28.3.2010
 @author: Peterko
 '''
 
-from lib.Depend.gtk2 import gtk
+from lib.Depend.gtk2 import gtk, gobject
 from lib.Depend.gtk2 import pygtk
 from lib.consts import PROJECT_CLEARXML_EXTENSION
 
@@ -73,11 +73,27 @@ class Gui(object):
         response = wid.run()
         wid.hide()
             
-    def CheckoutDialog(self):
+    def CheckoutDialog(self, implementations):
         wid = self.wTree.get_widget('checkoutDlg')
+        implComboBox = self.wTree.get_widget('implementationComboBox')
+        
+        model = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
+        for impl in implementations:
+            model.append([impl.description, impl])
+        
+        
+        implComboBox.set_model(model)
+        
+        cell = gtk.CellRendererText()
+        implComboBox.pack_start(cell)
+        implComboBox.add_attribute(cell,'text',0)
+        implComboBox.set_active(0)
+        
+        
         response = wid.run()
         wid.hide()
         if response == 0:
+            impl = model[implComboBox.get_active()][1]
             url = self.wTree.get_widget('checkoutRepoTxt').get_text()
             directory = self.wTree.get_widget('checkoutDirChooser').get_filename()
             checkRevision = self.wTree.get_widget('specifyRevisionCheck').get_active()
@@ -85,7 +101,7 @@ class Gui(object):
                 revision = self.wTree.get_widget('checkoutRevisionTxt').get_text()
             else:
                 revision = None
-            return (url, directory, revision)
+            return (impl, url, directory, revision)
         else:
             return None
         

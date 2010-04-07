@@ -10,7 +10,12 @@ from ElementView import CElementView
 from ConnectionView import CConnectionView
 from lib.Depend.etree import etree
 from lib.consts import UMLPROJECT_NAMESPACE
+from lib.lib import XMLEncode, Indent
 from ProjectTreeNode import CProjectTreeNode
+from Base import CBase
+import ProjectTreeNode
+
+#print '>>>', id(ProjectTreeNode), id(CProjectTreeNode), id(ProjectTreeNode.CProjectTreeNode)
 
 class CProject(object):
     '''
@@ -26,12 +31,21 @@ class CProject(object):
         self.__elements = {}
         self.__connections = {}
         self.__projectTreeRoot = None
+        self.__saveVersion = None
+        self.__metamodelUri = None
+        self.__metamodelVersion = None
+        self.__defaultDiagram = None 
+        self.__counters = None
         if (xmlData is not None):
             self.__LoadProjectFromXml(xmlData)
         if (project is not None):
             self.__LoadProjectFromApp(project)
     
     def __LoadProjectFromApp(self, project):
+        self.__saveVersion = (1,1,0)
+        self.__metamodelUri = project.GetMetamodel().GetUri()
+        self.__metamodelVersion = project.GetMetamodel().GetVersion()
+        
         root = project.GetRoot()
         if root is not None:
             self.__LoadProjectRecursive(root, None)
@@ -136,7 +150,19 @@ class CProject(object):
         '''
         # need to get plain xml file data
         root = etree.XML(xmlData)
+        self.__saveVersion = tuple(int(i) for i in root.get('saveversion').split('.'))
         for element in root:
+            if element.tag == UMLPROJECT_NAMESPACE+'metamodel':
+                uri = None
+                version = None
+                
+                for item in element:
+                    if item.tag == UMLPROJECT_NAMESPACE+'uri':
+                        uri = item.text
+                    elif item.tag == UMLPROJECT_NAMESPACE+'version':
+                        version = item.text
+                self.__metamodelUri = uri
+                self.__metamodelVersion = version
             if element.tag == UMLPROJECT_NAMESPACE + 'objects':
                 #nacitaj objekty
                 for subelement in element:
@@ -171,6 +197,9 @@ class CProject(object):
                 #nacitaj strom projektu
                 projectTreeRoot = element[0]
                 self.__CreateProjectTree(projectTreeRoot, None)
+            
+            elif element.tag == UMLPROJECT_NAMESPACE + 'counters':
+                self.__counters = element
                         
     
     def __CreateProjectTree(self, element, parent):
@@ -222,6 +251,8 @@ class CProject(object):
         
         id = element.get('id')
         diagram = self.GetById(id)
+        if 'default' in element.attrib and element.attrib['default'].lower() in ('1', 'true'):
+            self.__defaultDiagram = diagram
         for item in element:
             # nacitaj elementy a spojenia z diagramu
             if item.tag == UMLPROJECT_NAMESPACE+ 'element':
@@ -243,6 +274,7 @@ class CProject(object):
                     elif subitem.tag == UMLPROJECT_NAMESPACE + 'label':
                         label = dict(zip(subitem.keys(), [float(value) for value in subitem.values()]))
                         label.pop('num')
+                        label['idx'] = int(label['idx'])
                         connectionView.AddLabel(label)
                 diagram.AddConnectionView(connectionView)
         
@@ -252,6 +284,15 @@ class CProject(object):
     def GetById(self, id):
         id = id.lstrip('#')
         return self.__elements.get(id) or self.__connections.get(id) or self.__diagrams.get(id)
+    
+    def DeleteById(self, id):
+        id = id.lstrip('#')
+        try:
+            self.__elements.pop(id)
+            self.__connections.pop(id)
+            self.__diagrams.pop(id)
+        except:
+            pass
     
     def GetProjectTreeRoot(self):
         return self.__projectTreeRoot
@@ -285,6 +326,203 @@ class CProject(object):
             root = stack.pop()
         return root
         
+    def AddProjectTreeNode(self, treeNode):
+        obj = treeNode.GetObject()
+        
+        if isinstance(obj, CDiagram):
+            self.__diagrams[obj.GetId()] = obj
+            parent = self.GetProjectTreeNodeById(treeNode.GetParent().GetId(), self.__projectTreeRoot)
+            newProjectTreeNode = CProjectTreeNode(obj, parent)
+            parent.AppendChildDiagram(newProjectTreeNode)
+        elif isinstance(obj, CElement):
+            self.__elements[obj.GetId()] = obj
+            parent = self.GetProjectTreeNodeById(treeNode.GetParent().GetId(), self.__projectTreeRoot)
+            newProjectTreeNode = CProjectTreeNode(obj, parent)
+            parent.AppendChildElement(newProjectTreeNode)
+        
+    def AddView(self, view):
+        obj = view.GetObject()
+        obj = self.GetById(obj.GetId())
+        if isinstance(obj, CElement):
+            diagram = self.GetById(view.GetParentDiagram().GetId())
+            newView = CElementView(obj, diagram, view.GetPosition(), view.GetSize())
+            diagram.AddElementView(newView)
+        elif isinstance(obj, CConnection):
+            diagram = self.GetById(view.GetParentDiagram().GetId())
+            newView = CConnectionView(obj, diagram)
+            for point in view.GetPoints():
+                newView.AddPoint(point)
+            for label in view.GetLabels():
+                newView.AddLabel(label)
+            diagram.AddConnectionView(newView)
+    
+    def DeleteProjectTreeNode(self, treeNode):
+        node = self.GetProjectTreeNodeById(treeNode.GetId(), self.__projectTreeRoot)
+        parent = node.GetParent()
+        if parent is not None:
+            childs = parent.DeleteChild(node) 
+            for ch in childs:
+                self.DeleteById(ch.GetId())
+            
+            if isinstance(node.GetObject(), CElement):
+                # pozri ci nie je pouzity v nejakom spojeni
+                usedConnections = []
+                for c in self.__connections.values():
+                    if c.GetSource() == node.GetObject():
+                        usedConnections.append(c)
+                    if c.GetDestination() == node.GetObject():
+                        usedConnections.append(c)
+                        
+                # vymaz spojenia
+                for c in usedConnections:
+                    self.DeleteById(c.GetId())
+            elif isinstance(node.GetObject(), CDiagram):
+                pass
+            for d in self.__diagrams.values():
+                d.DeleteView(node.GetId())
+    
+    def DeleteView(self, view):
+        diagram = self.GetById(view.GetParentDiagram().GetId())
+        diagram.DeleteView(view)
+
+
+    def MoveProjectTreeNode(self, node, oldParent, newParent):
+        node = self.GetProjectTreeNodeById(node.GetId())
+        oldParent = self.GetProjectTreeNodeById(oldParent.GetId())
+        newParent = self.GetProjectTreeNodeById(newParent.GetId())
+        if isinstance(node.GetObject(), CDiagram):
+            newParent.AppendChildDiagram(node)
+        elif isinstance(node.GetObject(), CElement):
+            newParent.AppendChildElement(node)
+        oldParent.DeleteChild(node)
+
+    def GetSaveXml(self):
+        #assert self.__metamodel is not None
+        
+        def SaveDomainObjectInfo(data, name=None):
+            if isinstance(data, dict):
+                element = etree.Element(UMLPROJECT_NAMESPACE+'dict')
+                d = list(data.iteritems())
+                d.sort()
+                for key, value in d:
+                    element.append(SaveDomainObjectInfo(value, key))
+            elif isinstance(data, list):
+                element = etree.Element(UMLPROJECT_NAMESPACE+'list')
+                for value in data:
+                    element.append(SaveDomainObjectInfo(value))
+            elif isinstance(data, (str, unicode)):
+                element = etree.Element(UMLPROJECT_NAMESPACE+'text')
+                element.text = data
+            else:
+                pass
+                #raise ProjectError("unknown data format")
+            if name:
+                element.set('name', name)
+            return element
+        
+        def savetree(node, element):
+            nodeNode = etree.Element(UMLPROJECT_NAMESPACE+'node', id=unicode(node.GetId()))
+            if len(node.GetChildNodes())>0:
+                childsNode = etree.Element(UMLPROJECT_NAMESPACE+'childs')
+                for chld in node.GetChildNodes():
+                    savetree(chld, childsNode)
+                nodeNode.append(childsNode)
+                
+            diagramsNode = etree.Element(UMLPROJECT_NAMESPACE+'diagrams')
+            if len(node.GetChildDiagrams())>0:
+                for area in node.GetChildDiagrams():
+                    diagramNode = etree.Element(UMLPROJECT_NAMESPACE+'diagram', id=unicode(area.GetId()))
+                    if area is self.__defaultDiagram:
+                        diagramNode.attrib['default'] = 'true'
+                    for e in area.GetObject().GetElementViews():
+                        pos = e.GetPosition()
+                        dw, dh = e.GetSizeRelative()
+                        elementNode = etree.Element(UMLPROJECT_NAMESPACE+'element', id=unicode(e.GetObject().GetId()), x=unicode(pos[0]), y=unicode(pos[1]), dw=unicode(dw), dh=unicode(dh))
+                        diagramNode.append(elementNode)
+                        
+                    for c in area.GetObject().GetConnectionViews():
+                        connectionNode = etree.Element(UMLPROJECT_NAMESPACE+'connection', id=unicode(c.GetObject().GetId()))
+                        for pos in c.GetPoints():
+                            pointNode = etree.Element(UMLPROJECT_NAMESPACE+'point', x=unicode(pos[0]), y=unicode(pos[1]))
+                            connectionNode.append(pointNode)
+                            
+                        for num, info in enumerate(c.GetLabels()):
+                            connectionNode.append(etree.Element(UMLPROJECT_NAMESPACE+'label', 
+                                dict(map(lambda x: (x[0], unicode(x[1])), info.iteritems())), #transform {key:value, ...} -> {key:unicode(value), ...}
+                                num=unicode(num)))
+                                
+                        diagramNode.append(connectionNode)
+                    diagramsNode.append(diagramNode)
+            nodeNode.append(diagramsNode)
+            element.append(nodeNode)
+        
+        elements, connections, diagrams = self.__elements.values(), self.__connections.values(), self.__diagrams.values()
+        
+        rootNode = etree.XML('<umlproject saveversion="%s" xmlns="http://umlfri.kst.fri.uniza.sk/xmlschema/umlproject.xsd"></umlproject>'%('.'.join(str(i) for i in self.__saveVersion)))
+        
+        metamodelNode = etree.Element(UMLPROJECT_NAMESPACE+'metamodel')
+        objectsNode = etree.Element(UMLPROJECT_NAMESPACE+'objects')
+        connectionsNode = etree.Element(UMLPROJECT_NAMESPACE+'connections')
+        diagramsNode = etree.Element(UMLPROJECT_NAMESPACE+'diagrams')
+        projtreeNode = etree.Element(UMLPROJECT_NAMESPACE+'projecttree')
+        counterNode = self.__counters
+        
+        # metamodel informations
+        metamodelUriNode = etree.Element(UMLPROJECT_NAMESPACE+'uri')
+        metamodelUriNode.text = self.__metamodelUri
+        metamodelVersionNode = etree.Element(UMLPROJECT_NAMESPACE+'version')
+        metamodelVersionNode.text = self.__metamodelVersion
+        
+        metamodelNode.append(metamodelUriNode)
+        metamodelNode.append(metamodelVersionNode)
+        rootNode.append(metamodelNode)
+        
+        elements = list(elements)
+        elements.sort(key = CBase.GetId)
+        for object in elements:
+            objectNode = etree.Element(UMLPROJECT_NAMESPACE+'object', type=unicode(object.GetType()), id=unicode(object.GetId()))
+            objectNode.append(SaveDomainObjectInfo(object.GetSaveData()))
+            objectsNode.append(objectNode)
+            
+        rootNode.append(objectsNode)
+        
+        connections = list(connections)
+        connections.sort(key = CBase.GetId)
+        for connection in connections:
+            connectionNode = etree.Element(UMLPROJECT_NAMESPACE+'connection', type=unicode(connection.GetType()), id=unicode(connection.GetId()), source=unicode(connection.GetSource().GetId()), destination=unicode(connection.GetDestination().GetId()))
+            connectionNode.append(SaveDomainObjectInfo(connection.GetSaveData()))
+            connectionsNode.append(connectionNode)
+        
+        rootNode.append(connectionsNode)
+        
+        diagrams = list(diagrams)
+        diagrams.sort(key = CBase.GetId)
+        for diagram in diagrams:
+            diagramNode = etree.Element(UMLPROJECT_NAMESPACE + 'diagram', id=unicode(diagram.GetId()), type=unicode(diagram.GetType()))
+            diagramNode.append(SaveDomainObjectInfo(diagram.GetSaveData()))
+            diagramsNode.append(diagramNode)
+            
+        rootNode.append(diagramsNode)
+        
+        savetree(self.__projectTreeRoot, projtreeNode)
+        rootNode.append(projtreeNode)
+        
+#        for type in self.GetMetamodel().GetElementFactory().IterTypes():
+#            counterNode.append(etree.Element(UMLPROJECT_NAMESPACE+'count', id = type.GetId(), value = unicode(type.GetCounter())))
+#        for type in self.GetMetamodel().GetDiagramFactory():
+#            counterNode.append(etree.Element(UMLPROJECT_NAMESPACE+'count', id = type.GetId(), value = unicode(type.GetCounter())))
+#        
+        rootNode.append(counterNode)
+        
+
+        #make human-friendly tree
+        Indent(rootNode)
+        
+        return '<?xml version="1.0" encoding="utf-8"?>\n'+etree.tostring(rootNode, encoding='utf-8')
+    
+    
+
+
             
     def __str__(self):
         return str(self.__diagrams.keys())+str(self.__elements.keys())+str(self.__connections.keys())

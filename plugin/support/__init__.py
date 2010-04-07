@@ -8,3 +8,4 @@ from DiffResult import CDiffResult
 from DiffActions import EDiffActions
 from Conflict import CConflict
 from Conflicter import CConflicter
+from Updater import CUpdater

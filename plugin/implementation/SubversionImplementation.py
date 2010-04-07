@@ -11,7 +11,8 @@ class CSubversionImplementation(object):
     '''
     classdocs
     '''
-
+    description = 'SVN'
+    
 
     def __init__(self, fileName):
         '''
@@ -52,6 +53,20 @@ class CSubversionImplementation(object):
         else:
             return None
         
+
+
+        
+    def BeforeUpdate(self, revision=None):
+        print 'before update'
+        if revision is None:
+            revnum = pysvn.Revision( pysvn.opt_revision_kind.head )
+        else:
+            revnum = pysvn.Revision( pysvn.opt_revision_kind.number, revision )
+        mine = self.__client.cat(self.__fileName, pysvn.Revision(pysvn.opt_revision_kind.working))
+        base = self.__client.cat(self.__fileName, pysvn.Revision(pysvn.opt_revision_kind.base))
+        upd = self.__client.cat(self.__fileName, revnum)
+        return mine, base, upd
+    
         
     def Update(self, revision=None):
         print 'trying svn update'
@@ -74,11 +89,14 @@ class CSubversionImplementation(object):
     def Revert(self):
         print 'trying svn revert'
         print self.__client.revert(self.__fileName)
-        
+    
+    
+    @classmethod    
     def Checkout(self, url, directory, revision = None):
         print 'trying svn checkout'
+        client = pysvn.Client()
         if revision is None:
-            print self.__client.checkout(url,directory)
+            print client.checkout(url,directory)
         else:
-            print self.__client.checkout(url,directory, revision=pysvn.Revision(pysvn.opt_revision_kind.number, revision))
+            print client.checkout(url,directory, revision=pysvn.Revision(pysvn.opt_revision_kind.number, revision))
         

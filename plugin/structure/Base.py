@@ -22,13 +22,16 @@ class CBase(object):
         return self.__id
     
     def GetType(self):
-        return self.data
+        return self.__type
     
     def SetData(self, data):
         #print data
         self.data = data
         
     def GetData(self):
+        return self.data
+    
+    def GetSaveData(self):
         return self.data
     
     def __hash__(self):

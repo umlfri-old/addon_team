@@ -58,9 +58,9 @@ class CDiffer(object):
         connectionsOpcodes = smConnections.get_opcodes()
         
         # logicky diff
-        self.__ComputeDiff(diagramsOpcodes, diagrams1, diagrams2, result)
-        self.__ComputeDiff(elementsOpcodes, elements1, elements2, result)
-        self.__ComputeDiff(connectionsOpcodes, connections1, connections2, result)
+        self.__ComputeDiff(diagramsOpcodes, diagrams1, diagrams2)
+        self.__ComputeDiff(elementsOpcodes, elements1, elements2)
+        self.__ComputeDiff(connectionsOpcodes, connections1, connections2)
         
         # diff projektoveho stromu
         self.projectTreeDiff.extend(self.__DiffProjectTree())
@@ -104,25 +104,25 @@ class CDiffer(object):
             
         return result
         
-    def __ComputeDiff(self, opcodes, sequence1, sequence2, result):
+    def __ComputeDiff(self, opcodes, sequence1, sequence2):
         for tag, i1, i2, j1, j2 in opcodes:
-#            if (tag == EDiffActions.DELETE):
-#                # ak z prveho nieco zmizlo
-#                for si in sequence1[i1:i2]:
-#                    newDiffResult = CDiffResult(EDiffActions.DELETE, si)
-#                    result.append(newDiffResult)
-#            elif (tag == EDiffActions.INSERT):
-#                # ak v druhom nieco pribudlo
-#                for si in sequence2[j1:j2]:
-#                    newDiffResult = CDiffResult(EDiffActions.INSERT, si)
-#                    result.append(newDiffResult)
-#            elif (tag == EDiffActions.REPLACE):
-#                #replace nemoze byt
-#                #muselo iba ubudnut alebo pribudnut
-#                for si1 in sequence1[i1:i2]:
-#                    result.append(CDiffResult(EDiffActions.DELETE, si1))
-#                for si2 in sequence2[j1:j2]:                    
-#                    result.append(CDiffResult(EDiffActions.INSERT, si2))
+            if (tag == EDiffActions.DELETE):
+                # ak z prveho nieco zmizlo
+                for si in sequence1[i1:i2]:
+                    newDiffResult = CDiffResult(EDiffActions.DELETE, si)
+                    self.dataDiff.append(newDiffResult)
+            elif (tag == EDiffActions.INSERT):
+                # ak v druhom nieco pribudlo
+                for si in sequence2[j1:j2]:
+                    newDiffResult = CDiffResult(EDiffActions.INSERT, si)
+                    self.dataDiff.append(newDiffResult)
+            elif (tag == EDiffActions.REPLACE):
+                #replace nemoze byt
+                #muselo iba ubudnut alebo pribudnut
+                for si1 in sequence1[i1:i2]:
+                    self.dataDiff.append(CDiffResult(EDiffActions.DELETE, si1))
+                for si2 in sequence2[j1:j2]:                    
+                    self.dataDiff.append(CDiffResult(EDiffActions.INSERT, si2))
             if (tag == EDiffActions.EQUAL):
                 # ak sa tvaria rovnako, chod do hlbky, porovnaj data
                 for si1, si2 in zip(sequence1[i1:i2], sequence2[j1:j2]):
@@ -131,9 +131,13 @@ class CDiffer(object):
 
     def __DiffElementsData(self, el1, el2):
         data1 = el1.GetData()
+        
         data2 = el2.GetData()
+        
         tuple1 = dictToTuple(data1)
+        
         tuple2 = dictToTuple(data2)
+        
         result = []
         # dictionaries 
         if data1 == data2:

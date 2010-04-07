@@ -31,4 +31,6 @@ class CElementView(CBaseView):
     def GetSize(self):
         return self.__size
     
+    def GetSizeRelative(self):
+        return self.__size[0], self.__size[1]
     

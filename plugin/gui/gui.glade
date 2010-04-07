@@ -142,6 +142,14 @@
             <property name="visible">True</property>
             <property name="orientation">vertical</property>
             <child>
+              <widget class="GtkComboBox" id="implementationComboBox">
+                <property name="visible">True</property>
+              </widget>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
               <widget class="GtkEntry" id="checkoutRepoTxt">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -149,7 +157,7 @@
                 <property name="text" translatable="yes">&lt;Repository URL&gt;</property>
               </widget>
               <packing>
-                <property name="position">0</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -180,7 +188,7 @@
                 </child>
               </widget>
               <packing>
-                <property name="position">1</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child>
@@ -190,7 +198,7 @@
                 <property name="title" translatable="yes">Select A Checkout Directory</property>
               </widget>
               <packing>
-                <property name="position">2</property>
+                <property name="position">3</property>
               </packing>
             </child>
           </widget>
@@ -257,7 +265,7 @@
             <child>
               <widget class="GtkTextView" id="conflictsResultsTxt">
                 <property name="width_request">300</property>
-                <property name="height_request">0</property>
+                <property name="height_request">300</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
               </widget>
