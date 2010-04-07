@@ -56,7 +56,19 @@ class CDiagram(CBase):
         try:
             self.__elementsView.pop(view.GetId())
             self.__elementViewsOrdered.remove(view)
+        except:
+            pass
+        try:
             self.__connectionsViews.pop(view.GetId())
             self.__connectionsViewsOrdered.remove(view)
         except:
             pass
+        
+    def DeleteViewById(self, id):
+        view = self.GetViewById(id)
+        self.DeleteView(view)
+        
+    def ModifyData(self, oldState, newState, path):
+        print 'modifying diagram data'
+        self.data.update(newState)
+        

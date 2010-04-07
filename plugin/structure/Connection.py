@@ -36,3 +36,13 @@ class CConnection(CBase):
         del(result['source'])
         del(result['destination'])
         return result
+    
+    def __updateSourceDestination(self):
+        if self.data['source'] != self.__source.GetId():
+            self.__source, self.__destination = self.__destination, self.__source
+    
+    def ModifyData(self, oldState, newState, path):
+        print 'modifying connection data'
+        
+        self.data.update(newState)
+        self.__updateSourceDestination()

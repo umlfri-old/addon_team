@@ -65,7 +65,8 @@ class Plugin(object):
       
       
     def ProjectOpened(self):
-        
+        self.pluginAdapter = self.interface.GetAdapter()
+        self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
         if self.__CanRunPlugin():
             fileName = self.__LoadProject().GetFileName()
             # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
@@ -133,7 +134,10 @@ class Plugin(object):
         mine, base, upd = self.implementation.BeforeUpdate()
         updater = CUpdater(mine, base, upd)
         
-        #print self.implementation.Update()
+        newFileData = updater.GetNewXml()
+        
+        self.implementation.Update(newFileData)
+        self.pluginAdapter.LoadProject(self.implementation.GetFileName())
     
     def Checkin(self, arg):
         project = self.__LoadProject()
@@ -154,6 +158,7 @@ class Plugin(object):
         
         
         self.implementation.Revert()
+        self.pluginAdapter.LoadProject(self.implementation.GetFileName())
         
         
     def Checkout(self, arg):

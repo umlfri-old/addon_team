@@ -70,6 +70,9 @@ class CProjectTreeNode(object):
         try:
             self.__childElements.pop(child.GetId())
             self.__childElementsOrdered.remove(child)
+        except:
+            pass
+        try:
             self.__childDiagrams.pop(child.GetId())
             self.__childDiagramsOrdered.remove(child)
             

@@ -22,8 +22,11 @@ class CConflicter(object):
         self.__old = oldProject
         self.__work= workProject
         
-        self.__oldNewDiffer = CDiffer(self.__old, self.__new)
+        
         self.__oldWorkDiffer = CDiffer(self.__old, self.__work)
+        
+        self.__oldNewDiffer = CDiffer(self.__old, self.__new)
+        
         
         self.merging = []
         
@@ -37,7 +40,15 @@ class CConflicter(object):
         # pokus sa zakomponovat zmeny z new do worku
         # ak to nepojde vyhlas to za konflikt a ponukni pouzivatelovi riesenie
         
-        # najskor projektovy strom
+        # najskor diff objektov (elementov, spojeni, diagramov) a ich datovych zloziek
+        for diff in self.__oldNewDiffer.dataDiff:
+            if self.__PossibleToMergeDataDiff(diff):
+                self.__MergeDataDiff(diff)
+            else:
+                self.__DataConflict(diff)
+        
+        
+        # potom projektovy strom
         
         
         for diff in self.__oldNewDiffer.projectTreeDiff:
@@ -55,12 +66,7 @@ class CConflicter(object):
                 self.__VisualConflict(diff)
             
         
-        # nakoniec diff datovych zloziek
-        for diff in self.__oldNewDiffer.dataDiff:
-            if self.__PossibleToMergeDataDiff(diff):
-                self.__MergeDataDiff(diff)
-            else:
-                self.__DataConflict(diff)
+        
         
     
     
@@ -116,12 +122,12 @@ class CConflicter(object):
        
        
     def __MergeProjectTreeDiff(self, diff):
-        print 'merging possible project tree diff'
+        
         self.merging.append(diff)
         
     
     def __ProjectTreeConflict(self, diff):
-        print 'project tree conflict'
+        
         self.conflicting.append(diff)
     
     def __PossibleToMergeVisualDiff(self, diff):
@@ -151,15 +157,23 @@ class CConflicter(object):
                 print diff
             else:
                 return True
-    
+            
+        elif diff.GetAction() == EDiffActions.ORDER_CHANGE:
+            if diff.GetElement() in [d.GetElement() for d in self.__oldWorkDiffer.GetVisualDiff().get(EDiffActions.DELETE, [])]:
+                print 'changing view order of deleted view'
+                print diff
+                return False
+            else:
+                return True
     
     
     def __MergeVisualDiff(self, diff):
-        print 'merging possible visual diff'
+        
         self.merging.append(diff)
     
     def __VisualConflict(self, diff):
         print 'visual conflict'
+        print diff
         self.conflicting.append(diff)
         
         
@@ -176,10 +190,16 @@ class CConflicter(object):
                 return False
             else:
                 return True
+        
+        elif diff.GetAction() == EDiffActions.INSERT:
+            return True
+        
+        elif diff.GetAction() == EDiffActions.DELETE:
+            return True
     
     
     def __MergeDataDiff(self, diff):
-        print 'merging possible data diff'
+        
         self.merging.append(diff)
     
     def __DataConflict(self, diff):
