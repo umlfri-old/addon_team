@@ -9,3 +9,4 @@ from Connection import CConnection
 from Element import CElement
 from Base import CBase
 from ProjectTreeNode import CProjectTreeNode
+from BaseView import CBaseView

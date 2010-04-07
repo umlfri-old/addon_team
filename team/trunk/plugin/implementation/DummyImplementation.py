@@ -10,7 +10,8 @@ class CDummyImplementation(object):
     '''
     classdocs
     '''
-
+    
+    description = 'Dummy'
 
     def __init__(self, fileName):
         '''
@@ -43,6 +44,11 @@ class CDummyImplementation(object):
     
     def Checkin(self, message = ''):
         print 'Dummy implementation commit'
+        pass
+    
+    @classmethod
+    def Checkout(self, url, directory, revision = None):
+        print 'Dummy implementation checkout'
         pass
     
     def Revert(self):

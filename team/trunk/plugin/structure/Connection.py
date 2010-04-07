@@ -30,3 +30,9 @@ class CConnection(CBase):
         super(CConnection, self).SetData(data)
         self.data['source'] = self.__source.GetId()
         self.data['destination'] = self.__destination.GetId()
+        
+    def GetSaveData(self):
+        result = self.data.copy()
+        del(result['source'])
+        del(result['destination'])
+        return result
