@@ -18,19 +18,36 @@ class CElementView(CBaseView):
         '''
         super(CElementView, self).__init__(element, parentDiagram)
         self.__element = element
-        self.__position = position
-        self.__size = size
-        self.viewData = {
-                'position':{'x':self.__position[0],'y':self.__position[1]},
-                'size':{'dw':self.__size[0], 'dh': self.__size[1]}
-                }
+        #self.__position = position
+        #self.__size = size
+        
+            
+        
+        self.viewData = {}
+        self.SetPosition(position)
+        self.SetSize(size)
         
     def GetPosition(self):
-        return self.__position
+        return self.viewData['position']
+    
+    def SetPosition(self, position):
+        if type(position) == type({}):
+            position = (position['x'], position['y'])
+        self.viewData['position'] = {'x':position[0], 'y':position[1]}
     
     def GetSize(self):
-        return self.__size
+        return self.viewData['size']
+    
+    def SetSize(self, size):
+        if type(size) == type({}):
+            size = (size['dw'], size['dh'])
+        self.viewData['size'] = {'dw':size[0], 'dh': size[1]}
     
     def GetSizeRelative(self):
-        return self.__size[0], self.__size[1]
+        return self.viewData['size']
     
+    def ModifyData(self, oldState, newState, path):
+        print 'modifying element view'
+        
+        self.viewData[path[0]].update(newState)
+        print self.viewData

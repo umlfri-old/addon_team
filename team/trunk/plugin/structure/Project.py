@@ -10,12 +10,10 @@ from ElementView import CElementView
 from ConnectionView import CConnectionView
 from lib.Depend.etree import etree
 from lib.consts import UMLPROJECT_NAMESPACE
-from lib.lib import XMLEncode, Indent
+from lib.lib import Indent
 from ProjectTreeNode import CProjectTreeNode
 from Base import CBase
-import ProjectTreeNode
 
-#print '>>>', id(ProjectTreeNode), id(CProjectTreeNode), id(ProjectTreeNode.CProjectTreeNode)
 
 class CProject(object):
     '''
@@ -86,7 +84,7 @@ class CProject(object):
                 for ve in visualElements:
                     # nacitaj vizualne elementy
                     veo = ve.GetObject()
-                    size = (ve.GetSize()[0] - ve.GetMinimalSize()[0],ve.GetSize()[1] - ve.GetMinimalSize()[1])
+                    size = (unicode(ve.GetSize()[0] - ve.GetMinimalSize()[0]), unicode(ve.GetSize()[1] - ve.GetMinimalSize()[1]))
                     
                     elementViewObject = self.GetById(veo.GetId().lstrip('#'))
                     if elementViewObject is None:
@@ -94,7 +92,7 @@ class CProject(object):
                         elementViewObject = CElement(evoId, veo.GetType())
                         elementViewObject.SetData(veo.GetSaveInfo())
                         self.__elements[evoId] = elementViewObject
-                    newElementView = CElementView(elementViewObject, newDiagram, ve.GetPosition(), size)
+                    newElementView = CElementView(elementViewObject, newDiagram, (unicode(ve.GetPosition()[0]), unicode(ve.GetPosition()[1])), size)
                     newDiagram.AddElementView(newElementView)
                     
                 visualConnections = root.GetConnections()
@@ -109,8 +107,9 @@ class CProject(object):
                         self.__connections[cvoId] = connectionViewObject
                     newConnectionView = CConnectionView(connectionViewObject, newDiagram)
                     for point in vc.GetPoints()[1:len(vc.GetPoints())-1]:
-                        newConnectionView.AddPoint(point)
+                        newConnectionView.AddPoint((unicode(point[0]), unicode(point[1])))
                     for label in vc.GetAllLabelPositions():
+                        
                         newConnectionView.AddLabel(label)
                     newDiagram.AddConnectionView(newConnectionView)
                     
@@ -257,8 +256,8 @@ class CProject(object):
             # nacitaj elementy a spojenia z diagramu
             if item.tag == UMLPROJECT_NAMESPACE+ 'element':
             #nacitaj element
-                position = (int(item.get('x')), int(item.get('y')))
-                size = (int(item.get('dw')), int(item.get('dh')))
+                position = (unicode(item.get('x')), unicode(item.get('y')))
+                size = (unicode(item.get('dw')), unicode(item.get('dh')))
                 elId = item.get('id')
                 elementView = CElementView(self.GetById(elId), diagram ,position, size)
                 diagram.AddElementView(elementView)
@@ -269,12 +268,13 @@ class CProject(object):
                 for subitem in item:
                     #nacitaj sprostosti zo spojenia
                     if subitem.tag == UMLPROJECT_NAMESPACE + 'point':
-                        point = (int(subitem.get('x')), int(subitem.get('y')))
+                        point = (unicode(subitem.get('x')), unicode(subitem.get('y')))
                         connectionView.AddPoint(point)
                     elif subitem.tag == UMLPROJECT_NAMESPACE + 'label':
-                        label = dict(zip(subitem.keys(), [float(value) for value in subitem.values()]))
+                        label = dict(zip(subitem.keys(), [unicode(value) for value in subitem.values()]))
                         label.pop('num')
-                        label['idx'] = int(label['idx'])
+                        label['idx'] = unicode(label['idx'])
+                        
                         connectionView.AddLabel(label)
                 diagram.AddConnectionView(connectionView)
         
@@ -286,13 +286,21 @@ class CProject(object):
         return self.__elements.get(id) or self.__connections.get(id) or self.__diagrams.get(id)
     
     def DeleteById(self, id):
+        print id
         id = id.lstrip('#')
         try:
             self.__elements.pop(id)
+        except:
+            pass
+        try:
             self.__connections.pop(id)
+        except: 
+            pass
+        try:
             self.__diagrams.pop(id)
         except:
             pass
+        
     
     def GetProjectTreeRoot(self):
         return self.__projectTreeRoot
@@ -326,75 +334,158 @@ class CProject(object):
             root = stack.pop()
         return root
         
+        
+    # ----------------------    
+    # destructive operations
+    # ----------------------
+    def AddObject(self, obj):
+        if isinstance(obj, CElement):
+            # pridaj element
+            
+            self.__elements[obj.GetId()] = obj
+        
+        elif isinstance(obj, CConnection):
+            # pridaj spojenie
+            # najdi zdroj a ciel v aktualnom projekte, lebo nemusia to byt tie iste objekty
+            source = self.GetById(obj.GetSource().GetId()) or obj.GetSource()
+            dest = self.GetById(obj.GetDestination().GetId()) or obj.GetDestination()
+            # vytvor novy connection
+            con = CConnection(obj.GetId(), obj.GetType(), source, dest)
+            # skopiruj mu data
+            con.SetData(obj.GetData())
+            self.__connections[con.GetId()] = con
+            
+        elif isinstance(obj, CDiagram):
+            # pridaj diagram
+            # vytvor ho
+            diag = CDiagram(obj.GetId(), obj.GetType())
+            diag.SetData(obj.GetData())
+            self.__diagrams[diag.GetId()] = diag
+        
     def AddProjectTreeNode(self, treeNode):
-        obj = treeNode.GetObject()
+        # dostan objekt (ten by mal byt aj tak novy)
+        obj = self.GetById(treeNode.GetId())
+        # zisti rodica
+        parent = self.GetProjectTreeNodeById(treeNode.GetParent().GetId())
+        # vytvor novy node
+        newProjectTreeNode = CProjectTreeNode(obj, parent)
         
         if isinstance(obj, CDiagram):
-            self.__diagrams[obj.GetId()] = obj
-            parent = self.GetProjectTreeNodeById(treeNode.GetParent().GetId(), self.__projectTreeRoot)
-            newProjectTreeNode = CProjectTreeNode(obj, parent)
+            # ak je to diagram, pridaj diagram
             parent.AppendChildDiagram(newProjectTreeNode)
+            
         elif isinstance(obj, CElement):
-            self.__elements[obj.GetId()] = obj
-            parent = self.GetProjectTreeNodeById(treeNode.GetParent().GetId(), self.__projectTreeRoot)
-            newProjectTreeNode = CProjectTreeNode(obj, parent)
+            # ak je to element, pridaj element
             parent.AppendChildElement(newProjectTreeNode)
         
     def AddView(self, view):
-        obj = view.GetObject()
-        obj = self.GetById(obj.GetId())
+        
+        # najdi objekt, ktoremu to patri
+        obj = self.GetById(view.GetObject().GetId())
+        # najdi diagram, do ktoreh sa ma pridat
+        diagram = self.GetById(view.GetParentDiagram().GetId())
+        
         if isinstance(obj, CElement):
-            diagram = self.GetById(view.GetParentDiagram().GetId())
+            # ak je to element
+            # vytvor novy element view
             newView = CElementView(obj, diagram, view.GetPosition(), view.GetSize())
+            # pridaj ho do diagramu
             diagram.AddElementView(newView)
         elif isinstance(obj, CConnection):
-            diagram = self.GetById(view.GetParentDiagram().GetId())
+            # ak je to spojenie
+            
+            # vytvor novy connection view
             newView = CConnectionView(obj, diagram)
+            # skopiruj body
             for point in view.GetPoints():
                 newView.AddPoint(point)
+                
+            # skopiruj labels
             for label in view.GetLabels():
                 newView.AddLabel(label)
+            # pridaj do diagramu
             diagram.AddConnectionView(newView)
     
+    def DeleteObject(self, obj):
+        if isinstance(obj, CElement):
+            # najdi element v projektovom strome
+            node = self.GetProjectTreeNodeById(obj.GetId())
+            self.DeleteProjectTreeNode(node)
+        
+        elif isinstance(obj, CConnection):
+            # odober spojenie, vyhod ho zo zoznamu spojeni
+            self.DeleteById(obj.GetId())
+            # vymaz spojenie view zo vsetkych diagramov
+            for d in self.__diagrams.values():
+                
+                d.DeleteViewById(obj.GetId())
+                
+        elif isinstance(obj, CDiagram):
+            # najdi diagram v projektovom strome
+            node = self.GetProjectTreeNodeById(obj.GetId())
+            self.DeleteProjectTreeNode(node)
+    
     def DeleteProjectTreeNode(self, treeNode):
-        node = self.GetProjectTreeNodeById(treeNode.GetId(), self.__projectTreeRoot)
-        parent = node.GetParent()
-        if parent is not None:
-            childs = parent.DeleteChild(node) 
+        # najdi ho v projektovom strome
+        node = self.GetProjectTreeNodeById(treeNode.GetId())
+        # ak to nie je koren
+        if node is not self.__projectTreeRoot:
+            # najdi parenta
+            parent = node.GetParent()
+            
+            # vymaz vsetkych potomkov
+            childs = parent.DeleteChild(node)
+            # vymaz vsetky objekty predstavujuce potomkov 
             for ch in childs:
                 self.DeleteById(ch.GetId())
+                # vymaz objekt zo vsetkych diagramov
+                for d in self.__diagrams.values():
+                    # vymaz ho zo vsetkych diagramov
+                    d.DeleteViewById(ch.GetId())
             
-            if isinstance(node.GetObject(), CElement):
-                # pozri ci nie je pouzity v nejakom spojeni
-                usedConnections = []
-                for c in self.__connections.values():
-                    if c.GetSource() == node.GetObject():
-                        usedConnections.append(c)
-                    if c.GetDestination() == node.GetObject():
-                        usedConnections.append(c)
-                        
-                # vymaz spojenia
-                for c in usedConnections:
-                    self.DeleteById(c.GetId())
-            elif isinstance(node.GetObject(), CDiagram):
-                pass
-            for d in self.__diagrams.values():
-                d.DeleteView(node.GetId())
     
     def DeleteView(self, view):
+        # najdi diagram, do ktoreho patri
         diagram = self.GetById(view.GetParentDiagram().GetId())
+        # vymaz ho z daneho diagramu
         diagram.DeleteView(view)
 
 
     def MoveProjectTreeNode(self, node, oldParent, newParent):
+        # najdi node
         node = self.GetProjectTreeNodeById(node.GetId())
+        
+        # najdi stareho rodica
         oldParent = self.GetProjectTreeNodeById(oldParent.GetId())
+        # najdi noveho rodica
         newParent = self.GetProjectTreeNodeById(newParent.GetId())
+        
         if isinstance(node.GetObject(), CDiagram):
+            # ak je to diagram
             newParent.AppendChildDiagram(node)
         elif isinstance(node.GetObject(), CElement):
+            # ak je to element
             newParent.AppendChildElement(node)
+        
+        # vymaz ho zo stareho rodica
         oldParent.DeleteChild(node)
+
+    def ChangeOrderTreeNode(self, node, oldOrder, newOrder):
+        pass
+    
+    
+    def ChangeOrderView(self, view, oldOrder, newOrder):
+        pass
+
+
+    def ModifyObjectData(self, element, oldState, newState, path):
+        el = self.GetById(element.GetId())
+        el.ModifyData(oldState, newState, path)
+
+    def ModifyViewData(self, view, oldState, newState, path):
+        diagram = self.GetById(view.GetParentDiagram().GetId())
+        view = diagram.GetViewById(view.GetObject().GetId())
+        view.ModifyData(oldState, newState, path)
 
     def GetSaveXml(self):
         #assert self.__metamodel is not None
@@ -436,14 +527,16 @@ class CProject(object):
                         diagramNode.attrib['default'] = 'true'
                     for e in area.GetObject().GetElementViews():
                         pos = e.GetPosition()
-                        dw, dh = e.GetSizeRelative()
-                        elementNode = etree.Element(UMLPROJECT_NAMESPACE+'element', id=unicode(e.GetObject().GetId()), x=unicode(pos[0]), y=unicode(pos[1]), dw=unicode(dw), dh=unicode(dh))
+                        size = e.GetSizeRelative()
+                        elementNode = etree.Element(UMLPROJECT_NAMESPACE+'element', id=unicode(e.GetObject().GetId()), x=unicode(pos['x']), y=unicode(pos['y']), dw=unicode(size['dw']), dh=unicode(size['dh']))
                         diagramNode.append(elementNode)
                         
                     for c in area.GetObject().GetConnectionViews():
                         connectionNode = etree.Element(UMLPROJECT_NAMESPACE+'connection', id=unicode(c.GetObject().GetId()))
+                        print c.GetPoints()
                         for pos in c.GetPoints():
-                            pointNode = etree.Element(UMLPROJECT_NAMESPACE+'point', x=unicode(pos[0]), y=unicode(pos[1]))
+                            print pos
+                            pointNode = etree.Element(UMLPROJECT_NAMESPACE+'point', x=unicode(pos['x']), y=unicode(pos['y']))
                             connectionNode.append(pointNode)
                             
                         for num, info in enumerate(c.GetLabels()):
@@ -478,10 +571,12 @@ class CProject(object):
         rootNode.append(metamodelNode)
         
         elements = list(elements)
+        
         elements.sort(key = CBase.GetId)
-        for object in elements:
-            objectNode = etree.Element(UMLPROJECT_NAMESPACE+'object', type=unicode(object.GetType()), id=unicode(object.GetId()))
-            objectNode.append(SaveDomainObjectInfo(object.GetSaveData()))
+        
+        for obj in elements:
+            objectNode = etree.Element(UMLPROJECT_NAMESPACE+'object', type=unicode(obj.GetType()), id=unicode(obj.GetId()))
+            objectNode.append(SaveDomainObjectInfo(obj.GetSaveData()))
             objectsNode.append(objectNode)
             
         rootNode.append(objectsNode)

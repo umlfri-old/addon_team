@@ -3,7 +3,7 @@ Created on 23.3.2010
 
 @author: Peterko
 '''
-
+from dictToTuple import tupleToDict
 
 class CDiffResult(object):
     '''
@@ -17,8 +17,14 @@ class CDiffResult(object):
         '''
         self.__action = action
         self.__element = element
-        self.__previousState = previousState
-        self.__newState = newState
+        if type(previousState) == type([]) and len(previousState) == 1:
+            self.__previousState = previousState[0]
+        else:
+            self.__previousState = previousState
+        if type(newState) == type([]) and len(newState) == 1:
+            self.__newState = newState[0]
+        else:
+            self.__newState = newState
         self.__dataPath = dataPath
         
     def GetAction(self):

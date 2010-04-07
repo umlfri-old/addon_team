@@ -34,6 +34,9 @@ class CBase(object):
     def GetSaveData(self):
         return self.data
     
+    def ModifyData(self, oldState, newState, path):
+        pass
+    
     def __hash__(self):
         return hash(self.GetId())
     

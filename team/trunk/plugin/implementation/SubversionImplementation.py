@@ -24,7 +24,7 @@ class CSubversionImplementation(object):
        
     def GetFileData(self, revision=None):
         if revision is None:
-            revnum = pysvn.Revision( pysvn.opt_revision_kind.head )
+            revnum = pysvn.Revision( pysvn.opt_revision_kind.base )
         else:
             revnum = pysvn.Revision( pysvn.opt_revision_kind.number, revision )
         return self.__client.cat(self.__fileName, revnum)
@@ -68,7 +68,7 @@ class CSubversionImplementation(object):
         return mine, base, upd
     
         
-    def Update(self, revision=None):
+    def Update(self, fileData, revision=None):
         print 'trying svn update'
         if revision is None:
             revnum = pysvn.Revision( pysvn.opt_revision_kind.head )
@@ -77,10 +77,18 @@ class CSubversionImplementation(object):
         result = self.__client.update(self.__fileName, revnum)[0]
         
         if self.GetConflictTriple() is not None:
-            return self.GetConflictTriple()
-        else:
-            # malo by byt ok
-            return result.number
+            self.__SolveConflict()
+        
+        f = open(self.__fileName, 'w')
+        f.write(fileData)
+        f.close()
+        
+        
+        return result.number
+    
+    def __SolveConflict(self):
+        self.__client.resolved(self.__fileName)
+    
         
     def Checkin(self, message=''):
         print 'trynig svn commit'
@@ -96,7 +104,7 @@ class CSubversionImplementation(object):
         print 'trying svn checkout'
         client = pysvn.Client()
         if revision is None:
-            print client.checkout(url,directory)
+            client.checkout(url,directory)
         else:
-            print client.checkout(url,directory, revision=pysvn.Revision(pysvn.opt_revision_kind.number, revision))
+            client.checkout(url,directory, revision=pysvn.Revision(pysvn.opt_revision_kind.number, revision))
         

@@ -16,21 +16,36 @@ class CConnectionView(CBaseView):
         Constructor
         '''
         super(CConnectionView, self).__init__(connection, parentDiagram)
-        self.__points = []
-        self.__labels = []
+        
         self.viewData = {'points':[], 'labels':[]}
         
     def AddPoint(self, point):
-        self.__points.append({'x':point[0], 'y':point[1]})
-        self.viewData['points'] = self.__points
+        self.viewData['points'].append({'x':point[0], 'y':point[1]})
         
     def GetPoints(self):
-        return self.__points
+        return self.viewData['points']
     
     def AddLabel(self, label):
-        self.__labels.append(label)
-        self.viewData['labels'] = self.__labels
+        
+        self.viewData['labels'].append(label)
         
     def GetLabels(self):
-        return self.__labels
+        return self.viewData['labels']
     
+    def ModifyData(self, oldState, newState, path):
+        print 'modifying connection view'
+        print oldState, newState, path
+        if oldState is None:
+            #pridanie
+            if type(newState) is type([]):
+                self.viewData[path[0]].extend(newState)
+            else:
+                self.viewData[path[0]].append(newState)
+        elif newState is None:
+            #vymazanie
+            
+            self.viewData[path[0]].remove(oldState)
+            
+        else:
+            #uprava
+            self.viewData[path[0]][path[1]].update(newState)

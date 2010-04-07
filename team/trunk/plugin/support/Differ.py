@@ -7,7 +7,7 @@ from difflib import *
 from DiffResult import CDiffResult
 from DiffActions import EDiffActions
 #from DictDiffer import CDictDiffer
-from dictToTuple import dictToTuple
+from dictToTuple import dictToTuple, tupleToDict
 import copy
 
 class CDiffer(object):
@@ -157,10 +157,20 @@ class CDiffer(object):
             elif (tag == EDiffActions.DELETE):
                 # nieco bolo vymazane
                 for seq in tuple1[i1:i2]:
-                    result.append(CDiffResult(EDiffActions.MODIFY, el1, seq, None, dataPath))
+                    if type(seq[0]) == type(''):
+                        d = tupleToDict((seq,))
+                    else:
+                        d = tupleToDict(seq)
+                    print seq, d
+                    result.append(CDiffResult(EDiffActions.MODIFY, el1, d, None, dataPath))
             elif (tag == EDiffActions.INSERT):
                 for seq in tuple2[j1:j2]:
-                    result.append(CDiffResult(EDiffActions.MODIFY, el2, None, seq, dataPath))
+                    if type(seq[0]) == type(''):
+                        d = tupleToDict((seq,))
+                    else:
+                        d = tupleToDict(seq)
+                    print seq, d
+                    result.append(CDiffResult(EDiffActions.MODIFY, el2, None, d, dataPath))
                 # nieco bolo pridane
                 pass
             elif (tag == EDiffActions.REPLACE):
@@ -182,25 +192,47 @@ class CDiffer(object):
                         seq1 = (seq1,)
                     if (seq1 == ()):
                         seq2 = (seq2,)
+                    
                     try:
                         if type(seq1[0]) == type('') and type(seq1[1]) == type(u''):
+                            # ak som na konci
                             myPath = copy.deepcopy(dataPath)
                             myPath.append(seq1[0])
-                            result.append(CDiffResult(EDiffActions.MODIFY, el1, seq1, seq2, myPath))
+                            if type(seq1[0]) == type(''):
+                                d1 = tupleToDict((seq1,))
+                            else:
+                                d1 = tupleToDict(seq1)
+                                
+                            if type(seq2[0]) == type(''):
+                                d2 = tupleToDict((seq2,))
+                            else:
+                                d2 = tupleToDict(seq2)
+                            print seq1, d1
+                            print seq2, d2
+                            result.append(CDiffResult(EDiffActions.MODIFY, el1, d1, d2, myPath))
                         else:
+                            # ak sa da este pokracovat
                             myPath = copy.deepcopy(dataPath)
                             if type(seq1[0]) == type(''):
+                                # ak je to kluc v slovniku
                                 myPath.append(seq1[0])
                             elif type(tuple1[0]) != type(''):
-                                myPath.append(tuple1.index(seq1))
+                                if len(seq1) == 1:
+                                    myPath.append(tuple1.index(seq1[0]))
+                                else:
+                                    myPath.append(tuple1.index(seq1))
                             
                             self.__DiffData(el1, el2, seq1, seq2, result, myPath)
-                    except:
+                    except :
                         myPath = copy.deepcopy(dataPath)
-                        if type(seq2[0] == type('')):
+                        if type(seq2[0]) == type(''):
                             myPath.append(seq2[0])
                         elif type(tuple2[0]) != type(''):
-                            myPath.append(tuple1.index(seq2))
+                            if len(seq2) == 1:
+                                myPath.append(tuple2.index(seq2[0]))
+                            else:
+                                myPath.append(tuple2.index(seq2))
+                        
                         self.__DiffData(el1, el2, seq1, seq2, result, myPath)
 
 

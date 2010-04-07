@@ -16,7 +16,30 @@ def dictToTuple(data):
         return tuple([dictToTuple(item) for item in data])
     else:
         try:
-            result = unicode(round(float(data),10))
+            result = unicode(int(unicode(data)))
+            return result
         except:
-            result = unicode(data or '') 
+            result = unicode(data or '')
+            
+        try:
+            result = unicode(round(float(data),10))
+            return result
+        except:
+            result = unicode(data or '')
+            
+        
         return result
+    
+def tupleToDict(data):
+    '''
+    Spiatocna metoda
+    '''
+    
+    if type(data) == type(()):
+        if len(data) >= 1 and type(data[0][0]) != type(''):
+            return [tupleToDict(item) for item in data]
+        else:
+            return dict(zip([i[0] for i in data], [tupleToDict(i[1]) for i in data]))
+    else:
+        return data
+    
