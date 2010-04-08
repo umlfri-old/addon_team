@@ -40,19 +40,7 @@ class CSubversionImplementation(object):
             return False
         
      
-    def GetConflictTriple(self):
-        status = self.__client.status(self.__fileName)[0]
-        
-        if status['text_status']==pysvn.wc_status_kind.conflicted:
-            # conflict
-            conflictNewFileName = self.__fileName[0:self.__fileName.rfind(os.sep)+1]+status['entry']['conflict_new']
-            conflictOldFileName = self.__fileName[0:self.__fileName.rfind(os.sep)+1]+status['entry']['conflict_old']
-            conflictWorkFileName = self.__fileName[0:self.__fileName.rfind(os.sep)+1]+status['entry']['conflict_work']
-            result = (open(conflictNewFileName).read(), open(conflictOldFileName).read(), open(conflictWorkFileName).read())
-            return result
-        else:
-            return None
-        
+    
 
 
         
@@ -76,7 +64,11 @@ class CSubversionImplementation(object):
             revnum = pysvn.Revision( pysvn.opt_revision_kind.number, revision )
         result = self.__client.update(self.__fileName, revnum)[0]
         
-        if self.GetConflictTriple() is not None:
+        status = self.__client.status(self.__fileName)[0]
+        
+        if status['text_status']==pysvn.wc_status_kind.conflicted:
+        
+        
             self.__SolveConflict()
         
         f = open(self.__fileName, 'w')
@@ -92,7 +84,9 @@ class CSubversionImplementation(object):
         
     def Checkin(self, message=''):
         print 'trynig svn commit'
-        print self.__client.checkin(self.__fileName, message)
+        self.__client.checkin(self.__fileName, message)
+        status = self.__client.status(self.__fileName)[0]
+        return status.entry.revision.number
         
     def Revert(self):
         print 'trying svn revert'

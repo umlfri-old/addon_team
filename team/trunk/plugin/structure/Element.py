@@ -24,14 +24,20 @@ class CElement(CBase):
         for item in path[0:len(path)-1]:
             r = r[item]
         
-        print r, type(r)
         if oldState is None:
             # pridanie
             print 'inserting'
             if type(r) == type([]):
-                r.append(newState)
+                if type(newState) == type([]):
+                    r.extend(newState)
+                else:
+                    r.append(newState)
             elif type(r) == type({}):
-                r[path[len(path)-1]].append(newState)
+                if type(newState) == type([]):
+                    r[path[len(path)-1]].extend(newState)
+                else:
+                    r[path[len(path)-1]].append(newState)
+                
             
         elif newState is None:
             # odobratie
@@ -41,4 +47,3 @@ class CElement(CBase):
             print 'updating'
             r.update(newState)
             
-        print self.data
