@@ -42,7 +42,7 @@ class CElement(CBase):
         elif newState is None:
             # odobratie
             print 'deleting'
-            r.pop(path[len(path)-1])
+            r[path[len(path)-1]].remove(oldState)
         else:
             print 'updating'
             r.update(newState)

@@ -76,7 +76,8 @@ class CSubversionImplementation(object):
         f.close()
         
         
-        return result.number
+        
+        return status.entry.revision.number
     
     def __SolveConflict(self):
         self.__client.resolved(self.__fileName)
@@ -84,13 +85,19 @@ class CSubversionImplementation(object):
         
     def Checkin(self, message=''):
         print 'trynig svn commit'
-        self.__client.checkin(self.__fileName, message)
+        try:
+            self.__client.checkin(self.__fileName, message)
+        except Exception, e:
+            return 'error', e
         status = self.__client.status(self.__fileName)[0]
-        return status.entry.revision.number
+        return 'ok', status.entry.revision.number
         
     def Revert(self):
         print 'trying svn revert'
         print self.__client.revert(self.__fileName)
+    
+    
+    
     
     
     @classmethod    
