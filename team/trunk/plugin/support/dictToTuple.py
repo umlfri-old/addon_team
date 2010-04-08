@@ -22,7 +22,7 @@ def dictToTuple(data):
             result = unicode(data or '')
             
         try:
-            result = unicode(round(float(data),10))
+            result = unicode(round(float(data),12))
             return result
         except:
             result = unicode(data or '')

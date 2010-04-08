@@ -42,6 +42,7 @@ class CUpdater(object):
         for diff in conflicter.merging:
             self.__MergeDiff(diff)
             
+        self.__mineProject.UpdateCounters(self.__updProject.GetCounters())
         self.__newXml = self.__mineProject.GetSaveXml()
         
         
