@@ -68,7 +68,7 @@ class CSubversionImplementation(object):
         
         if status['text_status']==pysvn.wc_status_kind.conflicted:
         
-        
+            # vyries konflikt na urovni svn, aby tam potom nestrasili tie subory
             self.__SolveConflict()
         
         f = open(self.__fileName, 'w')

@@ -66,8 +66,8 @@ class Plugin(object):
       
       
     def ProjectOpened(self):
-        #self.pluginAdapter = self.interface.GetAdapter()
-        #self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
+        self.pluginAdapter = self.interface.GetAdapter()
+        self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
         if self.__CanRunPlugin():
             fileName = self.__LoadProject().GetFileName()
             # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)

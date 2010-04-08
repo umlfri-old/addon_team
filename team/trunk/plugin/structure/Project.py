@@ -425,7 +425,8 @@ class CProject(object):
         if isinstance(obj, CElement):
             # najdi element v projektovom strome
             node = self.GetProjectTreeNodeById(obj.GetId())
-            self.DeleteProjectTreeNode(node)
+            if node is not None:
+                self.DeleteProjectTreeNode(node)
         
         elif isinstance(obj, CConnection):
             # odober spojenie, vyhod ho zo zoznamu spojeni
@@ -438,7 +439,8 @@ class CProject(object):
         elif isinstance(obj, CDiagram):
             # najdi diagram v projektovom strome
             node = self.GetProjectTreeNodeById(obj.GetId())
-            self.DeleteProjectTreeNode(node)
+            if node is not None:
+                self.DeleteProjectTreeNode(node)
     
     def DeleteProjectTreeNode(self, treeNode):
         # najdi ho v projektovom strome

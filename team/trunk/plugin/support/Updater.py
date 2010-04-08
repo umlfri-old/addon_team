@@ -58,8 +58,9 @@ class CUpdater(object):
         for diff in conflicter.merging:
             self.__MergeDiff(diff)
             
-        self.__mineProject.UpdateCounters(self.__updProject.GetCounters())
-        self.__newXml = self.__mineProject.GetSaveXml()
+        self.__baseProject.UpdateCounters(self.__mineProject.GetCounters())
+        self.__baseProject.UpdateCounters(self.__updProject.GetCounters())
+        self.__newXml = self.__baseProject.GetSaveXml()
         
         
     def __MergeDiff(self, diff):
@@ -71,50 +72,50 @@ class CUpdater(object):
             
             if isinstance(element, CBase):
                 print 'adding object'
-                self.__mineProject.AddObject(element)
+                self.__baseProject.AddObject(element)
             
             elif isinstance(element, CProjectTreeNode):
                 print 'adding project tree node'
-                self.__mineProject.AddProjectTreeNode(element)
+                self.__baseProject.AddProjectTreeNode(element)
             elif isinstance(element, CBaseView):
                 print 'adding view'
-                self.__mineProject.AddView(element)
+                self.__baseProject.AddView(element)
             
         
         elif diff.GetAction() == EDiffActions.DELETE:
             if isinstance(element, CBase):
                 print 'deleting object'
-                self.__mineProject.DeleteObject(element)
+                self.__baseProject.DeleteObject(element)
             
             
             elif isinstance(element, CProjectTreeNode):
                 print 'deleting project tree node'
-                self.__mineProject.DeleteProjectTreeNode(element)
+                self.__baseProject.DeleteProjectTreeNode(element)
                 
             elif isinstance(element, CBaseView):
                 print 'deleting view'
-                self.__mineProject.DeleteView(element) 
+                self.__baseProject.DeleteView(element) 
             
             
         
         elif diff.GetAction() == EDiffActions.MODIFY:
             if isinstance(element, CBase):
                 print 'modifying object data'
-                self.__mineProject.ModifyObjectData(element, diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath())
+                self.__baseProject.ModifyObjectData(element, diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath())
             elif isinstance(element, CBaseView):
                 print 'modyfing view data'
-                self.__mineProject.ModifyViewData(element, diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath())
+                self.__baseProject.ModifyViewData(element, diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath())
                 
         elif diff.GetAction() == EDiffActions.MOVE:
             print 'moving project tree node'
-            self.__mineProject.MoveProjectTreeNode(element, diff.GetPreviousState(), diff.GetNewState())
+            self.__baseProject.MoveProjectTreeNode(element, diff.GetPreviousState(), diff.GetNewState())
         
         elif diff.GetAction() == EDiffActions.ORDER_CHANGE:
             if isinstance(element, CProjectTreeNode):
                 print 'changing order project tree node'
-                self.__mineProject.ChangeOrderTreeNode(element, diff.GetPreviousState(), diff.GetNewState())
+                self.__baseProject.ChangeOrderTreeNode(element, diff.GetPreviousState(), diff.GetNewState())
             elif isinstance(element, CBaseView):
                 print 'changing order view'
-                self.__mineProject.ChangeOrderView(element, diff.GetPreviousState(), diff.GetNewState())
+                self.__baseProject.ChangeOrderView(element, diff.GetPreviousState(), diff.GetNewState())
         
         
