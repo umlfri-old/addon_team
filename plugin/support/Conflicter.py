@@ -7,6 +7,7 @@ from Differ import CDiffer
 from DiffActions import EDiffActions
 import itertools
 from structure import CProjectTreeNode
+from Conflict import CConflict
 
 class CConflicter(object):
     '''
@@ -14,201 +15,292 @@ class CConflicter(object):
     '''
 
 
-    def __init__(self, newProject, oldProject, workProject):
+    def __init__(self, newProject, baseProject, workProject):
         '''
         Constructor
         '''
         self.__new = newProject
-        self.__old = oldProject
+        self.__base = baseProject
         self.__work= workProject
         
         
-        self.__oldWorkDiffer = CDiffer(self.__old, self.__work)
+        self.__baseWorkDiffer = CDiffer(self.__base, self.__work)
         
-        self.__oldNewDiffer = CDiffer(self.__old, self.__new)
+        self.__baseNewDiffer = CDiffer(self.__base, self.__new)
         
         
         self.merging = []
         
         self.conflicting = []
         
-        self.__TryConflictSolve()
+        self.__TryMerge()
         
         
         
-    def __TryConflictSolve(self):
-        # pokus sa zakomponovat zmeny z new do worku
+    def __TryMerge(self):
+        # pokus sa zakomponovat zmeny z new a worku do base
         # ak to nepojde vyhlas to za konflikt a ponukni pouzivatelovi riesenie
         
-        # najskor diff objektov (elementov, spojeni, diagramov) a ich datovych zloziek
-        for diff in self.__oldNewDiffer.dataDiff:
-            if self.__PossibleToMergeDataDiff(diff):
-                self.__MergeDataDiff(diff)
-            else:
-                self.__DataConflict(diff)
+        for diff in self.__baseWorkDiffer.dataDiff:
+            # prejdi data diffy z base do work
+            result = self.__FindConflictsForDataDiff(diff, self.__baseNewDiffer, self.__work)
+            for c in result:
+                self.__DataConflict(diff, c)
+                
+        for diff in self.__baseWorkDiffer.projectTreeDiff:
+            # prejdi project tree diffy z base do work
+            result = self.__FindConflictsForProjectTreeDiff(diff, self.__baseNewDiffer, self.__work)
+            for c in result:
+                self.__ProjectTreeConflict(diff, c)
+                
+        for diff in self.__baseWorkDiffer.visualDiff:
+            # prejdi visual diffy z base do work
+            result = self.__FindConflictsForVisualDiff(diff, self.__baseNewDiffer, self.__work)
+            for c in result:
+                self.__VisualConflict(diff, c)
         
         
-        # potom projektovy strom
         
-        
-        for diff in self.__oldNewDiffer.projectTreeDiff:
-            if self.__PossibleToMergeProjectTreeDiff(diff):
-                self.__MergeProjectTreeDiff(diff)
-            else:
-                self.__ProjectTreeConflict(diff)
-        
-        # potom vizualny diff
-        
-        for diff in self.__oldNewDiffer.visualDiff:
-            if self.__PossibleToMergeVisualDiff(diff):
-                self.__MergeVisualDiff(diff)
-            else:
-                self.__VisualConflict(diff)
+        for diff in self.__baseNewDiffer.dataDiff:
+            # prejdi data diffy z base do new
+            result = self.__FindConflictsForDataDiff(diff, self.__baseWorkDiffer, self.__new)
+            for c in result:
+                self.__DataConflict(c, diff)
+                
+        for diff in self.__baseNewDiffer.projectTreeDiff:
+            # prejdi project tree diffy z base do new
+            result = self.__FindConflictsForProjectTreeDiff(diff, self.__baseWorkDiffer, self.__new)
+            for c in result:
+                self.__ProjectTreeConflict(c, diff)
+                
+        for diff in self.__baseNewDiffer.visualDiff:
+            # prejdi visual diffy z base do new
+            result = self.__FindConflictsForVisualDiff(diff, self.__baseWorkDiffer, self.__new)
+            for c in result:
+                self.__VisualConflict(c, diff)
             
+        for diff in self.__baseWorkDiffer.dataDiff:
+            if diff not in [c.GetBaseWorkDiff() for c in self.conflicting]:
+                self.__MergeDataDiff(diff)
+        
+        for diff in self.__baseWorkDiffer.projectTreeDiff:
+            if diff not in [c.GetBaseWorkDiff() for c in self.conflicting]:
+                self.__MergeProjectTreeDiff(diff)
+                
+        for diff in self.__baseWorkDiffer.visualDiff:
+            if diff not in [c.GetBaseWorkDiff() for c in self.conflicting]:
+                self.__MergeVisualDiff(diff)
+                
+        for diff in self.__baseNewDiffer.dataDiff:
+            if diff not in [c.GetBaseNewDiff() for c in self.conflicting]:
+                self.__MergeDataDiff(diff)
+                
+        for diff in self.__baseNewDiffer.projectTreeDiff:
+            if diff not in [c.GetBaseNewDiff() for c in self.conflicting]:
+                self.__MergeProjectTreeDiff(diff)
+                
+        for diff in self.__baseNewDiffer.visualDiff:
+            if diff not in [c.GetBaseNewDiff() for c in self.conflicting]:
+                self.__MergeVisualDiff(diff)
         
         
+    def __FindConflictsForDataDiff(self, diff, otherDiffer, project):
+        result = []
+        
+        if diff.GetAction() == EDiffActions.MODIFY:
+            # ak som upravoval datove zlozky
+            for d in otherDiffer.GetDataDiff().get(EDiffActions.MODIFY, []):
+                # prejdi vsetky data diffy z druheho, kde som tiez upravoval
+                if d.GetDataPath() == diff.GetDataPath():
+                    # ak som upravoval na rovnakom mieste datovu zlozku
+                    print 'modyfing same data of elements'
+                    result.append(d)
+                    
+            parents = project.GetProjectTreeNodeById(diff.GetElement().GetId()).GetAllParents()
+            
+            for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
+                # prejdi vsetky data diffy z druheho, ktore som vymazal
+                if d.GetElement() == diff.GetElement() or d.GetElement() in [p.GetObject() for p in parents]:
+                    # upravoval som vymazany element
+                    print 'modifying data of deleted element'
+                    result.append(d)
+                    
+            for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
+                if d.GetElement().GetObject() == diff.GetElement() or d.GetElement() in parents:
+                    # upravoval som vymazany element
+                    print 'modifying data of deleted element'
+                    result.append(d)
+        
+        elif diff.GetAction() == EDiffActions.INSERT:
+            pass
+        
+        elif diff.GetAction() == EDiffActions.DELETE:
+            pass
+        
+        return result
+    
+    def __MergeDataDiff(self, diff):
+        
+        self.merging.append(diff)
+    
+    def __DataConflict(self, baseWorkDiff, baseNewDiff):
+        print 'data conflict'
+        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Data Conflict')
+        self.conflicting.append(conflict)    
         
     
     
     
     
-    def __PossibleToMergeProjectTreeDiff(self, diff):
+    def __FindConflictsForProjectTreeDiff(self, diff, otherDiffer, project):
+        result = []
         if diff.GetAction() == EDiffActions.INSERT:
-            if diff.GetElement().GetParent() in [d.GetElement() for d in self.__oldWorkDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, [])]:
-                print 'insert project tree node under deleted element'
-                print diff
-                return False
-            else:
-                return True
+            # ak som pridaval project tree node
+            
+            # zisti vsetkych jeho parentov a zabran ich vymazaniu
+            parents = diff.GetElement().GetAllParents()
+            for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
+                # prejdi vsetky vymazane elementy
+                if d.GetElement() in parents:
+                    # pozri ci je na ceste k vlozenemu elementu
+                    print 'insert project tree node under deleted element'
+                    result.append(d)
             
         elif diff.GetAction() == EDiffActions.DELETE:
-            if diff.GetElement().GetObject() in [d.GetElement() for d in self.__oldWorkDiffer.dataDiff]:
-                print 'delete modified element'
-                print diff
-                return False
-            elif diff.GetElement() in [d.GetElement().GetParent() for d in self.__oldWorkDiffer.GetProjectTreeDiff().get(EDiffActions.INSERT, [])]:
-                print 'delete new parent project tree'
-                print diff
-                return False
-            else:
-                return True
+            pass
             
         elif diff.GetAction() == EDiffActions.MOVE:
-            if diff.GetElement().GetParent() in [d.GetElement() for d in self.__oldWorkDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, [])]:
-                print 'move project tree node under deleted element'
-                print diff
-                return False
-            elif diff.GetElement() in [d.GetElement() for d in self.__oldWorkDiffer.GetProjectTreeDiff().get(EDiffActions.MOVE, [])]:
-                parentNew = diff.GetElement().GetParent()
-                parentOld = self.__oldWorkDiffer.GetProjectTreeDiff()[EDiffActions.MOVE][self.__oldWorkDiffer.GetProjectTreeDiff()[EDiffActions.MOVE].index(diff)].GetElement().GetParent()
-                if parentNew != parentOld:
-                    print 'moving project tree node under different parents'
-                    print diff
-                    return False
-                else:
-                    return True
+            # zisti vsetkych jeho parentov a zabran ich vymazaniu
+            parents = diff.GetElement().GetAllParents()
+            for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
+                # prejdi vsetky vymazane elementy
+                if d.GetElement() in parents:
+                    # pozri ci je na ceste k presunutemu elementu
+                    print 'move project tree node under deleted node'
+                    result.append(d)
                     
-            else:
-                return True
+            for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.MOVE, []):
+                # prejdi vsetky vymazane elementy
+                if d.GetElement() == diff.GetElement():
+                    if d.GetNewState() != diff.GetNewState():
+                        # ak som presunul ten isty element na ine miesto
+                        print 'move project tree node under different parents'
+                        result.append(d)
         
         elif diff.GetAction() == EDiffActions.ORDER_CHANGE:
-            if diff.GetElement().GetParent() in [d.GetElement() for d in self.__oldWorkDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, [])]:
-                print 'changing child order under deleted element'
-                print diff
-                return False
-            else:
-                return True
+            parents = diff.GetElement().GetAllParents()
+            for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
+                if d.GetElement() == diff.GetElement():
+                    # zmenil som poradie na vymazanom elemente
+                    print 'change order of deleted node'
+                    result.append(d)
+                if d.GetElement() in parents:
+                    print 'change order under deleted node'
+                    result.append(d)
+                    
+            for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.ORDER_CHANGE, []):
+                if d.GetElement() == diff.GetElement():
+                    if d.GetNewState() != diff.GetNewState():
+                        # presunutie toho isteho elementu na rozne miesto
+                        print 'change order of same nodes differently'
+                        result.append(d)
        
-       
+        
+        return result
        
     def __MergeProjectTreeDiff(self, diff):
         
         self.merging.append(diff)
         
     
-    def __ProjectTreeConflict(self, diff):
-        
-        self.conflicting.append(diff)
+    def __ProjectTreeConflict(self, baseWorkDiff, baseNewDiff):
+        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Project tree Conflict')
+        self.conflicting.append(conflict)    
     
-    def __PossibleToMergeVisualDiff(self, diff):
+    def __FindConflictsForVisualDiff(self, diff, otherDiffer, project):
+        result = []
         if diff.GetAction() == EDiffActions.INSERT:
-            if diff.GetElement().GetParentDiagram() in [d.GetElement().GetObject() for d in self.__oldWorkDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE,[])]:
-                print 'insert view in deleted diagram'
-                print diff
-                return False
-            else:
-                return True
+            parents = project.GetProjectTreeNodeById(diff.GetElement().GetParentDiagram().GetId()).GetAllParents()
+            for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE,[]):
+                if d.GetElement().GetObject() == diff.GetElement.GetParentDiagram() or d.GetElement() in parents:
+                    print 'insert view under deleted diagram'
+                    result.append(d)
+            
+            for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
+                if d.GetElement() == diff.GetElement().GetParentDiagram() or d.GetElement() in [p.GetObject() for p in parents]:
+                    print 'insert view under deleted diagram'
+                    result.append(d)
             
         elif diff.GetAction() == EDiffActions.DELETE:
-            if diff.GetElement() in [d.GetElement() for d in self.__oldWorkDiffer.GetVisualDiff().get(EDiffActions.MODIFY,[])]:
-                print 'delete modified visual element'
-                print diff
-                return False
-            else:
-                return True
+            pass
             
         elif diff.GetAction() == EDiffActions.MODIFY:
-            if diff.GetElement() in [d.GetElement() for d in self.__oldWorkDiffer.GetVisualDiff().get(EDiffActions.DELETE,[])]:
-                print 'modify deleted visual element'
-                print diff
-                return False
-            elif diff.GetDataPath() in [d.GetDataPath() for d in self.__oldWorkDiffer.GetVisualDiff().get(EDiffActions.MODIFY,[])]:
-                print 'modyfing same visual data of elements'
-                print diff
-            else:
-                return True
+            
+            for d in otherDiffer.GetVisualDiff().get(EDiffActions.DELETE,[]):
+                if d.GetElement() == diff.GetElement():
+                    print 'modifying deleted view'
+                    result.append(d)
+                    
+                    
+            parents = project.GetProjectTreeNodeById(diff.GetElement().GetParentDiagram().GetId()).GetAllParents()
+            for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
+                if d.GetElement().GetObject() == diff.GetElement().GetParentDiagram() or d.GetElement() in parents:
+                    print 'modifying view in deleted diagram'
+                    result.append(d)
+                    
+            for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
+                if d.GetElement() == diff.GetElement().GetParentDiagram()  or d.GetElement() in [p.GetObject() for p in parents]:
+                    print 'modifying view in deleted diagram'
+                    result.append(d)
+                    
+            for d in otherDiffer.GetVisualDiff().get(EDiffActions.MODIFY,[]):
+                if d.GetDataPath() == diff.GetDataPath():
+                    print 'modifying same visual data of views'
+                    result.append(d)
+            
             
         elif diff.GetAction() == EDiffActions.ORDER_CHANGE:
-            if diff.GetElement() in [d.GetElement() for d in self.__oldWorkDiffer.GetVisualDiff().get(EDiffActions.DELETE, [])]:
-                print 'changing view order of deleted view'
-                print diff
-                return False
-            else:
-                return True
+            for d in otherDiffer.GetVisualDiff().get(EDiffActions.ORDER_CHANGE, []):
+                if d.GetElement() == diff.GetElement():
+                    if d.GetNewState() != diff.GetNewState():
+                        print 'changing order of same views differently'
+                        result.append(d)
+            
+            
+            parents = project.GetProjectTreeNodeById(diff.GetElement().GetParentDiagram().GetId()).GetAllParents()
+                        
+            for d in otherDiffer.GetVisualDiff().get(EDiffActions.DELETE,[]):
+                if d.GetElement() == diff.GetElement():
+                    print 'changing order of deleted view'
+                    result.append(d)
+            
+            for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
+                if d.GetElement().GetObject() == diff.GetElement().GetParentDiagram() or d.GetElement() in parents:
+                    print 'changing order of view in deleted diagram'
+                    result.append(d)
+                    
+            for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
+                if d.GetElement() == diff.GetElement().GetParentDiagram() or d.GetElement() in [p.GetObject() for p in parents]:
+                    print 'changing order of view in deleted diagram'
+                    result.append(d)
+        return result
     
     
     def __MergeVisualDiff(self, diff):
         
         self.merging.append(diff)
     
-    def __VisualConflict(self, diff):
-        print 'visual conflict'
-        print diff
-        self.conflicting.append(diff)
+    def __VisualConflict(self, baseWorkDiff, baseNewDiff):
+        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Visual Conflict')
+        self.conflicting.append(conflict)    
         
         
         
-    def __PossibleToMergeDataDiff(self, diff):
-        if diff.GetAction() == EDiffActions.MODIFY:
-            if diff.GetElement() in [d.GetElement().GetObject() for d in self.__oldWorkDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE,[])]:
-                print 'modifying data of deleted element'
-                print diff
-                return False
-            elif diff.GetDataPath() in [d.GetDataPath() for d in self.__oldWorkDiffer.GetDataDiff().get(EDiffActions.MODIFY,[])]:
-                print 'modyfing same data of elements'
-                print diff
-                return False
-            else:
-                return True
-        
-        elif diff.GetAction() == EDiffActions.INSERT:
-            return True
-        
-        elif diff.GetAction() == EDiffActions.DELETE:
-            return True
-    
-    
-    def __MergeDataDiff(self, diff):
-        
-        self.merging.append(diff)
-    
-    def __DataConflict(self, diff):
-        print 'data conflict'
-        self.conflicting.append(diff)
+
         
         
         
     def __str__(self):
         return 'new: '+str(self.__new.GetProjectTreeRoot()) \
-            + 'old: '+str(self.__old.GetProjectTreeRoot()) \
+            + 'old: '+str(self.__base.GetProjectTreeRoot()) \
             + 'work: '+str(self.__work.GetProjectTreeRoot())

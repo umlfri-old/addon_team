@@ -73,6 +73,14 @@ class CProjectTreeNode(object):
     def GetParent(self):
         return self.__parent
     
+    def GetAllParents(self):
+        result = []
+        parent = self.GetParent()
+        while parent is not None:
+            result.append(parent)
+            parent = parent.GetParent()
+        return result
+    
     def DeleteChild(self, child):
         #vymaze child a vrati vsetky jeho deti, aby mohli byt vymazane
         result = [child]

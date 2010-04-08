@@ -3,7 +3,6 @@ Created on 23.3.2010
 
 @author: Peterko
 '''
-from dictToTuple import tupleToDict
 
 class CDiffResult(object):
     '''
@@ -46,4 +45,4 @@ class CDiffResult(object):
         return str(self.__action) + ' : ' + str(self.__element) + ' : ' +str(self.__previousState) + ' : ' + str(self.__newState) + ' : ' + str(self.__dataPath)
     
     def __cmp__(self, other):
-        return cmp(self.GetElement(), other.GetElement())
+        return cmp(hash(self.GetElement())+hash(self.GetAction()), hash(other.GetElement())+hash(other.GetAction()))
