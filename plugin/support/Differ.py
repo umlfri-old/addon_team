@@ -207,8 +207,8 @@ class CDiffer(object):
                                 d2 = tupleToDict((seq2,))
                             else:
                                 d2 = tupleToDict(seq2)
-                            print seq1, d1
-                            print seq2, d2
+                            #print seq1, d1
+                            #print seq2, d2
                             result.append(CDiffResult(EDiffActions.MODIFY, el1, d1, d2, myPath))
                         else:
                             # ak sa da este pokracovat

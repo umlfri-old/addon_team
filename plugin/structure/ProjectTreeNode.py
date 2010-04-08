@@ -96,6 +96,19 @@ class CProjectTreeNode(object):
             pass
         return result
     
+    def ChangeOrderNode(self, node, newIndex):
+        try:
+            self.__childElementsOrdered.remove(node)
+            self.AddChildElement(node, newIndex)
+        except:
+            pass
+        
+        try:
+            self.__childDiagramsOrdered.remove(node)
+            self.AddChildDiagram(node, newIndex)
+        except:
+            pass
+    
     def __str__(self):
         return 'Tree node '+str(self.__objectRepresentation)
     

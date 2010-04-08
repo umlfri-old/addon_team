@@ -84,3 +84,16 @@ class CDiagram(CBase):
         print 'modifying diagram data'
         self.data.update(newState)
         
+    def ChangeOrderView(self, view, newIndex):
+        try:
+            self.__elementViewsOrdered.remove(view)
+            self.AddElementView(view, newIndex)
+        except:
+            pass
+        
+        try:
+            self.__connectionsViewsOrdered.remove(view)
+            self.AddConnectionView(view, newIndex)
+        except:
+            pass
+        

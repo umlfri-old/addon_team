@@ -335,6 +335,9 @@ class CProject(object):
         return root
         
         
+    def GetCounters(self):
+        return self.__counters
+        
     # ----------------------    
     # destructive operations
     # ----------------------
@@ -471,11 +474,17 @@ class CProject(object):
         oldParent.DeleteChild(node)
 
     def ChangeOrderTreeNode(self, node, oldOrder, newOrder):
-        pass
+        print 'CHANGE ORDER', node, oldOrder, newOrder
+        node = self.GetProjectTreeNodeById(node.GetId())
+        parent = node.GetParent()
+        parent.ChangeOrderNode(node, newOrder)
     
     
     def ChangeOrderView(self, view, oldOrder, newOrder):
-        pass
+        print 'CHANGE ORDER', view, oldOrder, newOrder
+        diagram = self.GetById(view.GetParentDiagram().GetId())
+        view = diagram.GetViewById(view.GetObject().GetId())
+        diagram.ChangeOrderView(view, newOrder)
 
 
     def ModifyObjectData(self, element, oldState, newState, path):
@@ -486,6 +495,13 @@ class CProject(object):
         diagram = self.GetById(view.GetParentDiagram().GetId())
         view = diagram.GetViewById(view.GetObject().GetId())
         view.ModifyData(oldState, newState, path)
+
+    # updatni pocitadla,  vyber vyssie z nich
+    def UpdateCounters(self, newCounters):
+        for (old,new) in zip(self.__counters, newCounters):
+            if old.get('value') < new.get('value'):
+                old.set('value', new.get('value'))
+
 
     def GetSaveXml(self):
         #assert self.__metamodel is not None
