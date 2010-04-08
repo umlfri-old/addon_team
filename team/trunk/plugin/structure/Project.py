@@ -40,9 +40,9 @@ class CProject(object):
             self.__LoadProjectFromApp(project)
     
     def __LoadProjectFromApp(self, project):
-        self.__saveVersion = (1,1,0)
-        self.__metamodelUri = project.GetMetamodel().GetUri()
-        self.__metamodelVersion = project.GetMetamodel().GetVersion()
+        #self.__saveVersion = (1,1,0)
+        #self.__metamodelUri = project.GetMetamodel().GetUri()
+        #self.__metamodelVersion = project.GetMetamodel().GetVersion()
         
         root = project.GetRoot()
         if root is not None:
@@ -434,24 +434,26 @@ class CProject(object):
         # ak to nie je koren
         if node is not self.__projectTreeRoot:
             # najdi parenta
-            parent = node.GetParent()
-            
-            # vymaz vsetkych potomkov
-            childs = parent.DeleteChild(node)
-            # vymaz vsetky objekty predstavujuce potomkov 
-            for ch in childs:
-                self.DeleteById(ch.GetId())
-                # vymaz objekt zo vsetkych diagramov
-                for d in self.__diagrams.values():
-                    # vymaz ho zo vsetkych diagramov
-                    d.DeleteViewById(ch.GetId())
+            if node is not None:
+                parent = node.GetParent()
+                
+                # vymaz vsetkych potomkov
+                childs = parent.DeleteChild(node)
+                # vymaz vsetky objekty predstavujuce potomkov 
+                for ch in childs:
+                    self.DeleteById(ch.GetId())
+                    # vymaz objekt zo vsetkych diagramov
+                    for d in self.__diagrams.values():
+                        # vymaz ho zo vsetkych diagramov
+                        d.DeleteViewById(ch.GetId())
             
     
     def DeleteView(self, view):
         # najdi diagram, do ktoreho patri
         diagram = self.GetById(view.GetParentDiagram().GetId())
         # vymaz ho z daneho diagramu
-        diagram.DeleteViewById(view.GetObject().GetId())
+        if diagram is not None:
+            diagram.DeleteViewById(view.GetObject().GetId())
 
 
     def MoveProjectTreeNode(self, node, oldParent, newParent):
