@@ -66,8 +66,8 @@ class Plugin(object):
       
       
     def ProjectOpened(self):
-        self.pluginAdapter = self.interface.GetAdapter()
-        self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
+        #self.pluginAdapter = self.interface.GetAdapter()
+        #self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
         if self.__CanRunPlugin():
             fileName = self.__LoadProject().GetFileName()
             # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
@@ -140,13 +140,14 @@ class Plugin(object):
         newFileData = updater.GetNewXml()
         #print newFileData
         
-        self.implementation.Update(newFileData)
+        rev = self.implementation.Update(newFileData)
         self.pluginAdapter.LoadProject(self.implementation.GetFileName())
         
         if updater.GetConflictFileName() is not None:
             triple = self.GetProjectConflictingTriple(updater.GetConflictFileName())
             self.SolveConflictTriple(triple)
-        
+        else:
+            self.pluginGuiManager.DisplayWarning('Updated to revision: '+str(rev))
     
     def Checkin(self, arg):
         project = self.__LoadProject()
@@ -155,13 +156,16 @@ class Plugin(object):
             return
         
         project.Save()
-        msg = self.gui.CheckinMessageDialog()
-        if msg is not None:
-            rev = self.implementation.Checkin(msg)
-            if rev is not None:
-                self.pluginGuiManager.DisplayWarning('Checked in revision: '+str(rev))
-            else:
-                self.pluginGuiManager.DisplayWarning('Checkin failed')
+        if self.GetProjectConflictingTriple(self.implementation.GetFileName()) is not None:
+            self.pluginGuiManager.DisplayWarning('Unable to checkin: Project remains in conflict')
+        else:
+            msg = self.gui.CheckinMessageDialog()
+            if msg is not None:
+                result, rev = self.implementation.Checkin(msg)
+                if result=='ok':
+                    self.pluginGuiManager.DisplayWarning('Checked in revision: '+str(rev))
+                else:
+                    self.pluginGuiManager.DisplayWarning(str(rev))
             
     def Revert(self, arg):
         project = self.__LoadProject()

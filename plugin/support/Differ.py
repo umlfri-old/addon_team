@@ -278,9 +278,17 @@ class CDiffer(object):
         for parent in set(map1.values()+map2.values()):
             if parent is not None:
                 
-                childs1 = self.__project1.GetProjectTreeNodeById(parent.GetId()).GetChildsOrdered()
+                p = self.__project1.GetProjectTreeNodeById(parent.GetId())
+                childs1 = []
+                if p is not None:
+                    childs1 = p.GetChildsOrdered()
                 
-                childs2 = self.__project2.GetProjectTreeNodeById(parent.GetId()).GetChildsOrdered()
+                p = self.__project2.GetProjectTreeNodeById(parent.GetId())
+                childs2 = []
+                if p is not None:
+                    childs2 = p.GetChildsOrdered()
+                
+                
                 result.extend(self.__DiffOrder(childs1, childs2))
                 
         return result

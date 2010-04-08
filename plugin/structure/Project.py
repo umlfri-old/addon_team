@@ -332,7 +332,10 @@ class CProject(object):
         while not(root.GetId() == id or len(stack) == 0):
             stack.extend(root.GetChildsOrdered())
             root = stack.pop()
-        return root
+        if root.GetId() == id:
+            return root
+        else:
+            return None
         
         
     def GetCounters(self):
@@ -370,16 +373,25 @@ class CProject(object):
         obj = self.GetById(treeNode.GetId())
         # zisti rodica
         parent = self.GetProjectTreeNodeById(treeNode.GetParent().GetId())
-        # vytvor novy node
-        newProjectTreeNode = CProjectTreeNode(obj, parent)
         
-        if isinstance(obj, CDiagram):
-            # ak je to diagram, pridaj diagram
-            parent.AddChildDiagram(newProjectTreeNode, treeNode.GetIndex())
+        if parent is None:
+            parent = self.AddProjectTreeNode(treeNode.GetParent())
+        
+        if self.GetProjectTreeNodeById(obj.GetId()) is None:
+        
+        
+            # vytvor novy node
+            newProjectTreeNode = CProjectTreeNode(obj, parent)
             
-        elif isinstance(obj, CElement):
-            # ak je to element, pridaj element
-            parent.AddChildElement(newProjectTreeNode, treeNode.GetIndex())
+            if isinstance(obj, CDiagram):
+                # ak je to diagram, pridaj diagram
+                parent.AddChildDiagram(newProjectTreeNode, treeNode.GetIndex())
+                
+            elif isinstance(obj, CElement):
+                # ak je to element, pridaj element
+                parent.AddChildElement(newProjectTreeNode, treeNode.GetIndex())
+            
+            return newProjectTreeNode
         
     def AddView(self, view):
         
