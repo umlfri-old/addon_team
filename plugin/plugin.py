@@ -35,7 +35,7 @@ class Plugin(object):
         
         
         
-#        self.interface.StartAutocommit()
+        self.interface.StartAutocommit()
         self.pluginAdapter.AddNotification('project-opened', self.ProjectOpened)
         
         try:
@@ -53,8 +53,9 @@ class Plugin(object):
             self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Update,1,'Update',None,None)
             self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkin,2,'Checkin',None,None)
             self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Revert,3,'Revert',None,None)                    
-            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()), self.SolveConflicts ,4,'Solve conflicts',None,None)
-            self.teamMenuRoot.GetSubmenu().AddMenuItem(str(uuid.uuid1()),self.Checkout,5,'Checkout',None,None)
+            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.SolveConflicts ,4,'Solve conflicts',None,None)
+            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkout,5,'Checkout',None,None)
+            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.ShowLogs,6,'Show logs',None,None)
             
             self.ProjectOpened()
                     
@@ -132,13 +133,20 @@ class Plugin(object):
         
         project.Save()
         mine, base, upd = self.implementation.BeforeUpdate()
-        updater = CUpdater(mine, base, upd)
+        updater = CUpdater(mine, base, upd, self.implementation.GetFileName())
+        
+        
         
         newFileData = updater.GetNewXml()
         #print newFileData
         
         self.implementation.Update(newFileData)
         self.pluginAdapter.LoadProject(self.implementation.GetFileName())
+        
+        if updater.GetConflictFileName() is not None:
+            triple = self.GetProjectConflictingTriple(updater.GetConflictFileName())
+            self.SolveConflictTriple(triple)
+        
     
     def Checkin(self, arg):
         project = self.__LoadProject()
@@ -149,7 +157,11 @@ class Plugin(object):
         project.Save()
         msg = self.gui.CheckinMessageDialog()
         if msg is not None:
-            self.implementation.Checkin(msg)
+            rev = self.implementation.Checkin(msg)
+            if rev is not None:
+                self.pluginGuiManager.DisplayWarning('Checked in revision: '+str(rev))
+            else:
+                self.pluginGuiManager.DisplayWarning('Checkin failed')
             
     def Revert(self, arg):
         project = self.__LoadProject()
@@ -163,14 +175,19 @@ class Plugin(object):
         
         
     def Checkout(self, arg):
+        # najdi vsetky implementacie
         impls = []
         for name in dir(implementation):
             obj = getattr(implementation, name)
             if inspect.isclass(obj):
                 impls.append(obj)
+        
+        # otvor checkout dialog
         result = self.gui.CheckoutDialog(impls)
         if result is not None:
+            # vyber implementaciu
             self.implementation = result[0]
+            # sprav checkout
             self.implementation.Checkout(result[1], result[2], result[3])
             
             
@@ -178,15 +195,32 @@ class Plugin(object):
         prFile = self.gui.OpenConflictProjectDialog()
         if prFile is not None:
             self.implementation = self.__ChooseCorrectImplementation(prFile)
-            triple = self.implementation.GetConflictTriple()
-            if triple is not None:
-                newProject = CProject(None, triple[0])
-                oldProject = CProject(None, triple[1])
-                workProject = CProject(None, triple[2])
-                conflicter = CConflicter(newProject, oldProject, workProject)
-                self.gui.ConflictSolvingDialog(conflicter.merging, conflicter.conflicting)
+            triple = self.GetProjectConflictingTriple(prFile)
+            self.SolveConflictTriple(triple)
                 
+     
+    def ShowLogs(self, arg):
+        pass
         
         
+    def SolveConflictTriple(self, triple):    
+        if triple is not None:
+            newProject = CProject(None, triple[0])
+            oldProject = CProject(None, triple[1])
+            workProject = CProject(None, triple[2])
+            conflicter = CConflicter(newProject, oldProject, workProject)
+            self.gui.ConflictSolvingDialog(conflicter.merging, conflicter.conflicting)
+                
+    def GetProjectConflictingTriple(self, fileName):
+        conflictNewFileName = fileName+'.frinew'
+        conflictOldFileName = fileName+'.fribase'
+        conflictWorkFileName = fileName+'.friwork'
+        if os.path.isfile(conflictNewFileName) and os.path.isfile(conflictOldFileName) and os.path.isfile(conflictWorkFileName):
+            result = (open(conflictNewFileName).read(), open(conflictOldFileName).read(), open(conflictWorkFileName).read())
+        else:
+            result = None
+        return result
+    
+    
 # select plugin main object
 pluginMain = Plugin

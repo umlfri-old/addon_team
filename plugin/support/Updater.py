@@ -16,20 +16,26 @@ class CUpdater(object):
     '''
 
 
-    def __init__(self, mine, base, upd):
+    def __init__(self, mine, base, upd, fileName):
         '''
         Constructor
         '''
         self.__mineProject = CProject(None, mine)
         self.__baseProject = CProject(None, base)
         self.__updProject  = CProject(None, upd)
+        self.__fileName = fileName
         self.__newXml = None
+        self.__conflictFileName = None
         self.__TryUpdate()
+        
         
         
         
     def GetNewXml(self):
         return self.__newXml
+    
+    def GetConflictFileName(self):
+        return self.__conflictFileName
         
     def __TryUpdate(self):
         
@@ -38,7 +44,17 @@ class CUpdater(object):
         if len(conflicter.conflicting) == 0:
             print 'no conflicts'
         else:
-            print len(conflicter.conflicting), 'conflicts'
+            # vytvor 3 subory v adresari s projektom, aby som vedel, ze je v konflikte
+            fmine = open(self.__fileName+'.friwork', 'w')
+            fmine.write(self.__mineProject.GetSaveXml())
+            fmine.close()
+            fold = open(self.__fileName+'.fribase', 'w')
+            fold.write(self.__baseProject.GetSaveXml())
+            fold.close()
+            fnew = open(self.__fileName+'.frinew', 'w')
+            fnew.write(self.__updProject.GetSaveXml())
+            fnew.close()
+            self.__conflictFileName = self.__fileName
         for diff in conflicter.merging:
             self.__MergeDiff(diff)
             

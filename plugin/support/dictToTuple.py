@@ -36,7 +36,7 @@ def tupleToDict(data):
     '''
     
     if type(data) == type(()):
-        if len(data) >= 1 and type(data[0][0]) != type(''):
+        if (len(data) == 0) or (len(data) >= 1 and type(data[0][0]) != type('')):
             return [tupleToDict(item) for item in data]
         else:
             return dict(zip([i[0] for i in data], [tupleToDict(i[1]) for i in data]))
