@@ -10,3 +10,5 @@ from Element import CElement
 from Base import CBase
 from ProjectTreeNode import CProjectTreeNode
 from BaseView import CBaseView
+from ConnectionView import CConnectionView
+from ElementView import CElementView
