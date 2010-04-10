@@ -6,6 +6,7 @@ Created on 6.4.2010
 from Conflicter import CConflicter
 from structure import *
 from DiffActions import EDiffActions
+from Merger import CMerger
 
 
 
@@ -20,28 +21,34 @@ class CUpdater(object):
         '''
         Constructor
         '''
-        self.__mineProject = CProject(None, mine)
+        
         self.__baseProject = CProject(None, base)
         self.__updProject  = CProject(None, upd)
+        self.__mineProject = CProject(None, mine)
         self.__fileName = fileName
         self.__newXml = None
         self.__conflictFileName = None
         self.__TryUpdate()
+        self.__conflicter = None
         
         
         
         
     def GetNewXml(self):
+        self.__newXml = self.__baseProject.GetSaveXml()
         return self.__newXml
     
     def GetConflictFileName(self):
         return self.__conflictFileName
+    
+    def GetConflicter(self):
+        return self.__conflicter
         
     def __TryUpdate(self):
         
         
-        conflicter = CConflicter(self.__updProject, self.__baseProject, self.__mineProject)
-        if len(conflicter.conflicting) == 0:
+        self.__conflicter = CConflicter(self.__updProject, self.__baseProject, self.__mineProject)
+        if len(self.__conflicter.conflicting) == 0:
             print 'no conflicts'
         else:
             # vytvor 3 subory v adresari s projektom, aby som vedel, ze je v konflikte
@@ -55,67 +62,13 @@ class CUpdater(object):
             fnew.write(self.__updProject.GetSaveXml())
             fnew.close()
             self.__conflictFileName = self.__fileName
-        for diff in conflicter.merging:
-            self.__MergeDiff(diff)
+            
+        merger = CMerger(self.__baseProject)
+        merger.MergeDiffs(self.__conflicter.merging)
             
         self.__baseProject.UpdateCounters(self.__mineProject.GetCounters())
         self.__baseProject.UpdateCounters(self.__updProject.GetCounters())
-        self.__newXml = self.__baseProject.GetSaveXml()
         
         
-    def __MergeDiff(self, diff):
-        
-        print 'merging',diff
-        element = diff.GetElement()
-        
-        if diff.GetAction() == EDiffActions.INSERT:
-            
-            if isinstance(element, CBase):
-                print 'adding object'
-                self.__baseProject.AddObject(element)
-            
-            elif isinstance(element, CProjectTreeNode):
-                print 'adding project tree node'
-                self.__baseProject.AddProjectTreeNode(element)
-            elif isinstance(element, CBaseView):
-                print 'adding view'
-                self.__baseProject.AddView(element)
-            
-        
-        elif diff.GetAction() == EDiffActions.DELETE:
-            if isinstance(element, CBase):
-                print 'deleting object'
-                self.__baseProject.DeleteObject(element)
-            
-            
-            elif isinstance(element, CProjectTreeNode):
-                print 'deleting project tree node'
-                self.__baseProject.DeleteProjectTreeNode(element)
-                
-            elif isinstance(element, CBaseView):
-                print 'deleting view'
-                self.__baseProject.DeleteView(element) 
-            
-            
-        
-        elif diff.GetAction() == EDiffActions.MODIFY:
-            if isinstance(element, CBase):
-                print 'modifying object data'
-                self.__baseProject.ModifyObjectData(element, diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath())
-            elif isinstance(element, CBaseView):
-                print 'modyfing view data'
-                self.__baseProject.ModifyViewData(element, diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath())
-                
-        elif diff.GetAction() == EDiffActions.MOVE:
-            print 'moving project tree node'
-            self.__baseProject.MoveProjectTreeNode(element, diff.GetPreviousState(), diff.GetNewState())
-        
-        elif diff.GetAction() == EDiffActions.ORDER_CHANGE:
-            if isinstance(element, CProjectTreeNode):
-                print 'changing order project tree node'
-                self.__baseProject.ChangeOrderTreeNode(element, diff.GetPreviousState(), diff.GetNewState())
-            elif isinstance(element, CBaseView):
-                print 'changing order view'
-                self.__baseProject.ChangeOrderView(element, diff.GetPreviousState(), diff.GetNewState())
-        
+    
         

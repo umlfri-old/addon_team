@@ -9,3 +9,4 @@ from DiffActions import EDiffActions
 from Conflict import CConflict
 from Conflicter import CConflicter
 from Updater import CUpdater
+from ConflictSolver import CConflictSolver

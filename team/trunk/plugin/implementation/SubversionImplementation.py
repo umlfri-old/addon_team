@@ -45,6 +45,9 @@ class CSubversionImplementation(object):
 
         
     def BeforeUpdate(self, revision=None):
+        '''
+        Returns contents of mine, base and updated files
+        '''
         print 'before update'
         if revision is None:
             revnum = pysvn.Revision( pysvn.opt_revision_kind.head )
@@ -57,6 +60,10 @@ class CSubversionImplementation(object):
     
         
     def Update(self, fileData, revision=None):
+        '''
+        Run update and then rewrite file with contents in fileData
+        Solve conflicts on implementation level
+        '''
         print 'trying svn update'
         if revision is None:
             revnum = pysvn.Revision( pysvn.opt_revision_kind.head )
