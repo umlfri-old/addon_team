@@ -19,20 +19,21 @@ class Gui(object):
         Constructor
         '''
         #print 'constructing'
-        self.wTree = gtk.glade.XML( "./share/addons/team/plugin/Gui/gui.glade" )
+        self.wTree = gtk.Builder()
+        self.wTree.add_from_file( "./share/addons/team/plugin/Gui/gui.glade" )
         
         dic = { 
             
         }
         
-        self.wTree.signal_autoconnect( dic )
+        self.wTree.connect_signals( dic )
         
         #gtk.main()
 
 
     def CheckinMessageDialog(self):
-        wid = self.wTree.get_widget('checkinMessageDlg')
-        text = self.wTree.get_widget('checkinMessageTxt')
+        wid = self.wTree.get_object('checkinMessageDlg')
+        text = self.wTree.get_object('checkinMessageTxt')
         buf = text.get_buffer()
         buf.set_text('<Checkin message>')
         response = wid.run()
@@ -47,35 +48,30 @@ class Gui(object):
         
     
     def DiffResultsDialog(self, results):
-        wid = self.wTree.get_widget('diffResultsDlg')
-        text = self.wTree.get_widget('diffResultsTxt')
-        buf = text.get_buffer()
-        text = ''
-        for r in results:
-            text += str(r)+'\n'
-        buf.set_text(text)
+        wid = self.wTree.get_object('diffResultsDlg')
+
+        diffsListStore = self.wTree.get_object('diffsListStore')
+        diffsListStore.clear()
+        for diff in results:
+            diffsListStore.append([str(diff)])
         response = wid.run()
         
         wid.hide()
         
         
     def ConflictSolvingDialog(self, merging, conflicts):
-        wid = self.wTree.get_widget('conflictSolvingDlg')
-        text = self.wTree.get_widget('conflictsResultsTxt')
-        buf = text.get_buffer()
-        text = 'MERGING CHANGES\n'
-        for m in merging:
-            text += str(m) +'\n'
-        text += 'CONFLICTING CHANGES\n'
-        for c in conflicts:
-            text += str(c) +'\n'
-        buf.set_text(text)
+        wid = self.wTree.get_object('conflictSolvingDlg')
+        conflictsListStore = self.wTree.get_object('conflictsListStore')
+        conflictsListStore.clear()
+        
+        for conflict in conflicts:
+            conflictsListStore.append([str(conflict)])
         response = wid.run()
         wid.hide()
             
     def CheckoutDialog(self, implementations):
-        wid = self.wTree.get_widget('checkoutDlg')
-        implComboBox = self.wTree.get_widget('implementationComboBox')
+        wid = self.wTree.get_object('checkoutDlg')
+        implComboBox = self.wTree.get_object('implementationComboBox')
         
         model = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
         for impl in implementations:
@@ -94,11 +90,11 @@ class Gui(object):
         wid.hide()
         if response == 0:
             impl = model[implComboBox.get_active()][1]
-            url = self.wTree.get_widget('checkoutRepoTxt').get_text()
-            directory = self.wTree.get_widget('checkoutDirChooser').get_filename()
-            checkRevision = self.wTree.get_widget('specifyRevisionCheck').get_active()
+            url = self.wTree.get_object('checkoutRepoTxt').get_text()
+            directory = self.wTree.get_object('checkoutDirChooser').get_filename()
+            checkRevision = self.wTree.get_object('specifyRevisionCheck').get_active()
             if checkRevision:
-                revision = self.wTree.get_widget('checkoutRevisionTxt').get_text()
+                revision = self.wTree.get_object('checkoutRevisionTxt').get_text()
             else:
                 revision = None
             return (impl, url, directory, revision)
