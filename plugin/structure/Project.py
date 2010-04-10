@@ -344,6 +344,8 @@ class CProject(object):
     # ----------------------    
     # destructive operations
     # ----------------------
+    
+    # raise exception on failure
     def AddObject(self, obj):
         if isinstance(obj, CElement):
             # pridaj element
@@ -353,8 +355,12 @@ class CProject(object):
         elif isinstance(obj, CConnection):
             # pridaj spojenie
             # najdi zdroj a ciel v aktualnom projekte, lebo nemusia to byt tie iste objekty
-            source = self.GetById(obj.GetSource().GetId()) or obj.GetSource()
-            dest = self.GetById(obj.GetDestination().GetId()) or obj.GetDestination()
+            source = self.GetById(obj.GetSource().GetId())
+            if source is None:
+                raise Exception
+            dest = self.GetById(obj.GetDestination().GetId())
+            if dest is None:
+                raise Exception
             # vytvor novy connection
             con = CConnection(obj.GetId(), obj.GetType(), source, dest)
             # skopiruj mu data
@@ -371,11 +377,14 @@ class CProject(object):
     def AddProjectTreeNode(self, treeNode):
         # dostan objekt (ten by mal byt aj tak novy)
         obj = self.GetById(treeNode.GetId())
+        if obj is None:
+            raise Exception
         # zisti rodica
         parent = self.GetProjectTreeNodeById(treeNode.GetParent().GetId())
         
         if parent is None:
-            parent = self.AddProjectTreeNode(treeNode.GetParent())
+#            parent = self.AddProjectTreeNode(treeNode.GetParent())
+            raise Exception
         
         if self.GetProjectTreeNodeById(obj.GetId()) is None:
         
@@ -397,8 +406,12 @@ class CProject(object):
         
         # najdi objekt, ktoremu to patri
         obj = self.GetById(view.GetObject().GetId())
+        if obj is None:
+            raise Exception
         # najdi diagram, do ktoreh sa ma pridat
         diagram = self.GetById(view.GetParentDiagram().GetId())
+        if diagram is None:
+            raise Exception
         
         if isinstance(obj, CElement):
             # ak je to element
@@ -473,11 +486,17 @@ class CProject(object):
     def MoveProjectTreeNode(self, node, oldParent, newParent):
         # najdi node
         node = self.GetProjectTreeNodeById(node.GetId())
+        if node is None:
+            raise Exception
         
         # najdi stareho rodica
         oldParent = self.GetProjectTreeNodeById(oldParent.GetId())
+        if oldParent is None:
+            raise Exception
         # najdi noveho rodica
         newParent = self.GetProjectTreeNodeById(newParent.GetId())
+        if newParent is None:
+            raise Exception
         
         if isinstance(node.GetObject(), CDiagram):
             # ak je to diagram

@@ -20,6 +20,8 @@ class CConnectionView(CBaseView):
         self.viewData = {'points':[], 'labels':[]}
         
     def AddPoint(self, point):
+        if type(point) == type({}):
+            point = (point['x'], point['y'])
         self.viewData['points'].append({'x':point[0], 'y':point[1]})
         
     def GetPoints(self):

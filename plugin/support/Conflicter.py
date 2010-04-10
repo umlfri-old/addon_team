@@ -80,6 +80,7 @@ class CConflicter(object):
             for c in result:
                 self.__VisualConflict(c, diff)
             
+        
         for diff in self.__baseWorkDiffer.dataDiff:
             if diff not in [c.GetBaseWorkDiff() for c in self.conflicting]:
                 self.__MergeDataDiff(diff)
@@ -87,7 +88,7 @@ class CConflicter(object):
         for diff in self.__baseWorkDiffer.projectTreeDiff:
             if diff not in [c.GetBaseWorkDiff() for c in self.conflicting]:
                 self.__MergeProjectTreeDiff(diff)
-                
+     
         for diff in self.__baseWorkDiffer.visualDiff:
             if diff not in [c.GetBaseWorkDiff() for c in self.conflicting]:
                 self.__MergeVisualDiff(diff)
@@ -103,6 +104,7 @@ class CConflicter(object):
         for diff in self.__baseNewDiffer.visualDiff:
             if diff not in [c.GetBaseNewDiff() for c in self.conflicting]:
                 self.__MergeVisualDiff(diff)
+                
         
         
     def __FindConflictsForDataDiff(self, diff, otherDiffer, project):
