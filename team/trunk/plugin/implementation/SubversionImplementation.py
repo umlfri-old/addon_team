@@ -64,11 +64,12 @@ class CSubversionImplementation(object):
         Run update and then rewrite file with contents in fileData
         Solve conflicts on implementation level
         '''
-        print 'trying svn update'
+        print 'trying svn update to revision'
         if revision is None:
             revnum = pysvn.Revision( pysvn.opt_revision_kind.head )
         else:
             revnum = pysvn.Revision( pysvn.opt_revision_kind.number, revision )
+        print revnum
         result = self.__client.update(self.__fileName, revnum)[0]
         
         status = self.__client.status(self.__fileName)[0]
@@ -78,6 +79,8 @@ class CSubversionImplementation(object):
             # vyries konflikt na urovni svn, aby tam potom nestrasili tie subory
             self.__SolveConflict()
         
+
+        print fileData
         f = open(self.__fileName, 'w')
         f.write(fileData)
         f.close()

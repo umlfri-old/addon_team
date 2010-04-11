@@ -357,10 +357,10 @@ class CProject(object):
             # najdi zdroj a ciel v aktualnom projekte, lebo nemusia to byt tie iste objekty
             source = self.GetById(obj.GetSource().GetId())
             if source is None:
-                raise Exception
+                raise Exception('Source not found')
             dest = self.GetById(obj.GetDestination().GetId())
             if dest is None:
-                raise Exception
+                raise Exception('Destination not found')
             # vytvor novy connection
             con = CConnection(obj.GetId(), obj.GetType(), source, dest)
             # skopiruj mu data
@@ -378,13 +378,13 @@ class CProject(object):
         # dostan objekt (ten by mal byt aj tak novy)
         obj = self.GetById(treeNode.GetId())
         if obj is None:
-            raise Exception
+            raise Exception('Project tree node object not found')
         # zisti rodica
         parent = self.GetProjectTreeNodeById(treeNode.GetParent().GetId())
         
         if parent is None:
 #            parent = self.AddProjectTreeNode(treeNode.GetParent())
-            raise Exception
+            raise Exception ('Project tree node parent not found')
         
         if self.GetProjectTreeNodeById(obj.GetId()) is None:
         
@@ -407,11 +407,11 @@ class CProject(object):
         # najdi objekt, ktoremu to patri
         obj = self.GetById(view.GetObject().GetId())
         if obj is None:
-            raise Exception
+            raise Exception ('View object not found')
         # najdi diagram, do ktoreh sa ma pridat
         diagram = self.GetById(view.GetParentDiagram().GetId())
         if diagram is None:
-            raise Exception
+            raise Exception ('Diagram for view not found')
         
         if isinstance(obj, CElement):
             # ak je to element
@@ -487,16 +487,16 @@ class CProject(object):
         # najdi node
         node = self.GetProjectTreeNodeById(node.GetId())
         if node is None:
-            raise Exception
+            raise Exception ('Project tree node not found')
         
         # najdi stareho rodica
         oldParent = self.GetProjectTreeNodeById(oldParent.GetId())
         if oldParent is None:
-            raise Exception
+            raise Exception ('Old parent not found')
         # najdi noveho rodica
         newParent = self.GetProjectTreeNodeById(newParent.GetId())
         if newParent is None:
-            raise Exception
+            raise Exception ('New parent not found')
         
         if isinstance(node.GetObject(), CDiagram):
             # ak je to diagram

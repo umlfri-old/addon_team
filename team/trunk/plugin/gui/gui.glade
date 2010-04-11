@@ -75,6 +75,26 @@
       <action-widget response="1">cancelBt</action-widget>
     </action-widgets>
   </object>
+  <object class="GtkListStore" id="diffsListStore">
+    <columns>
+      <!-- column-name diff_name -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="implementationListStore">
+    <columns>
+      <!-- column-name implementation_name -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="conflictsListStore">
+    <columns>
+      <!-- column-name conflict_name -->
+      <column type="gchararray"/>
+      <!-- column-name conflict -->
+      <column type="PyObject"/>
+    </columns>
+  </object>
   <object class="GtkDialog" id="diffResultsDlg">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Diff results</property>
@@ -157,9 +177,17 @@
           <object class="GtkVBox" id="vbox1">
             <property name="visible">True</property>
             <property name="orientation">vertical</property>
+            <property name="spacing">5</property>
             <child>
               <object class="GtkComboBox" id="implementationComboBox">
                 <property name="visible">True</property>
+                <property name="model">implementationListStore</property>
+                <child>
+                  <object class="GtkCellRendererText" id="implementationCell"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
               </object>
               <packing>
                 <property name="position">0</property>
@@ -282,7 +310,9 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="GtkTreeView" id="treeview1">
+              <object class="GtkTreeView" id="conflictsTreeView">
+                <property name="width_request">500</property>
+                <property name="height_request">400</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="model">conflictsListStore</property>
@@ -302,6 +332,41 @@
           </object>
           <packing>
             <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHBox" id="hbox2">
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkButton" id="accept_mine_btn">
+                <property name="label" translatable="yes">ACCEPT MINE</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_accept_mine_btn_clicked"/>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="accept_theirs_btn">
+                <property name="label" translatable="yes">ACCEPT THEIRS</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_accept_theirs_btn_clicked"/>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="position">2</property>
           </packing>
         </child>
         <child internal-child="action_area">
@@ -348,16 +413,112 @@
       <action-widget response="1">cancelBtn</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkListStore" id="conflictsListStore">
-    <columns>
-      <!-- column-name conflict_name -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="diffsListStore">
-    <columns>
-      <!-- column-name diff_name -->
-      <column type="gchararray"/>
-    </columns>
+  <object class="GtkDialog" id="chooseRevisionDlg">
+    <property name="border_width">5</property>
+    <property name="type_hint">normal</property>
+    <property name="has_separator">False</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox7">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkVBox" id="vbox2">
+            <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkRadioButton" id="headRevisionRadioBtn">
+                <property name="label" translatable="yes">HEAD</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="active">True</property>
+                <property name="draw_indicator">True</property>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHBox" id="hbox3">
+                <property name="visible">True</property>
+                <child>
+                  <object class="GtkRadioButton" id="specifyRevisionRadioBtn">
+                    <property name="label" translatable="yes">Specify Revision</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="active">True</property>
+                    <property name="draw_indicator">True</property>
+                    <property name="group">headRevisionRadioBtn</property>
+                  </object>
+                  <packing>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="revisionTxt">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">&#x25CF;</property>
+                    <signal name="grab_focus" handler="on_revisionTxt_grab_focus"/>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area7">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="o">
+                <property name="label" translatable="yes">OK</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="cancel">
+                <property name="label" translatable="yes">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">o</action-widget>
+      <action-widget response="1">cancel</action-widget>
+    </action-widgets>
   </object>
 </interface>
