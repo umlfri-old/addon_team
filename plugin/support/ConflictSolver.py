@@ -94,4 +94,4 @@ class CConflictSolver(object):
                         
                     elif c.GetBaseNewDiff() == baseNewDiff:
                         result.append(c)
-        return result
+        return list(set(result))

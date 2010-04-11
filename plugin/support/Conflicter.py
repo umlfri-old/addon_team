@@ -36,7 +36,11 @@ class CConflicter(object):
         
         self.__TryMerge()
         
-        
+    def GetConflicting(self):
+        return list(set(self.conflicting))
+    
+    def GetMerging(self):
+        return self.merging
         
     def __TryMerge(self):
         # pokus sa zakomponovat zmeny z new a worku do base
@@ -129,9 +133,9 @@ class CConflicter(object):
             # ak som upravoval datove zlozky
             for d in otherDiffer.GetDataDiff().get(EDiffActions.MODIFY, []):
                 # prejdi vsetky data diffy z druheho, kde som tiez upravoval
-                if d.GetDataPath() == diff.GetDataPath():
+                if d.GetDataPath() == diff.GetDataPath() and d.GetNewState() != diff.GetNewState():
                     # ak som upravoval na rovnakom mieste datovu zlozku
-                    print 'modyfing same data of elements'
+                    print 'modyfing same data of elements different way'
                     result.append(d)
 
 
