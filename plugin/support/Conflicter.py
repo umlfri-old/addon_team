@@ -253,7 +253,7 @@ class CConflicter(object):
     def __FindConflictsForVisualDiff(self, diff, otherDiffer, project):
         result = []
         # zisti vsetky elementy vo vztahu
-        print diff
+        #print diff
         
         relatedElements = []
         relatedViews = []

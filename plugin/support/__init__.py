@@ -10,3 +10,4 @@ from Conflict import CConflict
 from Conflicter import CConflicter
 from Updater import CUpdater
 from ConflictSolver import CConflictSolver
+from Merger import CMerger

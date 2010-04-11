@@ -22,15 +22,19 @@ class CMerger(object):
         return self.__project
         
     def MergeDiffs(self, diffs):
-        while len(diffs) > 0:
+        stopper = {}
+        while len(diffs) > 0 :
             diff  = diffs.pop()
+            if stopper.get(diff, -1) == len(diffs):
+                raise Exception('Unable to merge all diffs')
+            stopper[diff] = len(diffs)
             ok = self.MergeDiff(diff)
             if not ok:
                 diffs.insert(0, diff)
     
         
     def MergeDiff(self, diff):
-        
+        print 'merging',diff
         result = True
         element = diff.GetElement()
         try:
@@ -84,7 +88,8 @@ class CMerger(object):
                 elif isinstance(element, CBaseView):
                     print 'changing order view'
                     self.__project.ChangeOrderView(element, diff.GetPreviousState(), diff.GetNewState())
-        except:
+        except Exception, e:
+            print e
             result = False
         return result
         

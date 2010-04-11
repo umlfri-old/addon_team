@@ -3,6 +3,7 @@ Created on 10.4.2010
 
 @author: Peterko
 '''
+from DiffActions import EDiffActions
 
 class CConflictSolver(object):
     '''
@@ -20,7 +21,7 @@ class CConflictSolver(object):
         Constructor
         '''
         
-        self.__unresolvedConflicts = self.__conflicts
+        self.__unresolvedConflicts = conflicts
         self.__resolvedConflicts = []
         self.__merger = merger
         
@@ -37,12 +38,15 @@ class CConflictSolver(object):
         if conflict not in self.__resolvedConflicts:
         
             relatedConflicts = self.__FindRelatedConflicts(conflict)
-            
+            print 'found related conflicts'
+            for r in relatedConflicts:
+                print r
             
             if resolution == CConflictSolver.NO_CHANGE:
                 self.__MoveResolvedConflicts(relatedConflicts)
                 
             elif resolution == CConflictSolver.ACCEPT_MINE:
+                print 'accepting mine'
                 self.__MoveResolvedConflicts(relatedConflicts)
                 self.__merger.MergeDiffs([conflict.GetBaseWorkDiff() for conflict in relatedConflicts])
                 
@@ -59,6 +63,35 @@ class CConflictSolver(object):
         
     def __FindRelatedConflicts(self, conflict):
         #najdi vsetky zavisle konflikty
-        result = []
-        
+        result = [conflict]
+        print 'finding related for', conflict
+        baseWorkDiff = conflict.GetBaseWorkDiff()
+        baseNewDiff = conflict.GetBaseNewDiff()
+        print 'base work diff', baseWorkDiff
+        print 'base new diff', baseNewDiff
+        if baseWorkDiff.GetAction() == EDiffActions.DELETE or baseNewDiff.GetAction() == EDiffActions.DELETE:
+            for c in self.__unresolvedConflicts:
+                if c not in result:
+                    if c.GetBaseWorkDiff() == baseWorkDiff:
+                        result.append(c)
+                        print 'found', c
+                        
+                    elif c.GetBaseNewDiff() == baseNewDiff:
+                        result.append(c)
+                        print 'found', c
+                        
+            for c in self.__unresolvedConflicts:
+                if c not in result:
+                    if c.GetBaseWorkDiff() in [r.GetBaseWorkDiff() for r in result]:
+                        result.append(c)
+                    elif c.GetBaseNewDiff() in [r.GetBaseNewDiff() for r in result]:
+                        result.append(c)
+        else:
+            for c in self.__unresolvedConflicts:
+                if c not in result:
+                    if c.GetBaseWorkDiff() == baseWorkDiff:
+                        result.append(c)
+                        
+                    elif c.GetBaseNewDiff() == baseNewDiff:
+                        result.append(c)
         return result
