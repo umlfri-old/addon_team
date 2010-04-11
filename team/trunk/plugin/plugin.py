@@ -169,11 +169,8 @@ class Plugin(object):
         else:
             msg = self.gui.CheckinMessageDialog()
             if msg is not None:
-                result, rev = self.implementation.Checkin(msg)
-                if result=='ok':
-                    self.pluginGuiManager.DisplayWarning('Checked in revision: '+str(rev))
-                else:
-                    self.pluginGuiManager.DisplayWarning(str(rev))
+                result = self.implementation.Checkin(msg)
+                self.pluginGuiManager.DisplayWarning(result)
             
     def Revert(self, arg):
         project = self.__LoadProject()
@@ -200,7 +197,8 @@ class Plugin(object):
             # vyber implementaciu
             self.implementation = result[0]
             # sprav checkout
-            self.implementation.Checkout(result[1], result[2], result[3])
+            result = self.implementation.Checkout(result[1], result[2], result[3])
+            self.pluginGuiManager.DisplayWarning(result)
             
             
     def SolveConflicts(self, arg, fileName = None):
@@ -209,9 +207,13 @@ class Plugin(object):
         else:
             prFile = fileName
         if prFile is not None:
+            
             self.implementation = self.__ChooseCorrectImplementation(prFile)
+            
             triple = self.GetProjectConflictingTriple(prFile)
+            
             mergedProject = CProject(None, open(prFile).read())
+            
             resolved = self.SolveConflictTriple(triple, mergedProject)
             if resolved:
                 self.__Resolve(prFile, mergedProject.GetSaveXml())
@@ -231,7 +233,7 @@ class Plugin(object):
             workProject = CProject(None, triple[2])
             conflicter = CConflicter(newProject, oldProject, workProject)
             merger = CMerger(mergedProject)
-            conflictSolver = CConflictSolver(conflicter.conflicting, merger)
+            conflictSolver = CConflictSolver(conflicter.GetConflicting(), merger)
             return self.gui.ConflictSolvingDialog(conflictSolver)
                 
     def GetProjectConflictingTriple(self, fileName):

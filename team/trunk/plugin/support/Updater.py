@@ -48,7 +48,7 @@ class CUpdater(object):
         
         
         self.__conflicter = CConflicter(self.__updProject, self.__baseProject, self.__mineProject)
-        if len(self.__conflicter.conflicting) == 0:
+        if len(self.__conflicter.GetConflicting()) == 0:
             print 'no conflicts'
         else:
             # vytvor 3 subory v adresari s projektom, aby som vedel, ze je v konflikte
