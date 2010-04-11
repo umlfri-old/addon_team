@@ -30,3 +30,6 @@ class CConflict(object):
     
     def __str__(self):
         return self.__text+' | '+str(self.__baseWorkDiff)+' | '+str(self.__baseNewDiff)
+    
+    def __eq__(self, other):
+        return self.GetBaseNewDiff() == other.GetBaseNewDiff() and self.GetBaseWorkDiff() == other.GetBaseWorkDiff()

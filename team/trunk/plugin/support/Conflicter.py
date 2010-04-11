@@ -37,7 +37,8 @@ class CConflicter(object):
         self.__TryMerge()
         
     def GetConflicting(self):
-        return list(set(self.conflicting))
+        return self.conflicting
+        
     
     def GetMerging(self):
         return self.merging
@@ -183,7 +184,8 @@ class CConflicter(object):
     def __DataConflict(self, baseWorkDiff, baseNewDiff):
         print 'data conflict'
         conflict = CConflict(baseWorkDiff, baseNewDiff, 'Data Conflict')
-        self.conflicting.append(conflict)    
+        if conflict not in self.conflicting:
+            self.conflicting.append(conflict)    
         
     
     
@@ -252,7 +254,8 @@ class CConflicter(object):
     
     def __ProjectTreeConflict(self, baseWorkDiff, baseNewDiff):
         conflict = CConflict(baseWorkDiff, baseNewDiff, 'Project tree Conflict')
-        self.conflicting.append(conflict)    
+        if conflict not in self.conflicting:
+            self.conflicting.append(conflict)    
     
     def __FindConflictsForVisualDiff(self, diff, otherDiffer, project):
         result = []
@@ -352,7 +355,8 @@ class CConflicter(object):
     
     def __VisualConflict(self, baseWorkDiff, baseNewDiff):
         conflict = CConflict(baseWorkDiff, baseNewDiff, 'Visual Conflict')
-        self.conflicting.append(conflict)    
+        if conflict not in self.conflicting:
+            self.conflicting.append(conflict)    
         
         
         
