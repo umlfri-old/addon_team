@@ -168,9 +168,33 @@ class Plugin(object):
             self.pluginGuiManager.DisplayWarning('Unable to checkin: Project remains in conflict')
         else:
             msg = self.gui.CheckinMessageDialog()
-            if msg is not None:
-                result = self.implementation.Checkin(msg)
-                self.pluginGuiManager.DisplayWarning(result)
+            result = self.__Checkin(msg)
+            print 'OUT RESULT',result
+            self.pluginGuiManager.DisplayWarning(result)
+    
+    def __Checkin(self, msg):
+        if msg is not None:
+            username = None
+            password = None
+            repeats = 0
+            while 1:
+                repeats += 1
+                try:
+                    result = self.implementation.Checkin(msg, username, password)
+                    print result
+                    return result
+                except:
+                    if repeats > 3:
+                        return 'Authorization failed'
+                    username, password = self.gui.AuthDialog()
+                    if username is None or password is None:
+                        return 'Authorization failed'
+                     
+            
+        else:
+            return 'Message cannot be None'
+            
+                        
             
     def Revert(self, arg):
         project = self.__LoadProject()
@@ -223,7 +247,13 @@ class Plugin(object):
                 
      
     def ShowLogs(self, arg):
-        pass
+        project = self.__LoadProject()
+        if project is None:
+            self.interface.GetAdapter().DisplayWarning('No project loaded')
+            return
+        
+        
+        self.implementation.Log()
         
         
     def SolveConflictTriple(self, triple, mergedProject):    

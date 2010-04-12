@@ -134,7 +134,7 @@ class CConflicter(object):
             # ak som upravoval datove zlozky
             for d in otherDiffer.GetDataDiff().get(EDiffActions.MODIFY, []):
                 # prejdi vsetky data diffy z druheho, kde som tiez upravoval
-                if d.GetDataPath() == diff.GetDataPath() and d.GetNewState() != diff.GetNewState():
+                if d.GetElement() == diff.GetElement() and d.GetDataPath() == diff.GetDataPath() and d.GetNewState() != diff.GetNewState():
                     # ak som upravoval na rovnakom mieste datovu zlozku
                     print 'modyfing same data of elements different way'
                     result.append(d)
@@ -317,8 +317,8 @@ class CConflicter(object):
                     result.append(d)
                     
             for d in otherDiffer.GetVisualDiff().get(EDiffActions.MODIFY,[]):
-                if d.GetDataPath() == diff.GetDataPath():
-                    print 'modifying same visual data of views'
+                if d.GetElement() == diff.GetElement() and d.GetDataPath() == diff.GetDataPath() and d.GetNewState() != diff.GetNewState():
+                    print 'modifying same visual data of views differently'
                     result.append(d)
                     
             
