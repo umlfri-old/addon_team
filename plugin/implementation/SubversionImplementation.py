@@ -36,7 +36,7 @@ class CSubversionImplementation(object):
         command = [self.executable, 'cat', self.__fileName, '-r', rev]
         p = Popen(command, stdout=PIPE, stderr=PIPE)
         (out, err) = p.communicate()
-        print out, err
+        
         if p.returncode == 0:
             return out
         else:
@@ -159,7 +159,7 @@ class CSubversionImplementation(object):
                 elif sub.tag == 'msg':
                     d['message'] = sub.text
             result.append(d)
-        print result
+        
         return result
                     
     @classmethod    
