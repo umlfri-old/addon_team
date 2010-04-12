@@ -34,6 +34,12 @@ class CConnectionView(CBaseView):
     def GetLabels(self):
         return self.viewData['labels']
     
+    def GetSourceView(self):
+        return self.GetParentDiagram().GetViewById(self.GetObject().GetSource().GetId())
+    
+    def GetDestinationView(self):
+        return self.GetParentDiagram().GetViewById(self.GetObject().GetDestination().GetId())
+    
     def ModifyData(self, oldState, newState, path):
         print 'modifying connection view'
         print oldState, newState, path

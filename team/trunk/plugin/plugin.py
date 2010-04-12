@@ -119,7 +119,7 @@ class Plugin(object):
         fileData = self.implementation.GetFileData()
         myProject2 = CProject(None, fileData)
         
-        self.DiffProjects(myProject2, myProject1)
+        self.DiffProjects(myProject1, myProject2)
         
 #       
 
@@ -131,7 +131,7 @@ class Plugin(object):
     def DiffProjects(self, project1, project2):
         differ = CDiffer(project2, project1)
         res = differ.projectTreeDiff + differ.visualDiff + differ.dataDiff
-        self.gui.DiffResultsDialog(res)
+        self.gui.DiffResultsDialog(res, project1, project2)
             
     def Update(self, arg):
         project = self.__LoadApplicationProject()
