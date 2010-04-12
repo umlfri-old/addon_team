@@ -24,6 +24,9 @@ class CBase(object):
     def GetType(self):
         return self.__type
     
+    def GetName(self):
+        return self.data.get('name', self.__id)
+    
     def SetData(self, data):
         #print data
         self.data = data

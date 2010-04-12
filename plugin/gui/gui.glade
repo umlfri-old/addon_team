@@ -118,28 +118,64 @@
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow1">
+          <object class="GtkHBox" id="hbox4">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="hscrollbar_policy">automatic</property>
-            <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="GtkTreeView" id="treeview2">
+              <object class="GtkViewport" id="viewport1">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="model">diffsListStore</property>
+                <property name="resize_mode">queue</property>
                 <child>
-                  <object class="GtkTreeViewColumn" id="diffNameCol">
-                    <property name="title">Diff</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="diffcell"/>
-                      <attributes>
-                        <attribute name="text">0</attribute>
-                      </attributes>
-                    </child>
+                  <object class="GtkDrawingArea" id="diagramDiffDrawingArea">
+                    <property name="width_request">500</property>
+                    <property name="height_request">500</property>
+                    <property name="visible">True</property>
                   </object>
                 </child>
               </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkVBox" id="vbox3">
+                <property name="visible">True</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkScrolledWindow" id="scrolledwindow1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="hscrollbar_policy">automatic</property>
+                    <property name="vscrollbar_policy">automatic</property>
+                    <child>
+                      <object class="GtkTreeView" id="projectTreeTreeView">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="model">projectTreeTreeStore</property>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="treeNodeCol">
+                            <property name="title">Tree node</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="treeNodeCell"/>
+                              <attributes>
+                                <attribute name="text">0</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
             </child>
           </object>
           <packing>
@@ -305,6 +341,14 @@
       <action-widget response="0">ok</action-widget>
       <action-widget response="1">cancelB</action-widget>
     </action-widgets>
+  </object>
+  <object class="GtkTreeStore" id="projectTreeTreeStore">
+    <columns>
+      <!-- column-name treeNodeName -->
+      <column type="gchararray"/>
+      <!-- column-name treeNode -->
+      <column type="PyObject"/>
+    </columns>
   </object>
   <object class="GtkDialog" id="conflictSolvingDlg">
     <property name="border_width">5</property>
