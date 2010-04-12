@@ -498,15 +498,18 @@ class CProject(object):
         if newParent is None:
             raise Exception ('New parent not found')
         
-        if isinstance(node.GetObject(), CDiagram):
-            # ak je to diagram
-            newParent.AddChildDiagram(node)
-        elif isinstance(node.GetObject(), CElement):
-            # ak je to element
-            newParent.AddChildElement(node)
-        
-        # vymaz ho zo stareho rodica
-        oldParent.DeleteChild(node)
+        if newParent.GetChild(node.GetId()) is None:
+            # uz tam taky existuje, netreba tam dalsi
+            
+            if isinstance(node.GetObject(), CDiagram):
+                # ak je to diagram
+                newParent.AddChildDiagram(node)
+            elif isinstance(node.GetObject(), CElement):
+                # ak je to element
+                newParent.AddChildElement(node)
+            
+            # vymaz ho zo stareho rodica
+            oldParent.DeleteChild(node)
 
     def ChangeOrderTreeNode(self, node, oldOrder, newOrder):
         print 'CHANGE ORDER', node, oldOrder, newOrder

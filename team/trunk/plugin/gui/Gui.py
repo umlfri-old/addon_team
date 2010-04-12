@@ -150,6 +150,17 @@ class Gui(object):
         else:
             return None
     
+    def AuthDialog(self):
+        wid = self.wTree.get_object('authDlg')
+        response = wid.run()
+        wid.hide()
+        if response == 0:
+            username = self.wTree.get_object('usernameTxt').get_text()
+            password = self.wTree.get_object('passwordTxt').get_text()
+            return username, password
+        else:
+            return None, None
+    
     
     def on_accept_mine_btn_clicked(self, arg):
         self.__AcceptChanges(CConflictSolver.ACCEPT_MINE)

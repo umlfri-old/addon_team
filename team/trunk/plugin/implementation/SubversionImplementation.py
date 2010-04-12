@@ -4,10 +4,9 @@ Created on 30.3.2010
 @author: Peterko
 '''
 
-#import pysvn
-import os
-from subprocess import Popen, PIPE
 
+from subprocess import Popen, PIPE
+from lib.Depend.etree import etree
 
 
 
@@ -37,6 +36,7 @@ class CSubversionImplementation(object):
         command = [self.executable, 'cat', self.__fileName, '-r', rev]
         p = Popen(command, stdout=PIPE, stderr=PIPE)
         (out, err) = p.communicate()
+        print out, err
         if p.returncode == 0:
             return out
         else:
@@ -112,15 +112,26 @@ class CSubversionImplementation(object):
         p.communicate()
     
         
-    def Checkin(self, message=''):
+    def Checkin(self, message='', username = None, password=None):
         print 'trynig svn commit'
-        command = [self.executable, 'commit', self.__fileName, '-m', message]
+        if username is None or password is None:
+            command = [self.executable, 'commit', self.__fileName, '-m', message, '--non-interactive']
+        else :
+            command = [self.executable, 'commit', self.__fileName, '-m', message, '--non-interactive', '--username',username, '--password', password]
         p = Popen(command, stdout=PIPE, stderr=PIPE)
         (out, err) = p.communicate()
+        
         if p.returncode == 0:
+            # ak je vsetko v poriadku, vrat hlasku
             return out
         else:
-            return err
+            if err.lower().find('authorization') != -1:
+                # ak je problem s autentifikaciou vyhod vynimnku
+                raise Exception
+            else:
+                # inak vrat chybovu hlasku
+                print 'returning err'
+                return err
         
     def Revert(self):
         print 'trying svn revert'
@@ -129,9 +140,28 @@ class CSubversionImplementation(object):
         p.communicate()
     
     
-    
-    
-    
+    def Log(self):
+        print 'trying svn log'
+        command = [self.executable, 'log', self.__fileName, '--xml']
+        p = Popen(command, stdout=PIPE, stderr=PIPE)
+        (out, err) = p.communicate()
+        # out ma teraz xml
+        root = etree.XML(out)
+        result = []
+        for e in root:
+            d = {}
+            d['revision'] = e.get('revision')
+            for sub in e:
+                if sub.tag == 'author':
+                    d['author'] = sub.text
+                elif sub.tag == 'date':
+                    d['date'] = sub.text
+                elif sub.tag == 'msg':
+                    d['message'] = sub.text
+            result.append(d)
+        print result
+        return result
+                    
     @classmethod    
     def Checkout(self, url, directory, revision = None):
         print 'trying svn checkout'
