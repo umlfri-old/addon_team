@@ -31,7 +31,7 @@ class Plugin(object):
         self.pluginAdapter = self.interface.GetAdapter()
         self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
         
-        self.gui = Gui()
+        self.gui = Gui(self)
         
         
         
@@ -69,14 +69,14 @@ class Plugin(object):
         self.pluginAdapter = self.interface.GetAdapter()
         self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
         if self.__CanRunPlugin():
-            fileName = self.__LoadProject().GetFileName()
+            fileName = self.__LoadApplicationProject().GetFileName()
             # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
             self.implementation = self.__ChooseCorrectImplementation(fileName)
   
       
           
     def __CanRunPlugin(self):
-        p = self.__LoadProject()
+        p = self.__LoadApplicationProject()
         if p is None:
             return False
         elif p.GetFileName() is None:
@@ -100,7 +100,7 @@ class Plugin(object):
         return result
     
     
-    def __LoadProject(self):
+    def __LoadApplicationProject(self):
         '''
         Load project
         '''
@@ -109,7 +109,7 @@ class Plugin(object):
     
     def DiffProject(self, arg):
         
-        project = self.__LoadProject()
+        project = self.__LoadApplicationProject()
         if project is None:
             self.pluginGuiManager.DisplayWarning('No project loaded')
             return
@@ -119,13 +119,22 @@ class Plugin(object):
         fileData = self.implementation.GetFileData()
         myProject2 = CProject(None, fileData)
         
-        differ = CDiffer(myProject2, myProject1)
+        self.DiffProjects(myProject2, myProject1)
+        
+#       
+
+    def LoadProject(self, rev = None):
+        data = self.implementation.GetFileData(rev)
+        project = CProject(None, data)
+        return project
+
+    def DiffProjects(self, project1, project2):
+        differ = CDiffer(project2, project1)
         res = differ.projectTreeDiff + differ.visualDiff + differ.dataDiff
         self.gui.DiffResultsDialog(res)
-#       
             
     def Update(self, arg):
-        project = self.__LoadProject()
+        project = self.__LoadApplicationProject()
         
         if project is None:
             self.pluginGuiManager.DisplayWarning('No project loaded')
@@ -158,7 +167,7 @@ class Plugin(object):
                 self.pluginGuiManager.DisplayWarning('Updated to revision: '+str(rev))
     
     def Checkin(self, arg):
-        project = self.__LoadProject()
+        project = self.__LoadApplicationProject()
         if project is None:
             self.pluginGuiManager.DisplayWarning('No project loaded')
             return
@@ -197,7 +206,7 @@ class Plugin(object):
                         
             
     def Revert(self, arg):
-        project = self.__LoadProject()
+        project = self.__LoadApplicationProject()
         if project is None:
             self.interface.GetAdapter().DisplayWarning('No project loaded')
             return
@@ -247,13 +256,14 @@ class Plugin(object):
                 
      
     def ShowLogs(self, arg):
-        project = self.__LoadProject()
+        project = self.__LoadApplicationProject()
         if project is None:
             self.interface.GetAdapter().DisplayWarning('No project loaded')
             return
         
         
-        self.implementation.Log()
+        logs = self.implementation.Log()
+        self.gui.LogsDialog(logs)
         
         
     def SolveConflictTriple(self, triple, mergedProject):    

@@ -15,19 +15,20 @@ class Gui(object):
     '''
     
 
-    def __init__(self):
+    def __init__(self, plugin):
         '''
         Constructor
         '''
-        self.__conflictSolver = None
+        self.plugin = plugin
         #print 'constructing'
         self.wTree = gtk.Builder()
         self.wTree.add_from_file( "./share/addons/team/plugin/Gui/gui.glade" )
         
         dic = { 
-            'on_accept_mine_btn_clicked': self.on_accept_mine_btn_clicked,
-            'on_accept_theirs_btn_clicked': self.on_accept_theirs_btn_clicked,
-            'on_revisionTxt_grab_focus': self.on_revisionTxt_grab_focus
+            
+            'on_revisionTxt_grab_focus': self.on_revisionTxt_grab_focus,
+            'on_logsTreeView_button_press_event' : self.on_logsTreeView_button_press_event,
+            'on_diffRevisionsMenu_activate' : self.on_diffRevisionsMenu_activate
         }
         
         self.wTree.connect_signals( dic )
@@ -64,13 +65,14 @@ class Gui(object):
         
         
     def ConflictSolvingDialog(self, conflictSolver):
-        self.__conflictSolver = conflictSolver
         wid = self.wTree.get_object('conflictSolvingDlg')
-        self.__UpdateConflictsTreeView()
+        self.__UpdateConflictsTreeView(conflictSolver)
+        self.wTree.get_object('acceptMineBtn').connect('clicked', self.on_accept_mine_btn_clicked, conflictSolver)
+        self.wTree.get_object('acceptTheirsBtn').connect('clicked', self.on_accept_theirs_btn_clicked, conflictSolver)
         while 1:
             response = wid.run()
             if response == 0:
-                if len(self.__conflictSolver.GetUnresolvedConflicts()) > 0:
+                if len(conflictSolver.GetUnresolvedConflicts()) > 0:
                     self.ShowError(wid, 'You must resolve all conflicts')
                 else:
                     wid.hide()
@@ -161,34 +163,68 @@ class Gui(object):
         else:
             return None, None
     
+    def LogsDialog(self, logs):
+        wid = self.wTree.get_object('logsDlg')
+        logsListStore = self.wTree.get_object('logsListStore')
+        logsListStore.clear()
+        logsTreeView = self.wTree.get_object('logsTreeView')
+        logsTreeView.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
+        for log in logs:
+            logsListStore.append([log['revision'], log['author'], log['date'], log['message']])
+        response = wid.run()
+        wid.hide()
     
-    def on_accept_mine_btn_clicked(self, arg):
-        self.__AcceptChanges(CConflictSolver.ACCEPT_MINE)
+    
+    def on_accept_mine_btn_clicked(self, wid, conflictSolver):
+        print 'accepting mine'
+        self.__AcceptChanges(CConflictSolver.ACCEPT_MINE, conflictSolver)
                 
-    def on_accept_theirs_btn_clicked(self, arg):
-        self.__AcceptChanges(CConflictSolver.ACCEPT_THEIRS)
+    def on_accept_theirs_btn_clicked(self, wid, conflictSolver):
+        print 'acceptin theirs'
+        self.__AcceptChanges(CConflictSolver.ACCEPT_THEIRS, conflictSolver)
     
     def on_revisionTxt_grab_focus(self, arg):
         print 'grab focus'
         radio  = self.wTree.get_object('specifyRevisionRadioBtn')
         radio.set_active(True)
     
-    def __AcceptChanges(self, solution):
-        if self.__conflictSolver is not None:
+    def on_logsTreeView_button_press_event(self, widget, event):
+        if event.button == 3:
+            logsPopupMenu = self.wTree.get_object('logsPopupMenu')
+            logsPopupMenu.popup(None, None, None, event.button, event.time, None)
+            return True
+    
+    def on_diffRevisionsMenu_activate(self, arg):
+        logsTreeView = self.wTree.get_object('logsTreeView')
+        selection = logsTreeView.get_selection()
+        (model, pathlist) = selection.get_selected_rows()
+        if len(pathlist) == 2:
+            iter1 = model.get_iter(pathlist[0])
+            iter2 = model.get_iter(pathlist[1])
+            rev1 = model.get_value(iter1, 0)
+            rev2 = model.get_value(iter2, 0)
+            
+            project1 = self.plugin.LoadProject(rev1)
+            project2 = self.plugin.LoadProject(rev2)
+            self.plugin.DiffProjects(project1, project2)
+        
+    
+    def __AcceptChanges(self, solution, conflictSolver):
+        if conflictSolver is not None:
             conflictsTreeView = self.wTree.get_object('conflictsTreeView')
             treeselection = conflictsTreeView.get_selection()
             (model, iter) = treeselection.get_selected()
             if iter is not None:
                 conflict = model.get_value(iter, 1)
-                self.__conflictSolver.ResolveConflict(conflict, solution)
-                self.__UpdateConflictsTreeView()
+                conflictSolver.ResolveConflict(conflict, solution)
+                self.__UpdateConflictsTreeView(conflictSolver)
                 
-    def __UpdateConflictsTreeView(self):
-        if self.__conflictSolver is not None:
+    def __UpdateConflictsTreeView(self, conflictSolver):
+        if conflictSolver is not None:
             conflictsListStore = self.wTree.get_object('conflictsListStore')
             conflictsListStore.clear()
             
-            for conflict in self.__conflictSolver.GetUnresolvedConflicts():
+            for conflict in conflictSolver.GetUnresolvedConflicts():
                 conflictsListStore.append([str(conflict), conflict])
     
     def ShowError(self, parent, message):
