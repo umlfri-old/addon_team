@@ -5,7 +5,6 @@ Created on 27.2.2010
 '''
 
 from lib.Addons.Plugin.Client.Interface import CInterface
-from lib.Exceptions import *
 from gui import Gui
 import os
 from structure import *
@@ -60,14 +59,14 @@ class Plugin(object):
             self.ProjectOpened()
                     
             
-        except PluginInvalidParameter:
+        except :
             pass
         
       
       
     def ProjectOpened(self):
-        self.pluginAdapter = self.interface.GetAdapter()
-        self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
+#        self.pluginAdapter = self.interface.GetAdapter()
+#        self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
         if self.__CanRunPlugin():
             fileName = self.__LoadApplicationProject().GetFileName()
             # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)

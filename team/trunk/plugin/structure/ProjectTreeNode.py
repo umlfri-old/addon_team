@@ -4,6 +4,9 @@ Created on 14.3.2010
 @author: Peterko
 '''
 
+from Element import CElement
+from Diagram import CDiagram
+
 class CProjectTreeNode(object):
     '''
     classdocs
@@ -22,15 +25,38 @@ class CProjectTreeNode(object):
         self.__objectRepresentation = objectRepresentation
         self.__parent = parent
         self.__index = 0
+        self.__absoluteIndex = 0
     
-    def SetIndex(self, index):
-        self.__index = index
+#    def SetIndex(self, index):
+#        self.__index = index
         
     def GetIndex(self):
-        return self.__index
+        if self.__parent is not None:
+            if isinstance(self.__objectRepresentation, CElement):
+                return self.__parent.GetChildElementsOrdered().index(self)
+            elif isinstance(self.__objectRepresentation, CElement):
+                return self.__parent.GetChildDiagramsOrdered().index(self)
+        else:
+            return 0   
+#    def SetAbsoluteIndex(self, index):
+#        self.__absoluteIndex = index
+    
+    def GetAbsoluteIndex(self):
+        if self.__parent is not None:
+            return self.__parent.GetChildsOrdered().index(self)
+        else:
+            return 0
+        
         
     def GetId(self):
         return self.__id
+    
+    def AddChild(self, child, index = None):
+        if isinstance(child.GetObject(), CElement):
+            self.AddChildElement(child, index)
+        elif isinstance(child.GetObject(), CDiagram):
+            self.AddChildDiagram(child, index)
+    
     
     def AddChildElement(self, child, index = None):
         self.__childElements[child.GetId()] = child
@@ -38,7 +64,7 @@ class CProjectTreeNode(object):
             self.__childElementsOrdered.insert(index, child)
         else:
             self.__childElementsOrdered.append(child)
-        child.SetIndex(index or len(self.__childElementsOrdered)-1)
+        
     
     def AddChildDiagram(self, child, index = None):
         self.__childDiagrams[child.GetId()] = child
@@ -47,7 +73,7 @@ class CProjectTreeNode(object):
         else:
             self.__childDiagramsOrdered.append(child)
             
-        child.SetIndex(index or len(self.__childDiagramsOrdered)-1)
+        
         
     def GetChild(self, id):
         return self.__childElements.get(id) or self.__childDiagrams.get(id)
@@ -63,6 +89,12 @@ class CProjectTreeNode(object):
     def GetChildDiagrams(self):
         return self.__childDiagramsOrdered
     
+    
+    def GetChildElementsOrdered(self):
+        return self.__childElementsOrdered
+    
+    def GetChildDiagramsOrdered(self):
+        return self.__childDiagramsOrdered
     
     def GetChildsOrdered(self):
         return self.__childDiagramsOrdered + self.__childElementsOrdered

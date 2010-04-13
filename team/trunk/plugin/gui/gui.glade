@@ -107,6 +107,16 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkTreeStore" id="projectTreeTreeStore">
+    <columns>
+      <!-- column-name treeNodeName -->
+      <column type="gchararray"/>
+      <!-- column-name treeNodeDiffIcon -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name treeNode -->
+      <column type="PyObject"/>
+    </columns>
+  </object>
   <object class="GtkDialog" id="diffResultsDlg">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Diff results</property>
@@ -158,6 +168,12 @@
                               <object class="GtkCellRendererText" id="treeNodeCell"/>
                               <attributes>
                                 <attribute name="text">0</attribute>
+                              </attributes>
+                            </child>
+                            <child>
+                              <object class="GtkCellRendererPixbuf" id="treeNodeDiffIcon"/>
+                              <attributes>
+                                <attribute name="pixbuf">1</attribute>
                               </attributes>
                             </child>
                           </object>
@@ -341,14 +357,6 @@
       <action-widget response="0">ok</action-widget>
       <action-widget response="1">cancelB</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkTreeStore" id="projectTreeTreeStore">
-    <columns>
-      <!-- column-name treeNodeName -->
-      <column type="gchararray"/>
-      <!-- column-name treeNode -->
-      <column type="PyObject"/>
-    </columns>
   </object>
   <object class="GtkDialog" id="conflictSolvingDlg">
     <property name="border_width">5</property>
