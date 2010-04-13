@@ -87,12 +87,14 @@ class CSubversionImplementation(object):
         p = Popen(command, stdout=PIPE, stderr=PIPE)
         (result, err) = p.communicate()
         
-        command2 = [self.executable, 'status', self.__fileName]
+        command2 = [self.executable, 'status', self.__fileName, '--xml']
         p2 = Popen(command2, stdout=PIPE, stderr=PIPE)
         (out, err2) = p2.communicate()
         
-        if len(out) > 0:
-            if out[0] == 'C':
+        r = etree.XML(out)
+        wcStatus = r.find('../wc-status')
+        if wcStatus is not None:
+            if wcStatus.get('item') == 'conflicted':
                 # ak je v konflikte
                 # vyries konflikt na urovni svn, aby tam potom nestrasili tie subory
                 self.__SolveConflict()

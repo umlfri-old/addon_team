@@ -8,7 +8,7 @@ from Element import CElement
 from Connection import CConnection
 from ElementView import CElementView
 from ConnectionView import CConnectionView
-from lib.Depend.etree import etree
+from imports.etree import etree
 from lib.consts import UMLPROJECT_NAMESPACE
 from lib.lib import Indent
 from ProjectTreeNode import CProjectTreeNode
@@ -65,7 +65,7 @@ class CProject(object):
                 if treeParent is None:
                     self.__projectTreeRoot = newProjectTreeNode
                 else :
-                    treeParent.AddChildElement(newProjectTreeNode)
+                    treeParent.AddChild(newProjectTreeNode)
                 childs = root.GetChilds()
                 diagrams = root.GetDiagrams()
                 connections = root.GetConnections()
@@ -79,7 +79,7 @@ class CProject(object):
                 newDiagram = CDiagram(id, root.GetType())
                 newDiagram.SetData(root.GetSaveInfo())
                 newProjectTreeNode = CProjectTreeNode(newDiagram, treeParent)
-                treeParent.AddChildDiagram(newProjectTreeNode)
+                treeParent.AddChild(newProjectTreeNode)
                 visualElements = root.GetElements()
                 for ve in visualElements:
                     # nacitaj vizualne elementy
@@ -214,14 +214,14 @@ class CProject(object):
             if (element.tag == UMLPROJECT_NAMESPACE+'node'):
                 id = element.get('id')
                 newProjectTreeNode = CProjectTreeNode(self.GetById(id), parent)
-                parent.AddChildElement(newProjectTreeNode)
+                parent.AddChild(newProjectTreeNode)
                 for child in self.__GetNodeChilds(element):
                     self.__CreateProjectTree(child, newProjectTreeNode)
             elif (element.tag == UMLPROJECT_NAMESPACE+'diagram'):
                 id = element.get('id')
                 self.__LoadDiagram(element)
                 newProjectTreeNode = CProjectTreeNode(self.GetById(id), parent)
-                parent.AddChildDiagram(newProjectTreeNode)
+                parent.AddChild(newProjectTreeNode)
                  
     
     def __GetNodeChilds(self, element):
@@ -391,14 +391,9 @@ class CProject(object):
         
             # vytvor novy node
             newProjectTreeNode = CProjectTreeNode(obj, parent)
+            parent.AddChild(newProjectTreeNode, treeNode.GetIndex())
             
-            if isinstance(obj, CDiagram):
-                # ak je to diagram, pridaj diagram
-                parent.AddChildDiagram(newProjectTreeNode, treeNode.GetIndex())
-                
-            elif isinstance(obj, CElement):
-                # ak je to element, pridaj element
-                parent.AddChildElement(newProjectTreeNode, treeNode.GetIndex())
+            
             
             return newProjectTreeNode
         
@@ -500,13 +495,8 @@ class CProject(object):
         
         if newParent.GetChild(node.GetId()) is None:
             # uz tam taky existuje, netreba tam dalsi
+            newParent.AddChild(node)
             
-            if isinstance(node.GetObject(), CDiagram):
-                # ak je to diagram
-                newParent.AddChildDiagram(node)
-            elif isinstance(node.GetObject(), CElement):
-                # ak je to element
-                newParent.AddChildElement(node)
             
             # vymaz ho zo stareho rodica
             oldParent.DeleteChild(node)

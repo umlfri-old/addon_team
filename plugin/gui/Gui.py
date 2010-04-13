@@ -4,13 +4,14 @@ Created on 28.3.2010
 @author: Peterko
 '''
 
-from lib.Depend.gtk2 import gtk, cairo
-from lib.Depend.gtk2 import pygtk
+from imports.gtk2 import gtk, cairo
+from imports.gtk2 import pygtk
 from lib.consts import PROJECT_CLEARXML_EXTENSION
 from support import CConflictSolver
 from structure import *
 import math
-from DiffDrawing import CDiffDrawing
+import os.path
+from DiffDialog import CDiffDialog
 
 class Gui(object):
     '''
@@ -25,7 +26,8 @@ class Gui(object):
         self.plugin = plugin
         #print 'constructing'
         self.wTree = gtk.Builder()
-        self.wTree.add_from_file( "./share/addons/team/plugin/Gui/gui.glade" )
+        gladeFile = os.path.join(os.path.dirname(__file__), "gui.glade")
+        self.wTree.add_from_file( gladeFile )
         
         dic = { 
             
@@ -56,74 +58,11 @@ class Gui(object):
         
     
     def DiffResultsDialog(self, results, projectNew, projectOld):
-        wid = self.wTree.get_object('diffResultsDlg')
-
-#        diffsListStore = self.wTree.get_object('diffsListStore')
-#        diffsListStore.clear()
-#        for diff in results:
-#            diffsListStore.append([str(diff)])
-
-        self.__UpdateProjectTreeDiffTreeStore(results, projectNew, projectOld)
-        response = wid.run()
-        wid.hide()
-    
-    def __UpdateDiagramDiffDrawingArea(self, newDiagram, oldDiagram, results):
-        area = self.wTree.get_object('diagramDiffDrawingArea')
-        diffDrawing = CDiffDrawing(newDiagram, oldDiagram, results)
-        print 'updating diagram diff'
-        diffDrawing.Paint(area)
-        area.connect('configure-event', self.drawingareaconfigure, diffDrawing)
-        area.connect('expose-event', self.drawingareaexpose, diffDrawing)
-    
-    def __UpdateProjectTreeDiffTreeStore(self, results, projectNew, projectOld):
-        oldTreeRoot = projectOld.GetProjectTreeRoot()
-        newTreeRoot = projectNew.GetProjectTreeRoot()
-        treeModel = self.wTree.get_object('projectTreeTreeStore')
-        treeModel.clear()
-        self.__InsertNodes(oldTreeRoot, treeModel, None)
-        self.__InsertNodes(newTreeRoot, treeModel, None)
-        self.wTree.get_object('projectTreeTreeView').connect('cursor-changed', self.on_project_tree_view_cursor_changed, projectNew, projectOld, results)
+        diffDialog = CDiffDialog(self.wTree, results, projectNew, projectOld)
         
         
-    def __InsertNodes(self, node, model, iter):
-        iter = model.append(iter, [node.GetObject().GetName(), node])
-        for child in node.GetChildsOrdered():
-            self.__InsertNodes(child, model, iter)
-            
-    def on_project_tree_view_cursor_changed(self, treeView, projectNew, projectOld, results):
-        sel = treeView.get_selection()
-        (model, iter) = sel.get_selected()
-        node = model.get_value(iter, 1)
-        print 'cursor changed'
-        if isinstance(node.GetObject(), CDiagram):
-            
-            newDiagram = projectNew.GetById(node.GetId())
-            
-            oldDiagram = projectOld.GetById(node.GetId())
-            
-            self.__UpdateDiagramDiffDrawingArea(newDiagram, oldDiagram, results)
     
-    def drawingareaconfigure(self, widget, event, diffDrawing):
-        print 'drawin area configure'
-        diffDrawing.Paint(widget)
-        return True
     
-    def drawingareaexpose(self, widget, event, diffDrawing):
-        print 'drawin area expose'
-        diffDrawing.Paint(widget)
-        return False
-    
-    def __draw(self, widget, context):
-        rect = widget.get_allocation()
-        x = rect.x + rect.width / 2
-        y = rect.y + rect.height / 2
-        
-        radius = min(rect.width / 2, rect.height / 2) - 5
-        context.arc(x, y, radius, 0, 2 * math.pi)
-        context.set_source_rgb(1, 1, 1)
-        context.fill_preserve()
-        context.set_source_rgb(0, 0, 0)
-        context.stroke()
         
     def ConflictSolvingDialog(self, conflictSolver):
         wid = self.wTree.get_object('conflictSolvingDlg')
