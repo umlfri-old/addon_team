@@ -96,6 +96,8 @@ class CDataDiffTreeView(object):
                     self.__Append(diff.GetNewState(), iter, icon)
                 else:
                     self.__Append({model.iter_n_children(iter):diff.GetNewState()}, iter, icon)
+                    
+                self.__MarkParentAsModified(model.get_path(iter), True)
                 return True
                 
         
@@ -142,6 +144,8 @@ class CDataDiffTreeView(object):
             
                 model.set_value(it, 2, icon)
                 
+                self.__MarkParentAsModified(model.get_path(it))
+                
                 model.foreach(func2, model.get_path(it))
                 
                 
@@ -175,6 +179,7 @@ class CDataDiffTreeView(object):
                 icon = gtk.gdk.pixbuf_new_from_file(iconfile)
                 model.set_value(iter, 1, diff.GetNewState().values()[0])
                 model.set_value(iter, 2, icon)
+                self.__MarkParentAsModified(model.get_path(iter))
         
         print diff
         self.model.foreach(func, diff)    
@@ -183,9 +188,16 @@ class CDataDiffTreeView(object):
         
         
         
-        
-        
-        
+    def __MarkParentAsModified(self, path, include = False):
+        if include == False:
+            path = path[0:-1]
+        for i,x in enumerate(path):
+            newpath = path[0:i+1]
+            newiter = self.model.get_iter(newpath)
+            iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"modify.png")
+            icon = gtk.gdk.pixbuf_new_from_file(iconfile)
+            self.model.set_value(newiter, 2, icon)
+    
         
         
         
