@@ -19,6 +19,8 @@ class CSubversionImplementation(object):
     
     executable = 'svn'
     
+    supported = ['checkin', 'checkout', 'diff', 'log', 'update', 'revert']
+    
 
     def __init__(self, fileName):
         '''

@@ -13,6 +13,9 @@ class CDummyImplementation(object):
     
     description = 'Dummy'
 
+
+    supported = ['diff']
+    
     def __init__(self, fileName):
         '''
         Constructor
@@ -37,29 +40,31 @@ class CDummyImplementation(object):
     def GetFileName(self):
         return self.__fileName
     
+    def BeforeUpdate(self, revision=None):
+        
+        raise Exception('Not implemented in dummy implementation')
     
-    def Update(self, revision = None):
-        print 'Dummy implementation update'
-        pass
     
-    def Checkin(self, message = ''):
-        print 'Dummy implementation commit'
-        pass
+    def Update(self, fileData, revision=None):
+        
+        raise Exception('Not implemented in dummy implementation')
+    
+    def Checkin(self, message='', username = None, password=None):
+        
+        raise Exception('Not implemented in dummy implementation')
     
     @classmethod
     def Checkout(self, url, directory, revision = None):
-        print 'Dummy implementation checkout'
-        pass
+        
+        raise Exception('Not implemented in dummy implementation')
     
     def Revert(self):
-        print 'Dummy implementation revert'
-        pass
+        
+        raise Exception('Not implemented in dummy implementation')
     
-    def Log(self, revisionStart = None, revisionEnd = None):
-        print 'Dummy implementation log'
-        pass
+    def Log(self):
+        
+        raise Exception('Not implemented in dummy implementation')
     
-    def Status(self):
-        print 'Dummy implementation status'
-        pass
+    
     
