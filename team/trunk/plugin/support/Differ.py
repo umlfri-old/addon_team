@@ -357,3 +357,9 @@ class CDiffer(object):
     
     def GetVisualDiff(self):
         return self.__DiffListToDict(self.visualDiff)
+    
+    def GetOldProject(self):
+        return self.__project1
+    
+    def GetNewProject(self):
+        return self.__project2

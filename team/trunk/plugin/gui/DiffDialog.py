@@ -8,6 +8,7 @@ from structure import *
 from DiagramDrawing import CDiagramDrawing
 from DiffDrawing import CDiffDrawing
 from ProjectTreeDiffTreeView import CProjectTreeDiffTreeView
+from DataDiffTreeView import CDataDiffTreeView
 import os.path
 
 class CDiffDialog(object):
@@ -16,14 +17,15 @@ class CDiffDialog(object):
     '''
 
 
-    def __init__(self, wTree, results, projectNew, projectOld):
+    def __init__(self, wTree, differ):
         '''
         Constructor
         '''
         self.wTree = wTree
-        self.results = results
-        self.projectNew = projectNew
-        self.projectOld = projectOld
+        self.differ = differ
+#        self.results = results
+#        self.projectNew = projectNew
+#        self.projectOld = projectOld
         self.dialog = self.wTree.get_object('diffResultsDlg')
         self.drawingArea =self.wTree.get_object('diagramDiffDrawingArea')
         self.newDiagram = None
@@ -33,7 +35,7 @@ class CDiffDialog(object):
         
         self.drawingArea.connect('configure-event', self.drawingareaconfigure)
         self.drawingArea.connect('expose-event', self.drawingareaexpose)
-        
+        self.wTree.get_object('dataDiffTreeStore').clear()
         
         
         
@@ -54,13 +56,12 @@ class CDiffDialog(object):
         oldDiagramDrawing.Paint(self.context)
         newDiagramDrawing = CDiagramDrawing(self.newDiagram)
         newDiagramDrawing.Paint(self.context)
-        for r in self.results:
-            if isinstance(r.GetElement(), CBaseView):
-                if (self.oldDiagram or self.newDiagram) is not None:
-                    if r.GetElement().GetParentDiagram() == (self.oldDiagram or self.newDiagram):
-                        diffDrawing = CDiffDrawing(self.context, r, self.oldDiagram, self.newDiagram)
-                        print 'drawing diff'
-                        diffDrawing.Paint()
+        for r in self.differ.visualDiff:
+            if (self.oldDiagram or self.newDiagram) is not None:
+                if r.GetElement().GetParentDiagram() == (self.oldDiagram or self.newDiagram):
+                    diffDrawing = CDiffDrawing(self.context, r, self.oldDiagram, self.newDiagram)
+                    print 'drawing diff'
+                    diffDrawing.Paint()
         
         
         self.drawingArea.window.draw_drawable(self.drawingArea.get_style().fg_gc[gtk.STATE_NORMAL],
@@ -89,25 +90,36 @@ class CDiffDialog(object):
         
     def __UpdateProjectTreeDiffTreeStore(self):
         treeModel = self.wTree.get_object('projectTreeTreeStore')
-        ptdtv = CProjectTreeDiffTreeView(self.projectOld, self.projectNew, self.results, treeModel)
+        ptdtv = CProjectTreeDiffTreeView(self.differ, treeModel)
         
         
         self.wTree.get_object('projectTreeTreeView').connect('cursor-changed', self.on_project_tree_view_cursor_changed)
         
+    
+    def __UpdateDataDiffTreeView(self, oldObj, newObj):
+        print 'updating data diff tree view'
+        treeModel = self.wTree.get_object('dataDiffTreeStore')
+        ddtv = CDataDiffTreeView(oldObj, newObj, self.differ, treeModel)
         
     
             
     def on_project_tree_view_cursor_changed(self, treeView):
         sel = treeView.get_selection()
         (model, iter) = sel.get_selected()
-        node = model.get_value(iter, 2)
+        node = model.get_value(iter, 3)
         print 'cursor changed'
         if isinstance(node.GetObject(), CDiagram):
             
-            self.newDiagram = self.projectNew.GetById(node.GetId())
+            self.newDiagram = self.differ.GetNewProject().GetById(node.GetId())
             
-            self.oldDiagram = self.projectOld.GetById(node.GetId())
+            self.oldDiagram = self.differ.GetOldProject().GetById(node.GetId())
             
             self.__UpdateDiagramDiffDrawingArea()
-    
-    
+        
+        obj = node.GetObject()
+        oldObj = self.differ.GetOldProject().GetById(obj.GetId())
+        newObj = self.differ.GetNewProject().GetById(obj.GetId())
+        self.__UpdateDataDiffTreeView(oldObj, newObj)
+        
+        
+        

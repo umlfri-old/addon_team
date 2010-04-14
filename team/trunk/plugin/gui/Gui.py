@@ -57,8 +57,8 @@ class Gui(object):
         
         
     
-    def DiffResultsDialog(self, results, projectNew, projectOld):
-        diffDialog = CDiffDialog(self.wTree, results, projectNew, projectOld)
+    def DiffResultsDialog(self, differ):
+        diffDialog = CDiffDialog(self.wTree, differ)
         
         
     

@@ -14,57 +14,94 @@ class CProjectTreeDiffTreeView(object):
     '''
 
 
-    def __init__(self, projectOld, projectNew, diffs, model):
+    def __init__(self, differ, model):
         '''
         Constructor
         '''
-        self.projectOld = projectOld
-        self.projectNew = projectNew
-        self.diffs = diffs[:]
+        self.differ = differ
+        self.projectOld = self.differ.GetOldProject()
+        self.projectNew = self.differ.GetNewProject()
+        #self.diffs = diffs[:]
         self.model = model
+        self.connectionsIter = None
         self.Create()
         
     def Create(self):
         self.model.clear()
         self.__Append(self.projectOld.GetProjectTreeRoot())
+        self.__AppendConnections()
         self.__ShowDiffs()
         
-    def __Append(self, node, iter=None, icon = None):
+    def __Append(self, node, iter=None, icon = None, icon2 = None):
         
-        iter = self.model.append(iter, [node.GetObject().GetName(), icon, node])
+        iter = self.model.append(iter, [node.GetObject().GetName(), icon, icon2, node])
         for child in node.GetChildsOrdered():
-            self.__Append(child, iter, icon)
+            self.__Append(child, iter, icon, icon2)
+            
+    def __AppendConnections(self):
+        self.connectionsIter = self.model.append(None, ['Connections', None, None, None])
+        for c in self.projectOld.GetConnections().values():
+            self.model.append(self.connectionsIter, [c.GetSource().GetName()+' -> '+c.GetDestination().GetName(), None, None, c])
             
     def __ShowDiffs(self):
+        self.diffs = self.differ.GetProjectTreeDiff().get(EDiffActions.INSERT, [])
         while len(self.diffs) > 0:
             diff = self.diffs[0]
-            if isinstance(diff.GetElement(), CProjectTreeNode):
-                if diff.GetAction() == EDiffActions.INSERT:
-                    self.__ShowInsertDiff(diff)
-                elif diff.GetAction() == EDiffActions.DELETE:
-                    self.__ShowDeleteDiff(diff)
-                elif diff.GetAction() == EDiffActions.MOVE:
-                    self.__ShowMoveDiff(diff)
-                elif diff.GetAction() == EDiffActions.ORDER_CHANGE:
-                    self.__ShowOrderChangeDiff(diff)
-                
-                
-            elif isinstance(diff.GetElement(), CBase):
-                self.diffs.remove(diff)
-            else:
-                self.diffs.remove(diff)
-            
+            self.__ShowInsertDiff(diff)
             self.diffs.reverse()
             
+        self.diffs = self.differ.GetProjectTreeDiff().get(EDiffActions.DELETE, [])
+        while len(self.diffs) > 0:
+            diff = self.diffs[0]
+            self.__ShowDeleteDiff(diff)
+            self.diffs.reverse()
+            
+        self.diffs = self.differ.GetProjectTreeDiff().get(EDiffActions.MOVE, [])
+        while len(self.diffs) > 0:
+            diff = self.diffs[0]
+            self.__ShowMoveDiff(diff)
+            self.diffs.reverse()
+            
+        self.diffs = self.differ.GetProjectTreeDiff().get(EDiffActions.ORDER_CHANGE, [])
+        while len(self.diffs) > 0:
+            diff = self.diffs[0]
+            self.__ShowOrderChangeDiff(diff)
+            self.diffs.reverse()
+        
+        self.diffs = self.differ.GetDataDiff().get(EDiffActions.INSERT, [])
+        self.diffs = [d for d in self.diffs if isinstance(d.GetElement(), CConnection)]
+        print 'insert connections'
+        print self.diffs
+        for d in self.diffs:
+            iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"insert.png")
+            icon = gtk.gdk.pixbuf_new_from_file(iconfile)
+            c = d.GetElement()
+            self.model.append(self.connectionsIter, [c.GetSource().GetName()+' -> '+c.GetDestination().GetName(), icon, None, c])
+            
+        self.diffs = self.differ.GetDataDiff().get(EDiffActions.DELETE, [])
+        self.diffs = [d for d in self.diffs if isinstance(d.GetElement(), CConnection)]
+        while len(self.diffs) > 0:
+            diff = self.diffs[0]
+            self.__ShowDeleteConnectionsDiff(diff)
+            self.diffs.reverse()
+        
+        
+        self.diffs = self.differ.GetDataDiff().get(EDiffActions.MODIFY, [])
+        while len(self.diffs) > 0:
+            diff = self.diffs[0]
+            self.__ShowModifiedDiff(diff)
+            self.diffs.reverse()
+            
+        
     def __ShowInsertDiff(self, diff):
         def func(model, path, iter, diff):
             
-            if model.get_value(iter, 2) == diff.GetElement().GetParent():
+            if model.get_value(iter, 3) is not None and model.get_value(iter,3) == diff.GetElement().GetParent():
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"insert.png")
                 icon = gtk.gdk.pixbuf_new_from_file(iconfile)
                 
                 pos = model.iter_nth_child(iter, diff.GetElement().GetAbsoluteIndex())
-                model.insert_before(iter, pos, [diff.GetElement().GetObject().GetName(), icon, diff.GetElement()])
+                model.insert_before(iter, pos, [diff.GetElement().GetObject().GetName(), icon, None, diff.GetElement()])
                 
                 self.diffs.remove(diff)
                 return True
@@ -76,7 +113,7 @@ class CProjectTreeDiffTreeView(object):
         
     def __ShowDeleteDiff(self, diff):
         def func(model, path, iter, diff):
-            if model.get_value(iter, 2) == diff.GetElement():
+            if model.get_value(iter, 3) is not None and model.get_value(iter,3) == diff.GetElement():
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"delete.png")
                 icon = gtk.gdk.pixbuf_new_from_file(iconfile)
                 model.set_value(iter, 1, icon)
@@ -88,7 +125,7 @@ class CProjectTreeDiffTreeView(object):
         
     def __ShowMoveDiff(self, diff):
         def func1(model, path, iter, diff):
-            if model.get_value(iter, 2) == diff.GetElement():
+            if model.get_value(iter, 3) is not None and model.get_value(iter,3)  == diff.GetElement():
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"delete-move.png")
                 icon = gtk.gdk.pixbuf_new_from_file(iconfile)
                 model.set_value(iter, 1, icon)
@@ -97,13 +134,13 @@ class CProjectTreeDiffTreeView(object):
         
         def func2(model, path, iter, diff):
             
-            if model.get_value(iter, 2) == diff.GetNewState():
+            if model.get_value(iter, 3) is not None and model.get_value(iter,3) == diff.GetNewState():
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"insert-move.png")
                 icon = gtk.gdk.pixbuf_new_from_file(iconfile)
                 
                 new = self.projectNew.GetProjectTreeNodeById(diff.GetElement().GetId())
                 pos = model.iter_nth_child(iter, new.GetAbsoluteIndex())
-                model.insert_before(iter, pos, [new.GetObject().GetName(), icon, new])
+                model.insert_before(iter, pos, [new.GetObject().GetName(), icon, None, new])
                 
                 #self.diffs.remove(diff)
                 return True
@@ -114,7 +151,7 @@ class CProjectTreeDiffTreeView(object):
     
     def __ShowOrderChangeDiff(self, diff):
         def func1(model, path, iter, diff):
-            if model.get_value(iter, 2) == diff.GetElement():
+            if model.get_value(iter, 3) is not None and model.get_value(iter,3) == diff.GetElement():
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"order-change-old.png")
                 icon = gtk.gdk.pixbuf_new_from_file(iconfile)
                 model.set_value(iter, 1, icon)
@@ -123,7 +160,7 @@ class CProjectTreeDiffTreeView(object):
         
         def func2(model, path, iter, diff):
             
-            if model.get_value(iter, 2) == diff.GetElement().GetParent():
+            if model.get_value(iter, 3) is not None and model.get_value(iter,3) == diff.GetElement().GetParent():
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"order-change-new.png")
                 icon = gtk.gdk.pixbuf_new_from_file(iconfile)
                 if diff.GetNewState() > diff.GetPreviousState():
@@ -131,11 +168,33 @@ class CProjectTreeDiffTreeView(object):
                     pos = model.iter_nth_child(iter, diff.GetNewState() + 1)
                 else:
                     pos = model.iter_nth_child(iter, diff.GetNewState())
-                model.insert_before(iter, pos, [diff.GetElement().GetObject().GetName(), icon, diff.GetElement()])
+                model.insert_before(iter, pos, [diff.GetElement().GetObject().GetName(), icon, None, diff.GetElement()])
                 
                 #self.diffs.remove(diff)
                 return True
         
         self.model.foreach(func1, diff)
         self.model.foreach(func2, diff)
+    
+    def __ShowDeleteConnectionsDiff(self, diff):
+        def func(model, path, iter, diff):
+            if model.get_value(iter, 3) is not None and model.get_value(iter,3) == diff.GetElement():
+                iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"delete.png")
+                icon = gtk.gdk.pixbuf_new_from_file(iconfile)
+                model.set_value(iter, 1, icon)
+                self.diffs.remove(diff)
+                
+        self.model.foreach(func, diff)
+    
+    def __ShowModifiedDiff(self, diff):
+        def func(model, path, iter, diff):
+            if model.get_value(iter, 3) is not None and model.get_value(iter,3).GetObject()== diff.GetElement():
+                iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"modify.png")
+                icon = gtk.gdk.pixbuf_new_from_file(iconfile)
+                
+                model.set_value(iter, 0, self.projectNew.GetById(diff.GetElement().GetId()).GetName())
+                model.set_value(iter, 2, icon)
+            
+        self.model.foreach(func, diff)
+        self.diffs.remove(diff)
     

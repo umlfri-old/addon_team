@@ -26,31 +26,32 @@ class CDiffDrawing(CBaseDrawing):
         
     def Paint(self):
         print 'painting'
-        if isinstance(self.diff.GetElement(), CBaseView):
-            if self.diff.GetAction() == EDiffActions.DELETE:
-                self.ChangeColor(self.context, 255, 0, 0, 0.2)
-                self.__PaintElement(self.diff.GetElement())
-            elif self.diff.GetAction() == EDiffActions.INSERT:
-                self.ChangeColor(self.context, 0, 255, 0, 0.2)
-                self.__PaintElement(self.diff.GetElement())
-                
-            elif self.diff.GetAction() == EDiffActions.MODIFY:
-                oldElementView = self.oldDiagram.GetViewById(self.diff.GetElement().GetObject().GetId())
-                self.ChangeColor(self.context, 0, 0, 255, 0.2)
-                self.__PaintElement(oldElementView)
-                
-                newElementView = self.newDiagram.GetViewById(self.diff.GetElement().GetObject().GetId())
-                
-                self.__PaintElement(newElementView)
-                
-            elif self.diff.GetAction() == EDiffActions.ORDER_CHANGE:
-                oldElementView = self.oldDiagram.GetViewById(self.diff.GetElement().GetObject().GetId())
-                self.ChangeColor(self.context, 255, 255, 0, 0.2)
-                self.__PaintElement(oldElementView)
-                
-                newElementView = self.newDiagram.GetViewById(self.diff.GetElement().GetObject().GetId())
-                
-                self.__PaintElement(newElementView)
+        
+        if self.diff.GetAction() == EDiffActions.DELETE:
+            self.ChangeColor(self.context, 255, 0, 0, 0.2)
+            self.__PaintElement(self.diff.GetElement())
+        elif self.diff.GetAction() == EDiffActions.INSERT:
+            self.ChangeColor(self.context, 0, 255, 0, 0.2)
+            self.__PaintElement(self.diff.GetElement())
+            
+        elif self.diff.GetAction() == EDiffActions.MODIFY:
+            oldElementView = self.oldDiagram.GetViewById(self.diff.GetElement().GetObject().GetId())
+            self.ChangeColor(self.context, 255, 255, 0, 0.2)
+            self.__PaintElement(oldElementView)
+            
+            newElementView = self.newDiagram.GetViewById(self.diff.GetElement().GetObject().GetId())
+            
+            self.ChangeColor(self.context, 0, 255, 255, 0.2)
+            self.__PaintElement(newElementView)
+            
+        elif self.diff.GetAction() == EDiffActions.ORDER_CHANGE:
+            oldElementView = self.oldDiagram.GetViewById(self.diff.GetElement().GetObject().GetId())
+            self.ChangeColor(self.context, 255, 0, 255, 0.2)
+            self.__PaintElement(oldElementView)
+            
+            newElementView = self.newDiagram.GetViewById(self.diff.GetElement().GetObject().GetId())
+            
+            self.__PaintElement(newElementView)
                 
     def __PaintElement(self, elementView):
         if isinstance(elementView, CConnectionView):
