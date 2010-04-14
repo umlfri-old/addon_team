@@ -6,7 +6,8 @@ Created on 30.3.2010
 
 
 from subprocess import Popen, PIPE
-from lib.Depend.etree import etree
+from imports.etree import etree
+from teamExceptions import *
 
 
 
@@ -129,7 +130,7 @@ class CSubversionImplementation(object):
         else:
             if err.lower().find('authorization') != -1:
                 # ak je problem s autentifikaciou vyhod vynimnku
-                raise Exception
+                raise AuthorizationError
             else:
                 # inak vrat chybovu hlasku
                 print 'returning err'

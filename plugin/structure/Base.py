@@ -17,6 +17,9 @@ class CBase(object):
         self.__id = id
         self.__type = type
         self.data = {}
+    
+    def GetObject(self):
+        return self
         
     def GetId(self):
         return self.__id

@@ -92,7 +92,7 @@
       <!-- column-name conflict_name -->
       <column type="gchararray"/>
       <!-- column-name conflict -->
-      <column type="PyObject"/>
+      <column type="PyObject" />
     </columns>
   </object>
   <object class="GtkListStore" id="logsListStore">
@@ -113,8 +113,20 @@
       <column type="gchararray"/>
       <!-- column-name treeNodeDiffIcon -->
       <column type="GdkPixbuf"/>
+      <!-- column-name treeNodeDiffIcon2 -->
+      <column type="GdkPixbuf"/>
       <!-- column-name treeNode -->
-      <column type="PyObject"/>
+      <column type="PyObject" />
+    </columns>
+  </object>
+  <object class="GtkTreeStore" id="dataDiffTreeStore">
+    <columns>
+      <!-- column-name key -->
+      <column type="gchararray"/>
+      <!-- column-name value -->
+      <column type="gchararray"/>
+      <!-- column-name icon -->
+      <column type="GdkPixbuf"/>
     </columns>
   </object>
   <object class="GtkDialog" id="diffResultsDlg">
@@ -170,10 +182,21 @@
                                 <attribute name="text">0</attribute>
                               </attributes>
                             </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="actionCol">
+                            <property name="title">Action</property>
                             <child>
                               <object class="GtkCellRendererPixbuf" id="treeNodeDiffIcon"/>
                               <attributes>
                                 <attribute name="pixbuf">1</attribute>
+                              </attributes>
+                            </child>
+                            <child>
+                              <object class="GtkCellRendererPixbuf" id="treeNodeDiffIcon2"/>
+                              <attributes>
+                                <attribute name="pixbuf">2</attribute>
                               </attributes>
                             </child>
                           </object>
@@ -183,6 +206,57 @@
                   </object>
                   <packing>
                     <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow" id="scrolledwindow3">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="hscrollbar_policy">automatic</property>
+                    <property name="vscrollbar_policy">automatic</property>
+                    <child>
+                      <object class="GtkTreeView" id="dataDiffTreeView">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="model">dataDiffTreeStore</property>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="keyCol">
+                            <property name="title">Key</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="keyCell"/>
+                              <attributes>
+                                <attribute name="text">0</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="valueCol">
+                            <property name="title">Value</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="valueCell"/>
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="iconCol">
+                            <property name="title">Action</property>
+                            <child>
+                              <object class="GtkCellRendererPixbuf" id="iconCell"/>
+                              <attributes>
+                                <attribute name="pixbuf">2</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
                   </packing>
                 </child>
                 <child>
@@ -368,7 +442,7 @@
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow3">
+          <object class="GtkScrolledWindow" id="scrolledwindow4">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="hscrollbar_policy">automatic</property>
@@ -700,7 +774,7 @@
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow4">
+          <object class="GtkScrolledWindow" id="scrolledwindow5">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="hscrollbar_policy">automatic</property>

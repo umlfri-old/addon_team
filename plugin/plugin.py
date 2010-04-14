@@ -14,6 +14,7 @@ import implementation
 import inspect
 import uuid
 import time
+from teamExceptions import *
 
 class Plugin(object):
     '''
@@ -129,8 +130,8 @@ class Plugin(object):
 
     def DiffProjects(self, project1, project2):
         differ = CDiffer(project2, project1)
-        res = differ.projectTreeDiff + differ.visualDiff + differ.dataDiff
-        self.gui.DiffResultsDialog(res, project1, project2)
+        #res = differ.projectTreeDiff + differ.visualDiff + differ.dataDiff
+        self.gui.DiffResultsDialog(differ)
             
     def Update(self, arg):
         project = self.__LoadApplicationProject()
@@ -191,7 +192,7 @@ class Plugin(object):
                     result = self.implementation.Checkin(msg, username, password)
                     print result
                     return result
-                except:
+                except AuthorizationError, e:
                     if repeats > 3:
                         return 'Authorization failed'
                     username, password = self.gui.AuthDialog()
