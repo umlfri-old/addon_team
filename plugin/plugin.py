@@ -31,6 +31,9 @@ class Plugin(object):
         self.pluginAdapter = self.interface.GetAdapter()
         self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
         
+        
+        self.implementation = None
+        
         self.gui = Gui(self)
         
         
@@ -38,30 +41,41 @@ class Plugin(object):
         self.interface.StartAutocommit()
         self.pluginAdapter.AddNotification('project-opened', self.ProjectOpened)
         
-        try:
-            # add menu
-            
-            self.teamMenuRoot = self.pluginGuiManager.GetMainMenu().AddMenuItem(str(uuid.uuid1()) ,None, -2,'Team',None,None)
-            
-            
-            
-            #add submenu
-            self.teamMenuRoot.AddSubmenu()
-            self.teamMenuSubmenu = self.teamMenuRoot.GetSubmenu()
-            
-            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.DiffProject,0,'Diff project',None,None)
-            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Update,1,'Update',None,None)
-            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkin,2,'Checkin',None,None)
-            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Revert,3,'Revert',None,None)                    
-            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.SolveConflicts ,4,'Solve conflicts',None,None)
-            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkout,5,'Checkout',None,None)
-            self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.ShowLogs,6,'Show logs',None,None)
-            
-            self.ProjectOpened()
+        
+        # add menu
+        
+        self.teamMenuRoot = self.pluginGuiManager.GetMainMenu().AddMenuItem(str(uuid.uuid1()) ,None, -2,'Team',None,None)
+        
+        
+        
+        #add submenu
+        self.teamMenuRoot.AddSubmenu()
+        self.teamMenuSubmenu = self.teamMenuRoot.GetSubmenu()
+        
+        self.diffMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.DiffProject,0,'Diff project',None,None)
+        
+        
+        self.updateMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Update,1,'Update',None,None)
+        
+        
+        self.checkinMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkin,2,'Checkin',None,None)
+        
+        
+        self.revertMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Revert,3,'Revert',None,None)
+        
+                            
+        self.solveConflictsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.SolveConflicts ,4,'Solve conflicts',None,None)
+        
+        
+        self.checkoutMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkout,5,'Checkout',None,None)
+        
+        
+        self.logsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.ShowLogs,6,'Show logs',None,None)
+        
+        
+        self.ProjectOpened()
                     
-            
-        except :
-            pass
+       
         
       
       
@@ -72,9 +86,24 @@ class Plugin(object):
             fileName = self.__LoadApplicationProject().GetFileName()
             # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
             self.implementation = self.__ChooseCorrectImplementation(fileName)
-  
-      
-          
+            
+            self.diffMenu.SetSensitive('diff' in self.implementation.supported)
+            self.updateMenu.SetSensitive('update' in self.implementation.supported)
+            self.checkinMenu.SetSensitive('checkin' in self.implementation.supported)
+            self.revertMenu.SetSensitive('revert' in self.implementation.supported)
+            self.logsMenu.SetSensitive('log' in self.implementation.supported)
+        else:
+            self.__ResetMenuSensitivity()
+    
+    def __ResetMenuSensitivity(self):
+        self.diffMenu.SetSensitive(False)
+        self.updateMenu.SetSensitive(False)
+        self.checkinMenu.SetSensitive(False)
+        self.revertMenu.SetSensitive(False)
+        self.solveConflictsMenu.SetSensitive(True)
+        self.checkoutMenu.SetSensitive(True)
+        self.logsMenu.SetSensitive(False)
+        
     def __CanRunPlugin(self):
         p = self.__LoadApplicationProject()
         if p is None:
@@ -222,7 +251,12 @@ class Plugin(object):
         for name in dir(implementation):
             obj = getattr(implementation, name)
             if inspect.isclass(obj):
-                impls.append(obj)
+                try:
+                    if 'checkout' in obj.supported:
+                        impls.append(obj)
+                except:
+                    pass
+                        
         
         # otvor checkout dialog
         result = self.gui.CheckoutDialog(impls)
