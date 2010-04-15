@@ -254,8 +254,12 @@ class CConflicter(object):
     
     def __ProjectTreeConflict(self, baseWorkDiff, baseNewDiff):
         conflict = CConflict(baseWorkDiff, baseNewDiff, 'Project tree Conflict')
+        print 'project tree conflict adding trying'
         if conflict not in self.conflicting:
-            self.conflicting.append(conflict)    
+            print 'project tree conflict ADDED'
+            self.conflicting.append(conflict)
+        else:
+            print 'project tree conflict NOT ADDED'    
     
     def __FindConflictsForVisualDiff(self, diff, otherDiffer, project):
         result = []
@@ -280,7 +284,7 @@ class CConflicter(object):
         if diff.GetAction() == EDiffActions.INSERT:
             #parents = project.GetProjectTreeNodeById(diff.GetElement().GetParentDiagram().GetId()).GetAllParents()
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE,[]):
-                if d.GetElement().GetObject() == diff.GetElement.GetParentDiagram() or d.GetElement() in relatedElements:
+                if d.GetElement().GetObject() == diff.GetElement().GetParentDiagram() or d.GetElement() in relatedElements:
                     print 'insert view under deleted diagram'
                     result.append(d)
             

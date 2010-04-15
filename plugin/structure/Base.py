@@ -44,13 +44,16 @@ class CBase(object):
         pass
     
     def __hash__(self):
-        return hash(self.GetId())
+        return hash(self.GetId()) + hash(self.__class__)
     
     def __eq__(self, other):
-        return (self.GetId() == other.GetId())
+        return hash(self) == hash(other)
+    
+    def __ne__(self, other):
+        return hash(self) != hash(other)
     
     def __str__(self):
-        return "Object: " + str(self.__id)
+        return "Object: " + str(self.GetName())
     
     def __cmp__(self, other):
-        return cmp(self.GetId(), other.GetId())
+        return cmp(hash(self), hash(other))

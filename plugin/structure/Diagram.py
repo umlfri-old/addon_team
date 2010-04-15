@@ -27,7 +27,10 @@ class CDiagram(CBase):
         
         
     def AddConnectionView(self, connectionView, index = None):
+        
         self.__connectionsViews[connectionView.GetObject().GetId()] = connectionView
+        if connectionView in self.__connectionsViewsOrdered:
+            self.__connectionsViewsOrdered.remove(connectionView)
         if index is not None:
             self.__connectionsViewsOrdered.insert(index, connectionView)
         else:
@@ -36,6 +39,8 @@ class CDiagram(CBase):
         
     def AddElementView(self, elementView, index = None):
         self.__elementsViews[elementView.GetObject().GetId()] = elementView
+        if elementView in self.__elementViewsOrdered:
+            self.__elementViewsOrdered.remove(elementView)
         if index is not None:
             self.__elementViewsOrdered.insert(index, elementView)
         else:

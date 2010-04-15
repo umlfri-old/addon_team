@@ -75,7 +75,7 @@ class CSubversionImplementation(object):
         return mine, base, upd
     
         
-    def Update(self, fileData, revision=None):
+    def Update(self, fileData = None, revision=None):
         '''
         Run update and then rewrite file with contents in fileData
         Solve conflicts on implementation level
@@ -94,22 +94,22 @@ class CSubversionImplementation(object):
         p2 = Popen(command2, stdout=PIPE, stderr=PIPE)
         (out, err2) = p2.communicate()
         
-        print out
+        
         r = etree.XML(out)
         wcStatus = r.find('.//wc-status')
-        print wcStatus
+        
         if wcStatus is not None:
-            print wcStatus.get('item')
+            
             if wcStatus.get('item') == 'conflicted':
                 # ak je v konflikte
                 # vyries konflikt na urovni svn, aby tam potom nestrasili tie subory
                 print 'solving conflict in svn'
                 self.__SolveConflict()
         
-
-        f = open(self.__fileName, 'w')
-        f.write(fileData)
-        f.close()
+        if fileData is not None:
+            f = open(self.__fileName, 'w')
+            f.write(fileData)
+            f.close()
         
         
         

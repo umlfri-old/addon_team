@@ -390,7 +390,10 @@ class CProject(object):
         
         
             # vytvor novy node
+            
             newProjectTreeNode = CProjectTreeNode(obj, parent)
+            print 'new project tree node',newProjectTreeNode
+            print 'index',treeNode.GetIndex()
             parent.AddChild(newProjectTreeNode, treeNode.GetIndex())
             
             
@@ -527,7 +530,7 @@ class CProject(object):
     # updatni pocitadla,  vyber vyssie z nich
     def UpdateCounters(self, newCounters):
         for (old,new) in zip(self.__counters, newCounters):
-            if old.get('value') < new.get('value'):
+            if int(old.get('value')) < int(new.get('value')):
                 old.set('value', new.get('value'))
 
 

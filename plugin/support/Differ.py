@@ -106,6 +106,7 @@ class CDiffer(object):
         
     def __ComputeDiff(self, opcodes, sequence1, sequence2):
         for tag, i1, i2, j1, j2 in opcodes:
+            print opcodes
             if (tag == EDiffActions.DELETE):
                 # ak z prveho nieco zmizlo
                 for si in sequence1[i1:i2]:

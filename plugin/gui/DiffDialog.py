@@ -21,6 +21,11 @@ class CDiffDialog(object):
         '''
         Constructor
         '''
+        print 'found diffs'
+        for d in differ.dataDiff + differ.projectTreeDiff + differ.visualDiff:
+            print d
+        
+        
         self.wTree = wTree
         self.differ = differ
 #        self.results = results
@@ -49,6 +54,7 @@ class CDiffDialog(object):
         x, y, width, height = self.drawingArea.get_allocation()
         self.pixmap = gtk.gdk.Pixmap(self.drawingArea.window, width, height)
         self.context = self.pixmap.cairo_create()
+        
         self.context.set_source_rgb(1,1,1)
         self.context.rectangle(x,y,width,height)
         self.context.fill()
@@ -56,6 +62,11 @@ class CDiffDialog(object):
         oldDiagramDrawing.Paint(self.context)
         newDiagramDrawing = CDiagramDrawing(self.newDiagram)
         newDiagramDrawing.Paint(self.context)
+        newDiagramSize = newDiagramDrawing.GetSize()
+        oldDiagramSize = oldDiagramDrawing.GetSize()
+
+        size = (newDiagramSize[0] if newDiagramSize[0] > oldDiagramSize[0] else oldDiagramSize[0]
+                ,newDiagramSize[1] if newDiagramSize[1] > oldDiagramSize[1] else oldDiagramSize[1])
         for r in self.differ.visualDiff:
             if (self.oldDiagram or self.newDiagram) is not None:
                 if r.GetElement().GetParentDiagram() == (self.oldDiagram or self.newDiagram):
@@ -63,12 +74,12 @@ class CDiffDialog(object):
                     print 'drawing diff'
                     diffDrawing.Paint()
         
-        
+        self.drawingArea.set_size_request(int(size[0]), int(size[1]))
         self.drawingArea.window.draw_drawable(self.drawingArea.get_style().fg_gc[gtk.STATE_NORMAL],
                                     self.pixmap, x, y, x, y, width, height)
     
     def drawingareaconfigure(self, widget, event):
-        print 'drawin area configure'
+        
         self.__UpdateDiagramDiffDrawingArea()
         
         self.drawingArea.connect('size-request', self.drawingareasizerequest)
@@ -76,7 +87,6 @@ class CDiffDialog(object):
         return True
     
     def drawingareaexpose(self, widget, event):
-        print 'drawing area exposing'
         if self.pixmap is None:
             self.__UpdateDiagramDiffDrawingArea()
         x , y, width, height = event.area
@@ -85,7 +95,7 @@ class CDiffDialog(object):
         return False
     
     def drawingareasizerequest(self, widget, event):
-        print 'drawing area size request'
+        
         self.__UpdateDiagramDiffDrawingArea()
         
     def __UpdateProjectTreeDiffTreeStore(self):
@@ -108,18 +118,19 @@ class CDiffDialog(object):
         (model, iter) = sel.get_selected()
         node = model.get_value(iter, 3)
         print 'cursor changed'
-        if isinstance(node.GetObject(), CDiagram):
-            
-            self.newDiagram = self.differ.GetNewProject().GetById(node.GetId())
-            
-            self.oldDiagram = self.differ.GetOldProject().GetById(node.GetId())
-            
-            self.__UpdateDiagramDiffDrawingArea()
+        if node is not None:
+            if isinstance(node.GetObject(), CDiagram):
+                
+                self.newDiagram = self.differ.GetNewProject().GetById(node.GetId())
+                
+                self.oldDiagram = self.differ.GetOldProject().GetById(node.GetId())
+                
+                self.__UpdateDiagramDiffDrawingArea()
         
-        obj = node.GetObject()
-        oldObj = self.differ.GetOldProject().GetById(obj.GetId())
-        newObj = self.differ.GetNewProject().GetById(obj.GetId())
-        self.__UpdateDataDiffTreeView(oldObj, newObj)
+            obj = node.GetObject()
+            oldObj = self.differ.GetOldProject().GetById(obj.GetId())
+            newObj = self.differ.GetNewProject().GetById(obj.GetId())
+            self.__UpdateDataDiffTreeView(oldObj, newObj)
         
         
         
