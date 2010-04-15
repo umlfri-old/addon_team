@@ -46,22 +46,22 @@ class CDataDiffTreeView(object):
         
         self.__Append(obj.GetData(), None, icon)
         
-    def __Append(self, data, iter = None, icon = None):
+    def __Append(self, data, iter = None, icon = None, conflictIcon = None):
         if type(data) == type({}):
             for k,v in data.items():
                 if type(v) == type([]):
-                    it = self.model.append(iter, [k, None, icon])
+                    it = self.model.append(iter, [k, None, icon, conflictIcon])
                     for i,d in enumerate(v):
-                        self.__Append({i:d}, it, icon)
+                        self.__Append({i:d}, it, icon, conflictIcon)
                 elif type(v) == type({}):
-                    it = self.model.append(iter, [k, None, icon])
-                    self.__Append(v, it, icon)
+                    it = self.model.append(iter, [k, None, icon, conflictIcon])
+                    self.__Append(v, it, icon, conflictIcon)
                 else:
-                    self.model.append(iter, [k,v,icon])
+                    self.model.append(iter, [k,v,icon, conflictIcon])
                     
         elif type(data) == type([]):
             for i,d in enumerate(data):
-                self.__Append({i:d}, iter, icon)
+                self.__Append({i:d}, iter, icon, conflictIcon)
             
             
     def __ShowDiffs(self):
@@ -95,7 +95,7 @@ class CDataDiffTreeView(object):
                 if type(diff.GetNewState()) == type([]):
                     self.__Append(diff.GetNewState(), iter, icon)
                 else:
-                    self.__Append({model.iter_n_children(iter):diff.GetNewState()}, iter, icon)
+                    self.__Append({model.iter_n_children(iter):diff.GetNewState()}, iter, icon, None)
                     
                 self.__MarkParentAsModified(model.get_path(iter), True)
                 return True

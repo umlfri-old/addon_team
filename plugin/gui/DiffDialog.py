@@ -17,17 +17,16 @@ class CDiffDialog(object):
     '''
 
 
-    def __init__(self, wTree, differ):
+    def __init__(self, wTree, differ, conflicts = None):
         '''
         Constructor
         '''
-        print 'found diffs'
-        for d in differ.dataDiff + differ.projectTreeDiff + differ.visualDiff:
-            print d
+        
         
         
         self.wTree = wTree
         self.differ = differ
+        self.conflicts = conflicts
 #        self.results = results
 #        self.projectNew = projectNew
 #        self.projectOld = projectOld
@@ -38,15 +37,23 @@ class CDiffDialog(object):
         self.pixmap = None
         self.__UpdateProjectTreeDiffTreeStore()
         
-        self.drawingArea.connect('configure-event', self.drawingareaconfigure)
-        self.drawingArea.connect('expose-event', self.drawingareaexpose)
+        
+        id1 = self.wTree.get_object('projectTreeTreeView').connect('cursor-changed', self.on_project_tree_view_cursor_changed)
+        
+        id2 = self.drawingArea.connect('configure-event', self.drawingareaconfigure)
+        id3 = self.drawingArea.connect('expose-event', self.drawingareaexpose)
         self.wTree.get_object('dataDiffTreeStore').clear()
+        
         
         
         
         
         self.dialog.run()
         self.dialog.hide()
+        
+        #self.wTree.get_object('projectTreeTreeView').disconnect(id1)
+        #self.drawingArea.disconnect(id2)
+        #self.drawingArea.disconnect(id3)
         
         
     def __UpdateDiagramDiffDrawingArea(self):
@@ -100,10 +107,10 @@ class CDiffDialog(object):
         
     def __UpdateProjectTreeDiffTreeStore(self):
         treeModel = self.wTree.get_object('projectTreeTreeStore')
-        ptdtv = CProjectTreeDiffTreeView(self.differ, treeModel)
+        ptdtv = CProjectTreeDiffTreeView(self.differ, treeModel, self.conflicts)
         
         
-        self.wTree.get_object('projectTreeTreeView').connect('cursor-changed', self.on_project_tree_view_cursor_changed)
+        
         
     
     def __UpdateDataDiffTreeView(self, oldObj, newObj):

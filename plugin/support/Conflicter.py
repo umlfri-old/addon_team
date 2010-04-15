@@ -42,6 +42,12 @@ class CConflicter(object):
     
     def GetMerging(self):
         return self.merging
+    
+    def GetBaseWorkDiffer(self):
+        return self.__baseWorkDiffer
+    
+    def GetBaseNewDiffer(self):
+        return self.__baseNewDiffer
         
     def __TryMerge(self):
         # pokus sa zakomponovat zmeny z new a worku do base
@@ -217,6 +223,9 @@ class CConflicter(object):
                     # pozri ci je na ceste k presunutemu elementu
                     print 'move project tree node under deleted node'
                     result.append(d)
+                if d.GetElement() == diff.GetElement():
+                    print 'moveing deleted node'
+                    result.append(d)
                     
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.MOVE, []):
                 # prejdi vsetky vymazane elementy
@@ -225,6 +234,14 @@ class CConflicter(object):
                         # ak som presunul ten isty element na ine miesto
                         print 'move project tree node under different parents'
                         result.append(d)
+                        
+            for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
+                if d.GetElement() == diff.GetElement().GetObject():
+                    print 'moving deleted object'
+                    result.append(d)
+                if d.GetElement() in [p.GetObject() for p in parents]:
+                    print 'moving under deleted object'
+                    result.append(d)
         
         elif diff.GetAction() == EDiffActions.ORDER_CHANGE:
             parents = diff.GetElement().GetAllParents()
@@ -243,6 +260,14 @@ class CConflicter(object):
                         # presunutie toho isteho elementu na rozne miesto
                         print 'change order of same nodes differently'
                         result.append(d)
+                        
+            for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
+                if d.GetElement() == diff.GetElement().GetObject():
+                    print 'change order of deleted object'
+                    result.append(d)
+                if d.GetElement() in [p.GetObject() for p in parents]:
+                    print 'change order under deleted object'
+                    result.append(d)
        
         
         return result
@@ -254,12 +279,9 @@ class CConflicter(object):
     
     def __ProjectTreeConflict(self, baseWorkDiff, baseNewDiff):
         conflict = CConflict(baseWorkDiff, baseNewDiff, 'Project tree Conflict')
-        print 'project tree conflict adding trying'
         if conflict not in self.conflicting:
-            print 'project tree conflict ADDED'
             self.conflicting.append(conflict)
-        else:
-            print 'project tree conflict NOT ADDED'    
+            
     
     def __FindConflictsForVisualDiff(self, diff, otherDiffer, project):
         result = []

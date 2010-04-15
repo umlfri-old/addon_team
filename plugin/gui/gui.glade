@@ -117,6 +117,8 @@
       <column type="GdkPixbuf"/>
       <!-- column-name treeNode -->
       <column type="PyObject" />
+      <!-- column-name treeNodeConflictIcon -->
+      <column type="GdkPixbuf"/>
     </columns>
   </object>
   <object class="GtkTreeStore" id="dataDiffTreeStore">
@@ -126,6 +128,8 @@
       <!-- column-name value -->
       <column type="gchararray"/>
       <!-- column-name icon -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name conflictIcon -->
       <column type="GdkPixbuf"/>
     </columns>
   </object>
@@ -143,22 +147,22 @@
           <object class="GtkHBox" id="hbox4">
             <property name="visible">True</property>
             <child>
-            <object class="GtkScrolledWindow" id="scrolledwindow2">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="hscrollbar_policy">automatic</property>
-            <property name="vscrollbar_policy">automatic</property>
-            <child>
-              <object class="GtkViewport" id="viewport1">
+              <object class="GtkScrolledWindow" id="scrolledwindow1">
                 <property name="visible">True</property>
-                <property name="resize_mode">queue</property>
+                <property name="can_focus">True</property>
+                <property name="hscrollbar_policy">automatic</property>
+                <property name="vscrollbar_policy">automatic</property>
                 <child>
-                  <object class="GtkDrawingArea" id="diagramDiffDrawingArea">
+                  <object class="GtkViewport" id="viewport1">
                     <property name="visible">True</property>
+                    <property name="resize_mode">queue</property>
+                    <child>
+                      <object class="GtkDrawingArea" id="diagramDiffDrawingArea">
+                        <property name="visible">True</property>
+                      </object>
+                    </child>
                   </object>
                 </child>
-              </object>
-              </child>
               </object>
               <packing>
                 <property name="position">0</property>
@@ -169,7 +173,7 @@
                 <property name="visible">True</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkScrolledWindow" id="scrolledwindow1">
+                  <object class="GtkScrolledWindow" id="scrolledwindow3">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="hscrollbar_policy">automatic</property>
@@ -205,6 +209,12 @@
                                 <attribute name="pixbuf">2</attribute>
                               </attributes>
                             </child>
+                            <child>
+                              <object class="GtkCellRendererPixbuf" id="treeNodeConflictIcon"/>
+                              <attributes>
+                                <attribute name="pixbuf">4</attribute>
+                              </attributes>
+                            </child>
                           </object>
                         </child>
                       </object>
@@ -215,7 +225,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkScrolledWindow" id="scrolledwindow3">
+                  <object class="GtkScrolledWindow" id="scrolledwindow4">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="hscrollbar_policy">automatic</property>
@@ -254,6 +264,12 @@
                               <object class="GtkCellRendererPixbuf" id="iconCell"/>
                               <attributes>
                                 <attribute name="pixbuf">2</attribute>
+                              </attributes>
+                            </child>
+                            <child>
+                              <object class="GtkCellRendererPixbuf" id="conflictIconCell"/>
+                              <attributes>
+                                <attribute name="pixbuf">3</attribute>
                               </attributes>
                             </child>
                           </object>
@@ -310,6 +326,7 @@
   </object>
   <object class="GtkDialog" id="checkoutDlg">
     <property name="border_width">5</property>
+    <property name="title" translatable="yes">Checkout</property>
     <property name="type_hint">normal</property>
     <property name="has_separator">False</property>
     <child internal-child="vbox">
@@ -440,6 +457,7 @@
   </object>
   <object class="GtkDialog" id="conflictSolvingDlg">
     <property name="border_width">5</property>
+    <property name="title" translatable="yes">Solving conflicts</property>
     <property name="type_hint">normal</property>
     <property name="has_separator">False</property>
     <child internal-child="vbox">
@@ -448,7 +466,48 @@
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow4">
+          <object class="GtkHBox" id="hbox5">
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkButton" id="showMineDiffBtn">
+                <property name="label" translatable="yes">Show mine diff</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="showTheirsDiffBtn">
+                <property name="label" translatable="yes">Show theirs diff</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="showMergedProjectBtn">
+                <property name="label" translatable="yes">Show merged project</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledwindow5">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="hscrollbar_policy">automatic</property>
@@ -475,7 +534,7 @@
             </child>
           </object>
           <packing>
-            <property name="position">1</property>
+            <property name="position">2</property>
           </packing>
         </child>
         <child>
@@ -510,7 +569,7 @@
             </child>
           </object>
           <packing>
-            <property name="position">2</property>
+            <property name="position">3</property>
           </packing>
         </child>
         <child internal-child="action_area">
@@ -559,6 +618,7 @@
   </object>
   <object class="GtkDialog" id="chooseRevisionDlg">
     <property name="border_width">5</property>
+    <property name="title" translatable="yes">Choose revision</property>
     <property name="type_hint">normal</property>
     <property name="has_separator">False</property>
     <child internal-child="vbox">
@@ -667,6 +727,7 @@
   </object>
   <object class="GtkDialog" id="authDlg">
     <property name="border_width">5</property>
+    <property name="title" translatable="yes">Authorize</property>
     <property name="type_hint">normal</property>
     <property name="has_separator">False</property>
     <child internal-child="vbox">
@@ -772,6 +833,7 @@
   </object>
   <object class="GtkDialog" id="logsDlg">
     <property name="border_width">5</property>
+    <property name="title" translatable="yes">Logs</property>
     <property name="type_hint">normal</property>
     <property name="has_separator">False</property>
     <child internal-child="vbox">
@@ -780,7 +842,7 @@
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow5">
+          <object class="GtkScrolledWindow" id="scrolledwindow6">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="hscrollbar_policy">automatic</property>
