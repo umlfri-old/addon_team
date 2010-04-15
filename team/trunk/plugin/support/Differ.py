@@ -302,25 +302,30 @@ class CDiffer(object):
         
         result = []
         
-        movesUp = []
-        movesDown = []
+#        movesUp = []
+#        movesDown = []
+#        for rc in reducedChilds1:
+#            index1 = reducedChilds1.index(rc)
+#            index2 = reducedChilds2.index(rc)
+#            if index1 < index2:
+#                movesUp.append((rc, index1, index2))
+#            elif index1 > index2:
+#                movesDown.append((rc, index1, index2))
+#        
+#        if len(movesDown) == 0 and len(movesUp) == 0:
+#            pass
+#        elif len(movesDown) < len(movesUp):
+#            for m in movesDown:
+#                result.append(CDiffResult(EDiffActions.ORDER_CHANGE, m[0], list1.index(m[0]), list2.index(m[0])))
+#        else :
+#            
+#            for m in movesUp:
+#                result.append(CDiffResult(EDiffActions.ORDER_CHANGE, m[0], list1.index(m[0]), list2.index(m[0])))
         for rc in reducedChilds1:
             index1 = reducedChilds1.index(rc)
             index2 = reducedChilds2.index(rc)
-            if index1 < index2:
-                movesUp.append((rc, index1, index2))
-            elif index1 > index2:
-                movesDown.append((rc, index1, index2))
-        
-        if len(movesDown) == 0 and len(movesUp) == 0:
-            pass
-        elif len(movesDown) < len(movesUp):
-            for m in movesDown:
-                result.append(CDiffResult(EDiffActions.ORDER_CHANGE, m[0], list1.index(m[0]), list2.index(m[0])))
-        else :
-            
-            for m in movesUp:
-                result.append(CDiffResult(EDiffActions.ORDER_CHANGE, m[0], list1.index(m[0]), list2.index(m[0])))
+            if index1 != index2:
+                result.append(CDiffResult(EDiffActions.ORDER_CHANGE, rc, list1.index(rc), list2.index(rc)))
         
         return result
                 

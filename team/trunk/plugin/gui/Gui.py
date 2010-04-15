@@ -7,11 +7,11 @@ Created on 28.3.2010
 from imports.gtk2 import gtk, cairo
 from imports.gtk2 import pygtk
 from lib.consts import PROJECT_CLEARXML_EXTENSION
-from support import CConflictSolver
 from structure import *
 import math
 import os.path
 from DiffDialog import CDiffDialog
+from ConflictsDialog import CConflictsDialog
 
 class Gui(object):
     '''
@@ -35,6 +35,8 @@ class Gui(object):
             'on_logsTreeView_button_press_event' : self.on_logsTreeView_button_press_event,
             'on_diffRevisionsMenu_activate' : self.on_diffRevisionsMenu_activate
         }
+        
+        
         
         self.wTree.connect_signals( dic )
         
@@ -64,24 +66,9 @@ class Gui(object):
     
     
         
-    def ConflictSolvingDialog(self, conflictSolver):
-        wid = self.wTree.get_object('conflictSolvingDlg')
-        self.__UpdateConflictsTreeView(conflictSolver)
-        self.wTree.get_object('acceptMineBtn').connect('clicked', self.on_accept_mine_btn_clicked, conflictSolver)
-        self.wTree.get_object('acceptTheirsBtn').connect('clicked', self.on_accept_theirs_btn_clicked, conflictSolver)
-        while 1:
-            response = wid.run()
-            if response == 0:
-                print 'remaining conflicts',len(conflictSolver.GetUnresolvedConflicts())
-                if len(conflictSolver.GetUnresolvedConflicts()) > 0:
-                    self.ShowError(wid, 'You must resolve all conflicts')
-                else:
-                    wid.hide()
-                    return True
-                    
-            else:
-                wid.hide()
-                return False
+    def ConflictSolvingDialog(self, conflictSolver, baseWorkDiffer, baseNewDiffer):
+        conflictsDialog = CConflictsDialog(self.wTree, conflictSolver, baseWorkDiffer, baseNewDiffer)
+        return conflictsDialog.Response()
     
     
             
@@ -176,13 +163,7 @@ class Gui(object):
         wid.hide()
     
     
-    def on_accept_mine_btn_clicked(self, wid, conflictSolver):
-        print 'accepting mine'
-        self.__AcceptChanges(CConflictSolver.ACCEPT_MINE, conflictSolver)
-                
-    def on_accept_theirs_btn_clicked(self, wid, conflictSolver):
-        print 'acceptin theirs'
-        self.__AcceptChanges(CConflictSolver.ACCEPT_THEIRS, conflictSolver)
+    
     
     def on_revisionTxt_grab_focus(self, arg):
         print 'grab focus'
@@ -210,25 +191,7 @@ class Gui(object):
             self.plugin.DiffProjects(project1, project2)
         
     
-    def __AcceptChanges(self, solution, conflictSolver):
-        if conflictSolver is not None:
-            print 'BEFORE',len(conflictSolver.GetUnresolvedConflicts())
-            conflictsTreeView = self.wTree.get_object('conflictsTreeView')
-            treeselection = conflictsTreeView.get_selection()
-            (model, iter) = treeselection.get_selected()
-            if iter is not None:
-                conflict = model.get_value(iter, 1)
-                conflictSolver.ResolveConflict(conflict, solution)
-                print 'AFTER',len(conflictSolver.GetUnresolvedConflicts())
-                self.__UpdateConflictsTreeView(conflictSolver)
-                
-    def __UpdateConflictsTreeView(self, conflictSolver):
-        if conflictSolver is not None:
-            conflictsListStore = self.wTree.get_object('conflictsListStore')
-            conflictsListStore.clear()
-            
-            for conflict in conflictSolver.GetUnresolvedConflicts():
-                conflictsListStore.append([str(conflict), conflict])
+    
     
     def ShowError(self, parent, message):
         md = gtk.MessageDialog(parent, 

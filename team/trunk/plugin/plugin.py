@@ -315,7 +315,7 @@ class Plugin(object):
             conflicter = CConflicter(newProject, oldProject, workProject)
             merger = CMerger(mergedProject)
             conflictSolver = CConflictSolver(conflicter.GetConflicting(), merger)
-            return self.gui.ConflictSolvingDialog(conflictSolver)
+            return self.gui.ConflictSolvingDialog(conflictSolver, conflicter.GetBaseWorkDiffer(), conflicter.GetBaseNewDiffer())
                 
     def GetProjectConflictingTriple(self, fileName):
         conflictNewFileName = fileName+'.frinew'

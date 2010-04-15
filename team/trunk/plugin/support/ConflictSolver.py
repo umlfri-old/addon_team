@@ -25,6 +25,8 @@ class CConflictSolver(object):
         self.__resolvedConflicts = []
         self.__merger = merger
         
+    def GetMerger(self):
+        return self.__merger
         
     def GetUnresolvedConflicts(self):
         return self.__unresolvedConflicts

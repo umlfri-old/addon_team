@@ -347,6 +347,7 @@ class CProject(object):
     
     # raise exception on failure
     def AddObject(self, obj):
+        print 'Adding object to project', str(obj)
         if isinstance(obj, CElement):
             # pridaj element
             
@@ -393,7 +394,7 @@ class CProject(object):
             
             newProjectTreeNode = CProjectTreeNode(obj, parent)
             print 'new project tree node',newProjectTreeNode
-            print 'index',treeNode.GetIndex()
+            
             parent.AddChild(newProjectTreeNode, treeNode.GetIndex())
             
             

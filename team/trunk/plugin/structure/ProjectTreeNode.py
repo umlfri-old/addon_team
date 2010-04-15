@@ -31,11 +31,16 @@ class CProjectTreeNode(object):
 #        self.__index = index
         
     def GetIndex(self):
+        
         if self.__parent is not None:
             if isinstance(self.__objectRepresentation, CElement):
+                
                 return self.__parent.GetChildElementsOrdered().index(self)
-            elif isinstance(self.__objectRepresentation, CElement):
+            
+            elif isinstance(self.__objectRepresentation, CDiagram):
+                
                 return self.__parent.GetChildDiagramsOrdered().index(self)
+                
         else:
             return 0   
 #    def SetAbsoluteIndex(self, index):
@@ -91,14 +96,16 @@ class CProjectTreeNode(object):
     
     
     def GetChildElementsOrdered(self):
-        #self.__childElementsOrdered.sort(key=self.GetIndex)
+        #self.__childElementsOrdered.sort(key=CProjectTreeNode.GetIndex)
         return self.__childElementsOrdered
     
     def GetChildDiagramsOrdered(self):
-        #self.__childDiagramsOrdered.sort(key=self.GetIndex)
+        #self.__childDiagramsOrdered.sort(key=CProjectTreeNode.GetIndex)
         return self.__childDiagramsOrdered
     
     def GetChildsOrdered(self):
+        #self.__childDiagramsOrdered.sort(key=CProjectTreeNode.GetIndex)
+        #self.__childElementsOrdered.sort(key=CProjectTreeNode.GetIndex)
         return self.__childDiagramsOrdered + self.__childElementsOrdered
     
     def GetObject(self):
