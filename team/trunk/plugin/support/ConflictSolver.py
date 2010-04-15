@@ -48,11 +48,11 @@ class CConflictSolver(object):
             elif resolution == CConflictSolver.ACCEPT_MINE:
                 print 'accepting mine'
                 self.__MoveResolvedConflicts(relatedConflicts)
-                self.__merger.MergeDiffs([conflict.GetBaseWorkDiff() for conflict in relatedConflicts])
+                self.__merger.MergeDiffs(list(set([conflict.GetBaseWorkDiff() for conflict in relatedConflicts])))
                 
             elif resolution == CConflictSolver.ACCEPT_THEIRS:
                 self.__MoveResolvedConflicts(relatedConflicts)
-                self.__merger.MergeDiffs([conflict.GetBaseNewDiff() for conflict in relatedConflicts])
+                self.__merger.MergeDiffs(list(set([conflict.GetBaseNewDiff() for conflict in relatedConflicts])))
         
          
     def __MoveResolvedConflicts(self, conflicts):

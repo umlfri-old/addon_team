@@ -11,6 +11,7 @@ from Merger import CMerger
 
 
 
+
 class CUpdater(object):
     '''
     classdocs
@@ -28,8 +29,10 @@ class CUpdater(object):
         self.__fileName = fileName
         self.__newXml = None
         self.__conflictFileName = None
-        self.__TryUpdate()
         self.__conflicter = None
+        
+        self.__TryUpdate()
+        
         
         
         
@@ -49,6 +52,7 @@ class CUpdater(object):
         
         self.__conflicter = CConflicter(self.__updProject, self.__baseProject, self.__mineProject)
         if len(self.__conflicter.GetConflicting()) == 0:
+            # ok nechaj vsetko tak
             print 'no conflicts'
         else:
             # vytvor 3 subory v adresari s projektom, aby som vedel, ze je v konflikte
@@ -66,8 +70,11 @@ class CUpdater(object):
         merger = CMerger(self.__baseProject)
         merger.MergeDiffs(self.__conflicter.merging)
             
+        
         self.__baseProject.UpdateCounters(self.__mineProject.GetCounters())
+        
         self.__baseProject.UpdateCounters(self.__updProject.GetCounters())
+        
         
         
     

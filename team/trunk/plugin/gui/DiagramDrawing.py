@@ -20,7 +20,7 @@ class CDiagramDrawing(object):
         '''
         
         self.__diagram = diagram
-        
+        self.size = [0,0]
         
     def Paint(self, context):
         if self.__diagram is not None:
@@ -31,7 +31,11 @@ class CDiagramDrawing(object):
     
     def __PaintView(self, context, view, r, g, b, a=None):
         if isinstance(view, CElementView):
-            self.__PaintElement(context, view, r, g, b, a)
+            box = self.__PaintElement(context, view, r, g, b, a)
+            if box[2] > self.size[0]:
+                self.size[0] = box[2]
+            if box[3] > self.size[1]:
+                self.size[1] = box[3]
         elif isinstance(view, CConnectionView):
             self.__PaintConnection(context, view, r, g, b, a)                
                     
@@ -48,8 +52,9 @@ class CDiagramDrawing(object):
       
         ed = CElementDrawing(element, context)
         ed.ChangeColor(context, r, g, b, a)
-        ed.Paint()        
+        return ed.Paint()        
           
         
-         
+    def GetSize(self):
+        return self.size  
     

@@ -21,9 +21,10 @@ class CProjectTreeDiffTreeView(object):
         self.differ = differ
         self.projectOld = self.differ.GetOldProject()
         self.projectNew = self.differ.GetNewProject()
-        #self.diffs = diffs[:]
+        
         self.model = model
         self.connectionsIter = None
+        self.deletedLeft = []
         self.Create()
         
     def Create(self):
@@ -50,11 +51,7 @@ class CProjectTreeDiffTreeView(object):
             self.__ShowInsertDiff(diff)
             self.diffs.reverse()
             
-        self.diffs = self.differ.GetProjectTreeDiff().get(EDiffActions.DELETE, [])
-        while len(self.diffs) > 0:
-            diff = self.diffs[0]
-            self.__ShowDeleteDiff(diff)
-            self.diffs.reverse()
+        
             
         self.diffs = self.differ.GetProjectTreeDiff().get(EDiffActions.MOVE, [])
         while len(self.diffs) > 0:
@@ -67,6 +64,13 @@ class CProjectTreeDiffTreeView(object):
             diff = self.diffs[0]
             self.__ShowOrderChangeDiff(diff)
             self.diffs.reverse()
+        
+        self.diffs = self.differ.GetProjectTreeDiff().get(EDiffActions.DELETE, [])
+        while len(self.diffs) > 0:
+            diff = self.diffs[0]
+            self.__ShowDeleteDiff(diff)
+            self.diffs.reverse()
+        
         
         self.diffs = self.differ.GetDataDiff().get(EDiffActions.INSERT, [])
         self.diffs = [d for d in self.diffs if isinstance(d.GetElement(), CConnection)]
@@ -119,6 +123,8 @@ class CProjectTreeDiffTreeView(object):
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"delete.png")
                 icon = gtk.gdk.pixbuf_new_from_file(iconfile)
                 model.set_value(iter, 1, icon)
+                
+                self.deletedLeft.append((iter))
                 self.__MarkParentAsModified(path)
                 self.diffs.remove(diff)
                 return True

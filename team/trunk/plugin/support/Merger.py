@@ -25,10 +25,13 @@ class CMerger(object):
         stopper = {}
         while len(diffs) > 0 :
             diff  = diffs.pop()
+            print 'merging', diff, stopper.get(diff, -1)
             if stopper.get(diff, -1) == len(diffs):
-                raise Exception('Unable to merge all diffs')
+                raise Exception('Unable to merge all diffs', [str(d) for d in diffs])
             stopper[diff] = len(diffs)
+            
             ok = self.MergeDiff(diff)
+            print ok
             if not ok:
                 diffs.insert(0, diff)
     

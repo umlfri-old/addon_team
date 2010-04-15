@@ -80,8 +80,7 @@ class Plugin(object):
       
       
     def ProjectOpened(self):
-#        self.pluginAdapter = self.interface.GetAdapter()
-#        self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
+
         if self.__CanRunPlugin():
             fileName = self.__LoadApplicationProject().GetFileName()
             # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
@@ -159,7 +158,11 @@ class Plugin(object):
 
     def DiffProjects(self, project1, project2):
         differ = CDiffer(project2, project1)
-        #res = differ.projectTreeDiff + differ.visualDiff + differ.dataDiff
+        res = differ.projectTreeDiff + differ.visualDiff + differ.dataDiff
+        print 'DIFFFFFFFFFS'
+        for r in res:
+            print r
+        print '------------'
         self.gui.DiffResultsDialog(differ)
             
     def Update(self, arg):
@@ -183,16 +186,19 @@ class Plugin(object):
             
             
             
-            newFileData = updater.GetNewXml()
-            #print newFileData
             
+            
+            
+            newFileData = updater.GetNewXml()
             rev = self.implementation.Update(newFileData, revision)
             self.pluginAdapter.LoadProject(self.implementation.GetFileName())
             
-            mergedProject = CProject(None, open(self.implementation.GetFileName()).read())
             if updater.GetConflictFileName() is not None:
+                
                 self.SolveConflicts(arg, self.implementation.GetFileName())
+                
             else:
+                
                 self.pluginGuiManager.DisplayWarning('Updated to revision: '+str(rev))
     
     def Checkin(self, arg):
@@ -282,6 +288,7 @@ class Plugin(object):
             mergedProject = CProject(None, open(prFile).read())
             
             resolved = self.SolveConflictTriple(triple, mergedProject)
+            print 'resolved',resolved
             if resolved:
                 self.__Resolve(prFile, mergedProject.GetSaveXml())
             else:

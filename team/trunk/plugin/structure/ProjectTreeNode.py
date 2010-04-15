@@ -91,9 +91,11 @@ class CProjectTreeNode(object):
     
     
     def GetChildElementsOrdered(self):
+        #self.__childElementsOrdered.sort(key=self.GetIndex)
         return self.__childElementsOrdered
     
     def GetChildDiagramsOrdered(self):
+        #self.__childDiagramsOrdered.sort(key=self.GetIndex)
         return self.__childDiagramsOrdered
     
     def GetChildsOrdered(self):
@@ -153,7 +155,13 @@ class CProjectTreeNode(object):
         return 'Tree node '+str(self.__objectRepresentation)
     
     def __hash__(self):
-        return hash(self.GetId())
+        return hash(self.GetId()) + hash(self.__class__)
+    
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+    
+    def __ne__(self, other):
+        return hash(self) != hash(other)
     
     def __cmp__(self, other):
-        return cmp(self.GetId(), other.GetId())
+        return cmp(hash(self), hash(other))

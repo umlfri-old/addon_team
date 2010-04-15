@@ -72,6 +72,7 @@ class Gui(object):
         while 1:
             response = wid.run()
             if response == 0:
+                print 'remaining conflicts',len(conflictSolver.GetUnresolvedConflicts())
                 if len(conflictSolver.GetUnresolvedConflicts()) > 0:
                     self.ShowError(wid, 'You must resolve all conflicts')
                 else:
@@ -211,12 +212,14 @@ class Gui(object):
     
     def __AcceptChanges(self, solution, conflictSolver):
         if conflictSolver is not None:
+            print 'BEFORE',len(conflictSolver.GetUnresolvedConflicts())
             conflictsTreeView = self.wTree.get_object('conflictsTreeView')
             treeselection = conflictsTreeView.get_selection()
             (model, iter) = treeselection.get_selected()
             if iter is not None:
                 conflict = model.get_value(iter, 1)
                 conflictSolver.ResolveConflict(conflict, solution)
+                print 'AFTER',len(conflictSolver.GetUnresolvedConflicts())
                 self.__UpdateConflictsTreeView(conflictSolver)
                 
     def __UpdateConflictsTreeView(self, conflictSolver):
