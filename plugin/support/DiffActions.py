@@ -17,3 +17,4 @@ class EDiffActions(object):
     MODIFY = 'modify'
     MOVE = 'move'
     ORDER_CHANGE = 'change order'
+    LET = 'let it be there'

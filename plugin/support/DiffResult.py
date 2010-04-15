@@ -45,9 +45,13 @@ class CDiffResult(object):
         return str(self.__action) + ' : ' + str(self.__element) + ' : ' +str(self.__previousState) + ' : ' + str(self.__newState) + ' : ' + str(self.__dataPath)
     
     def __eq__(self, other):
+        if other is None:
+            return False
         return hash(self.GetElement()) == hash(other.GetElement()) and self.GetAction() == other.GetAction() and self.GetDataPath() == other.GetDataPath()
     
     def __ne__(self, other):
+        if other is None:
+            return True
         return hash(self.GetElement()) != hash(other.GetElement()) or self.GetAction() != other.GetAction() or self.GetDataPath() != other.GetDataPath()
     
     #def __cmp__(self, other):
