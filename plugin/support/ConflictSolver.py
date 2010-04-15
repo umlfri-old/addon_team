@@ -88,6 +88,14 @@ class CConflictSolver(object):
                         result.append(c)
                     elif c.GetBaseNewDiff() in [r.GetBaseNewDiff() for r in result]:
                         result.append(c)
+                        
+            for c in self.__unresolvedConflicts:
+                if c not in result:
+                    if len(set.intersection(set(c.GetRelatedObjects()), set([r.GetBaseWorkDiff().GetElement() for r in result]))) > 0:
+                        result.append(c)
+                        
+                    elif len(set.intersection(set(c.GetRelatedObjects()), set([r.GetBaseNewDiff().GetElement() for r in result]))) > 0:
+                        result.append(c)
         else:
             for c in self.__unresolvedConflicts:
                 if c not in result:

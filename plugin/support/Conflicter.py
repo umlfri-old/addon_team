@@ -96,55 +96,59 @@ class CConflicter(object):
             
             if diff not in [c.GetBaseWorkDiff() for c in self.conflicting]:
                 relatedElements = self.__RelatedElements(diff, self.__base, self.__work)
-                
-                if len(set.intersection(set(relatedElements),set([c.GetBaseWorkDiff().GetElement() for c in self.conflicting if c.GetBaseWorkDiff().GetAction() == EDiffActions.DELETE]))) == 0:
+                intersection = set.intersection(set(relatedElements),set([c.GetBaseWorkDiff().GetElement() for c in self.conflicting if c.GetBaseWorkDiff().GetAction() == EDiffActions.DELETE]))
+                if len(intersection) == 0:
                     self.__MergeDataDiff(diff)
                 else:
-                    self.__DataConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()))
+                    self.__DataConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()), list(intersection))
         
         for diff in self.__baseWorkDiffer.projectTreeDiff:
             if diff not in [c.GetBaseWorkDiff() for c in self.conflicting]:
                 if diff.GetElement().GetParent() not in [c.GetBaseWorkDiff().GetElement() for c in self.conflicting if c.GetBaseWorkDiff().GetAction() == EDiffActions.DELETE]:
                     self.__MergeProjectTreeDiff(diff)
                 else:
-                    self.__ProjectTreeConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()))
+                    self.__ProjectTreeConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()), [diff.GetElement().GetParent()])
      
         for diff in self.__baseWorkDiffer.visualDiff:
             if diff not in [c.GetBaseWorkDiff() for c in self.conflicting]:
                 
                 relatedElements = self.__RelatedElements(diff, self.__base, self.__work)
                 
-                if len(set.intersection(set(relatedElements),set([c.GetBaseWorkDiff().GetElement() for c in self.conflicting if c.GetBaseWorkDiff().GetAction() == EDiffActions.DELETE]))) == 0:
+                intersection = set.intersection(set(relatedElements),set([c.GetBaseWorkDiff().GetElement() for c in self.conflicting if c.GetBaseWorkDiff().GetAction() == EDiffActions.DELETE])) 
+                if len(intersection) == 0:
                     self.__MergeDataDiff(diff)
                 else:
-                    self.__VisualConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()))
+                    self.__VisualConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()), list(intersection))
                 
         for diff in self.__baseNewDiffer.dataDiff:
             if diff not in [c.GetBaseNewDiff() for c in self.conflicting]:
                 
                 relatedElements = self.__RelatedElements(diff, self.__base, self.__new)
                 
-                if len(set.intersection(set(relatedElements),set([c.GetBaseNewDiff().GetElement() for c in self.conflicting if c.GetBaseNewDiff().GetAction() == EDiffActions.DELETE]))) == 0:
+                intersection = set.intersection(set(relatedElements),set([c.GetBaseNewDiff().GetElement() for c in self.conflicting if c.GetBaseNewDiff().GetAction() == EDiffActions.DELETE])) 
+                if len(intersection) == 0:
                     self.__MergeDataDiff(diff)
                 else:
-                    self.__DataConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()), diff)
+                    self.__DataConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()), diff, list(intersection))
                 
         for diff in self.__baseNewDiffer.projectTreeDiff:
             if diff not in [c.GetBaseNewDiff() for c in self.conflicting]:
                 if diff.GetElement().GetParent() not in [c.GetBaseNewDiff().GetElement() for c in self.conflicting if c.GetBaseNewDiff().GetAction() == EDiffActions.DELETE]:
                     self.__MergeProjectTreeDiff(diff)
                 else:
-                    self.__ProjectTreeConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()), diff)
+                    self.__ProjectTreeConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()), diff, [diff.GetElement().GetParent()])
                 
         for diff in self.__baseNewDiffer.visualDiff:
             if diff not in [c.GetBaseNewDiff() for c in self.conflicting]:
                 
                 relatedElements = self.__RelatedElements(diff, self.__base, self.__new)
                 
-                if len(set.intersection(set(relatedElements),set([c.GetBaseNewDiff().GetElement() for c in self.conflicting if c.GetBaseNewDiff().GetAction() == EDiffActions.DELETE]))) == 0:
+                intersection = set.intersection(set(relatedElements),set([c.GetBaseNewDiff().GetElement() for c in self.conflicting if c.GetBaseNewDiff().GetAction() == EDiffActions.DELETE])) 
+                
+                if len(intersection) == 0:
                     self.__MergeDataDiff(diff)
                 else:
-                    self.__VisualConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()), diff)
+                    self.__VisualConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath()), diff, list(intersection))
                 
     
     def __RelatedElements(self, diff, base, other):
@@ -255,9 +259,9 @@ class CConflicter(object):
         
         self.merging.append(diff)
     
-    def __DataConflict(self, baseWorkDiff, baseNewDiff):
+    def __DataConflict(self, baseWorkDiff, baseNewDiff, relatedObjects = None):
         print 'data conflict'
-        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Data Conflict')
+        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Data Conflict', relatedObjects)
         if conflict not in self.conflicting:
             self.conflicting.append(conflict)    
         
@@ -271,7 +275,7 @@ class CConflicter(object):
             # ak som pridaval project tree node
             
             # zisti vsetkych jeho parentov a zabran ich vymazaniu
-            parents = diff.GetElement().GetAllParents()
+            parents = project.GetProjectTreeNodeById(diff.GetElement().GetId()).GetAllParents()
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
                 # prejdi vsetky vymazane elementy
                 if d.GetElement() in parents:
@@ -284,7 +288,7 @@ class CConflicter(object):
             
         elif diff.GetAction() == EDiffActions.MOVE:
             # zisti vsetkych jeho parentov a zabran ich vymazaniu
-            parents = diff.GetElement().GetAllParents()
+            parents = project.GetProjectTreeNodeById(diff.GetElement().GetId()).GetAllParents()
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
                 # prejdi vsetky vymazane elementy
                 if d.GetElement() in parents:
@@ -312,7 +316,7 @@ class CConflicter(object):
                     result.append(d)
         
         elif diff.GetAction() == EDiffActions.ORDER_CHANGE:
-            parents = diff.GetElement().GetAllParents()
+            parents = project.GetProjectTreeNodeById(diff.GetElement().GetId()).GetAllParents()
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
                 if d.GetElement() == diff.GetElement():
                     # zmenil som poradie na vymazanom elemente
@@ -345,8 +349,8 @@ class CConflicter(object):
         self.merging.append(diff)
         
     
-    def __ProjectTreeConflict(self, baseWorkDiff, baseNewDiff):
-        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Project tree Conflict')
+    def __ProjectTreeConflict(self, baseWorkDiff, baseNewDiff, relatedObjects = None):
+        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Project tree Conflict', relatedObjects)
         if conflict not in self.conflicting:
             self.conflicting.append(conflict)
             
@@ -447,8 +451,8 @@ class CConflicter(object):
         
         self.merging.append(diff)
     
-    def __VisualConflict(self, baseWorkDiff, baseNewDiff):
-        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Visual Conflict')
+    def __VisualConflict(self, baseWorkDiff, baseNewDiff, relatedObjects = None):
+        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Visual Conflict', relatedObjects)
         if conflict not in self.conflicting:
             self.conflicting.append(conflict)    
         
