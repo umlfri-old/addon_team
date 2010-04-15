@@ -91,6 +91,10 @@ class CMerger(object):
                 elif isinstance(element, CBaseView):
                     print 'changing order view'
                     self.__project.ChangeOrderView(element, diff.GetPreviousState(), diff.GetNewState())
+            
+            elif diff.GetAction() == EDiffActions.LET:
+                print 'letting it there'
+                
         except Exception, e:
             print e
             result = False
