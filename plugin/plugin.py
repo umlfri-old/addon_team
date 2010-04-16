@@ -9,17 +9,20 @@ from gui import Gui
 import os
 from structure import *
 from support import *
-from zipfile import is_zipfile
+from zipfile import is_zipfile, ZIP_DEFLATED, ZipFile
 import implementation
 import inspect
 import uuid
 import time
 from teamExceptions import *
+from cStringIO import StringIO
 
 class Plugin(object):
     '''
     classdocs
     '''
+    
+    incompatibleText = 'Project is under version control, but is incompatible with Team plugin. Would you like to make it compatible? (There will be no physical changes to project file)'
     
     def __init__(self, interface):
         '''
@@ -86,11 +89,22 @@ class Plugin(object):
             # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
             self.implementation = self.__ChooseCorrectImplementation(fileName)
             
-            self.diffMenu.SetSensitive('diff' in self.implementation.supported)
-            self.updateMenu.SetSensitive('update' in self.implementation.supported)
-            self.checkinMenu.SetSensitive('checkin' in self.implementation.supported)
-            self.revertMenu.SetSensitive('revert' in self.implementation.supported)
-            self.logsMenu.SetSensitive('log' in self.implementation.supported)
+            if self.implementation.IsInConflict():
+                self.SolveConflicts(None, fileName)
+            
+            
+            if not self.implementation.IsCompatible():
+                response = self.gui.ShowQuestion(self.incompatibleText)
+                if response:
+                    self.implementation.MakeCompatible()
+                else:
+                    self.__ResetMenuSensitivity()
+            else:
+                self.diffMenu.SetSensitive('diff' in self.implementation.supported)
+                self.updateMenu.SetSensitive('update' in self.implementation.supported)
+                self.checkinMenu.SetSensitive('checkin' in self.implementation.supported)
+                self.revertMenu.SetSensitive('revert' in self.implementation.supported)
+                self.logsMenu.SetSensitive('log' in self.implementation.supported)
         else:
             self.__ResetMenuSensitivity()
     
@@ -110,8 +124,41 @@ class Plugin(object):
         elif p.GetFileName() is None:
             return False
         else:
-            return not is_zipfile(p.GetFileName())
+            return True
+    
+    def __SaveProjectXmlToExistingFile(self, xml, fileName):
+        if is_zipfile(fileName):
+            # uloz zipko
+            fZip = ZipFile(fileName, 'w', ZIP_DEFLATED)
+            fZip.writestr('content.xml', xml)
+            fZip.close()
+        else:
+            f = open(fileName, 'w')
+            f.write(xml)
+            f.close()
+    
+    def __GetProjectXmlFromFile(self, fileName):
+        if is_zipfile(fileName):
+            f = ZipFile(fileName,'r')
+            result = f.read('content.xml')
+        else:
+            f = open(fileName)
+            result = f.read()
+            f.close()
+        return result
+    
+    def __GetProjectXmlFromFileData(self, fd):
         
+        result = ''
+        try:
+            fileLikeObject = StringIO(fd)
+            zf = ZipFile(fileLikeObject, 'r')
+            result = zf.read('content.xml')
+        except:
+            result = fd
+        return result
+    
+    
     def __ChooseCorrectImplementation(self, fileName):
         result = None
         # vyber nejaky
@@ -145,15 +192,15 @@ class Plugin(object):
         
         myProject1 = CProject(project)
         fileData = self.implementation.GetFileData()
-        myProject2 = CProject(None, fileData)
+        myProject2 = CProject(None, self.__GetProjectXmlFromFileData(fileData))
         
         self.DiffProjects(myProject1, myProject2)
         
 #       
 
     def LoadProject(self, rev = None):
-        data = self.implementation.GetFileData(rev)
-        project = CProject(None, data)
+        fd = self.implementation.GetFileData(rev)
+        project = CProject(None, self.__GetProjectXmlFromFileData(fd))
         return project
 
     def DiffProjects(self, project1, project2):
@@ -181,25 +228,36 @@ class Plugin(object):
             else:
                 revision = updateToRevision
                 
-            mine, base, upd = self.implementation.BeforeUpdate(revision)
-            updater = CUpdater(mine, base, upd, self.implementation.GetFileName())
+            result = self.implementation.Update(revision)
+            if self.implementation.IsInConflict():
+                ct = self.implementation.GetConflictingFiles()
+                if ct is not None:
+                # nastal konflikt svn mi vratilo nazvy suborov (mine, base, upd)
+                    mine = self.__GetProjectXmlFromFile(ct['mine'])
+                    base = self.__GetProjectXmlFromFile(ct['base'])
+                    upd = self.__GetProjectXmlFromFile(ct['new'])
+                    updater = CUpdater(mine, base, upd)
+                    if updater.IsInConflict():
+                        
+                        self.SolveConflicts(arg, self.implementation.GetFileName())
+                    
+                    else:
+                        self.__SaveProjectXmlToExistingFile(updater.GetNewXml(), self.implementation.GetFileName())
+                        self.implementation.Resolve()
+                        self.pluginGuiManager.DisplayWarning(result)
+                        self.pluginAdapter.LoadProject(self.implementation.GetFileName())
             
             
-            
-            
-            
-            
-            newFileData = updater.GetNewXml()
-            rev = self.implementation.Update(newFileData, revision)
-            self.pluginAdapter.LoadProject(self.implementation.GetFileName())
-            
-            if updater.GetConflictFileName() is not None:
-                
-                self.SolveConflicts(arg, self.implementation.GetFileName())
-                
             else:
                 
-                self.pluginGuiManager.DisplayWarning('Updated to revision: '+str(rev))
+                self.pluginGuiManager.DisplayWarning(result)
+                self.pluginAdapter.LoadProject(self.implementation.GetFileName())
+            
+            
+                
+                
+                
+            
     
     def Checkin(self, arg):
         project = self.__LoadApplicationProject()
@@ -208,13 +266,11 @@ class Plugin(object):
             return
         
         project.Save()
-        if self.GetProjectConflictingTriple(self.implementation.GetFileName()) is not None:
-            self.pluginGuiManager.DisplayWarning('Unable to checkin: Project remains in conflict')
-        else:
-            msg = self.gui.CheckinMessageDialog()
-            result = self.__Checkin(msg)
-            print 'OUT RESULT',result
-            self.pluginGuiManager.DisplayWarning(result)
+        
+        msg = self.gui.CheckinMessageDialog()
+        result = self.__Checkin(msg)
+        print 'OUT RESULT',result
+        self.pluginGuiManager.DisplayWarning(result)
     
     def __Checkin(self, msg):
         if msg is not None:
@@ -283,14 +339,17 @@ class Plugin(object):
             
             self.implementation = self.__ChooseCorrectImplementation(prFile)
             
-            triple = self.GetProjectConflictingTriple(prFile)
+            triple = self.implementation.GetConflictingFiles()
             
-            mergedProject = CProject(None, open(prFile).read())
             
-            resolved = self.SolveConflictTriple(triple, mergedProject)
+            
+            resolved, newXml = self.SolveConflictTriple(triple)
             print 'resolved',resolved
             if resolved:
-                self.__Resolve(prFile, mergedProject.GetSaveXml())
+                self.__SaveProjectXmlToExistingFile(newXml, prFile)
+                self.implementation.Resolve()
+                self.pluginAdapter.LoadProject(self.implementation.GetFileName())
+                
             else:
                 pass
                 
@@ -307,38 +366,22 @@ class Plugin(object):
         self.gui.LogsDialog(logs)
         
         
-    def SolveConflictTriple(self, triple, mergedProject):    
+    def SolveConflictTriple(self, triple):    
         if triple is not None:
-            newProject = CProject(None, triple[0])
-            oldProject = CProject(None, triple[1])
-            workProject = CProject(None, triple[2])
-            conflicter = CConflicter(newProject, oldProject, workProject)
-            merger = CMerger(mergedProject)
+            upd = self.__GetProjectXmlFromFile(triple['new'])
+            base = self.__GetProjectXmlFromFile(triple['base'])
+            mine = self.__GetProjectXmlFromFile(triple['mine'])
+            
+            updater = CUpdater(mine, base, upd)
+            
+            conflicter = updater.GetConflicter()
+            
+            merger = updater.GetMerger()
+            
             conflictSolver = CConflictSolver(conflicter.GetConflicting(), merger)
-            return self.gui.ConflictSolvingDialog(conflictSolver, conflicter.GetBaseWorkDiffer(), conflicter.GetBaseNewDiffer())
+            return self.gui.ConflictSolvingDialog(conflictSolver, conflicter.GetBaseWorkDiffer(), conflicter.GetBaseNewDiffer()), merger.GetProject().GetSaveXml()
                 
-    def GetProjectConflictingTriple(self, fileName):
-        conflictNewFileName = fileName+'.frinew'
-        conflictOldFileName = fileName+'.fribase'
-        conflictWorkFileName = fileName+'.friwork'
-        if os.path.isfile(conflictNewFileName) and os.path.isfile(conflictOldFileName) and os.path.isfile(conflictWorkFileName):
-            result = (open(conflictNewFileName).read(), open(conflictOldFileName).read(), open(conflictWorkFileName).read())
-        else:
-            result = None
-        return result
     
-    def __Resolve(self, fileName, content):
-        conflictNewFileName = fileName+'.frinew'
-        conflictOldFileName = fileName+'.fribase'
-        conflictWorkFileName = fileName+'.friwork'
-        if os.path.isfile(conflictNewFileName) and os.path.isfile(conflictOldFileName) and os.path.isfile(conflictWorkFileName):
-            os.remove(conflictNewFileName)
-            os.remove(conflictOldFileName)
-            os.remove(conflictWorkFileName)
-        f = open(fileName, 'w')
-        f.write(content)
-        f.close()
-        self.pluginAdapter.LoadProject(fileName)
         
 # select plugin main object
 pluginMain = Plugin

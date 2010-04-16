@@ -17,7 +17,7 @@ class CDiffDialog(object):
     '''
 
 
-    def __init__(self, wTree, differ, conflicts = None):
+    def __init__(self, wTree):
         '''
         Constructor
         '''
@@ -25,36 +25,42 @@ class CDiffDialog(object):
         
         
         self.wTree = wTree
-        self.differ = differ
-        self.conflicts = conflicts
-#        self.results = results
-#        self.projectNew = projectNew
-#        self.projectOld = projectOld
+        self.differ = None
+        self.conflicts = None
+        
         self.dialog = self.wTree.get_object('diffResultsDlg')
         self.drawingArea =self.wTree.get_object('diagramDiffDrawingArea')
+        
         self.newDiagram = None
         self.oldDiagram = None
         self.pixmap = None
-        self.__UpdateProjectTreeDiffTreeStore()
         
         
-        id1 = self.wTree.get_object('projectTreeTreeView').connect('cursor-changed', self.on_project_tree_view_cursor_changed)
         
-        id2 = self.drawingArea.connect('configure-event', self.drawingareaconfigure)
-        id3 = self.drawingArea.connect('expose-event', self.drawingareaexpose)
+        
+        self.wTree.get_object('projectTreeTreeView').connect('cursor-changed', self.on_project_tree_view_cursor_changed)
+        
+        self.drawingArea.connect('configure-event', self.drawingareaconfigure)
+        self.drawingArea.connect('expose-event', self.drawingareaexpose)
         self.wTree.get_object('dataDiffTreeStore').clear()
         
         
         
         
         
+        
+        
+      
+    def Run(self):
+        self.__UpdateProjectTreeDiffTreeStore()
         self.dialog.run()
-        self.dialog.hide()
+        self.dialog.hide()  
+
+    def SetDiffer(self, differ):
+        self.differ = differ
         
-        #self.wTree.get_object('projectTreeTreeView').disconnect(id1)
-        #self.drawingArea.disconnect(id2)
-        #self.drawingArea.disconnect(id3)
-        
+    def SetConflicts(self, conflicts):
+        self.conflicts = conflicts
         
     def __UpdateDiagramDiffDrawingArea(self):
         

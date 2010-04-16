@@ -8,6 +8,7 @@ Created on 30.3.2010
 from subprocess import Popen, PIPE
 from imports.etree import etree
 from teamExceptions import *
+import os
 
 
 
@@ -56,40 +57,50 @@ class CSubversionImplementation(object):
         return p.communicate()[1] == ''
         
      
-    
-
-
-        
-    def BeforeUpdate(self, revision=None):
-        '''
-        Returns contents of mine, base and updated files
-        '''
-        print 'before update'
-        if revision is None:
-            rev = 'HEAD'
-        else:
-            rev = revision
-        mine = open(self.__fileName).read()
-        base = self.GetFileData()
-        upd = self.GetFileData(rev)
-        return mine, base, upd
+   
     
         
-    def Update(self, fileData = None, revision=None):
+    def Update(self, revision=None):
         '''
-        Run update and then rewrite file with contents in fileData
-        Solve conflicts on implementation level
+        Run update, return new status of updated file
         '''
         print 'trying svn update to revision'
         if revision is None:
             rev = 'HEAD'
         else:
             rev = revision
-            
+        
+        # run update    
         command = [self.executable, 'update', self.__fileName, '-r', rev, '--non-interactive']
         p = Popen(command, stdout=PIPE, stderr=PIPE)
         (result, err) = p.communicate()
         
+        
+        return result
+    
+    
+    def IsCompatible(self):
+        command = [self.executable, 'propget', 'svn:mime-type', self.__fileName, '--xml']
+        p = Popen(command, stdout=PIPE, stderr=PIPE)
+        (out, err) = p.communicate()
+        r = etree.XML(out)
+        result = False
+        for t in r:
+            if t.tag == 'target':
+                if os.path.normpath(t.get('path')) == os.path.normpath(self.__fileName):
+                    for p in t:
+                        if p.tag == 'property':
+                            if p.get('name') == 'svn:mime-type':
+                                if p.text == 'application/octet-stream':
+                                    result = True
+        return result
+    
+    def MakeCompatible(self):
+        command = [self.executable, 'propset', 'svn:mime-type', 'application/octet-stream', self.__fileName]
+        p = Popen(command, stdout=PIPE, stderr=PIPE)
+        (out, err) = p.communicate()
+    
+    def IsInConflict(self):
         command2 = [self.executable, 'status', self.__fileName, '--xml']
         p2 = Popen(command2, stdout=PIPE, stderr=PIPE)
         (out, err2) = p2.communicate()
@@ -101,19 +112,32 @@ class CSubversionImplementation(object):
         if wcStatus is not None:
             
             if wcStatus.get('item') == 'conflicted':
-                # ak je v konflikte
-                # vyries konflikt na urovni svn, aby tam potom nestrasili tie subory
-                print 'solving conflict in svn'
-                self.__SolveConflict()
-        
-        if fileData is not None:
-            f = open(self.__fileName, 'w')
-            f.write(fileData)
-            f.close()
-        
-        
-        
-        return result
+                return True
+            
+        return False
+    
+    def GetConflictingFiles(self):
+        if self.IsInConflict():
+            command3 = [self.executable, 'info', self.__fileName, '--xml']
+            p3 = Popen(command3, stdout=PIPE, stderr=PIPE)
+            (out, err2) = p3.communicate()
+            r = etree.XML(out)
+            baseFileName = r.find('.//prev-base-file').text
+            newFileName = r.find('.//cur-base-file').text
+             
+            baseFile = os.path.join(os.path.dirname(self.__fileName), baseFileName)
+            newFile = os.path.join(os.path.dirname(self.__fileName), newFileName)
+            return {'mine':self.__fileName, 'base':baseFile, 'new':newFile}
+        else:
+            return None
+            
+    
+    def Resolve(self):
+        command = [self.executable, 'resolved', self.__fileName]
+        p = Popen(command, stdout=PIPE, stderr=PIPE)
+        (result, err) = p.communicate()
+    
+    
     
     def __SolveConflict(self):
         command = [self.executable, 'resolved', self.__fileName]
