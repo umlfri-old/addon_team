@@ -28,6 +28,7 @@ class Gui(object):
         self.wTree = gtk.Builder()
         gladeFile = os.path.join(os.path.dirname(__file__), "gui.glade")
         self.wTree.add_from_file( gladeFile )
+        self.diffDialog = None
         
         dic = { 
             
@@ -60,14 +61,20 @@ class Gui(object):
         
     
     def DiffResultsDialog(self, differ):
-        diffDialog = CDiffDialog(self.wTree, differ)
+        if self.diffDialog is None:
+            self.diffDialog = CDiffDialog(self.wTree)
+        self.diffDialog.SetDiffer(differ)
+        self.diffDialog.Run()
         
         
     
     
         
     def ConflictSolvingDialog(self, conflictSolver, baseWorkDiffer, baseNewDiffer):
-        conflictsDialog = CConflictsDialog(self.wTree, conflictSolver, baseWorkDiffer, baseNewDiffer)
+        if self.diffDialog is None:
+            self.diffDialog = CDiffDialog(self.wTree)
+        conflictsDialog = CConflictsDialog(self.wTree, conflictSolver, baseWorkDiffer, baseNewDiffer, self.diffDialog)
+        conflictsDialog.Run()
         return conflictsDialog.Response()
     
     
@@ -199,3 +206,11 @@ class Gui(object):
             gtk.BUTTONS_CLOSE, message)
         md.run()
         md.destroy()
+        
+    def ShowQuestion(self, question):
+        md = gtk.MessageDialog(None, gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_QUESTION, gtk.BUTTONS_YES_NO, question)
+        response = md.run()
+        md.destroy()
+        return response == gtk.RESPONSE_YES
+    
+    

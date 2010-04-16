@@ -13,57 +13,71 @@ class CConflictsDialog(object):
     '''
 
 
-    def __init__(self, wTree, conflictSolver, baseWorkDiffer, baseNewDiffer):
+    def __init__(self, wTree, conflictSolver, baseWorkDiffer, baseNewDiffer, diffDialog):
         self.wTree = wTree
         self.conflictSolver = conflictSolver
         self.baseWorkDiffer = baseWorkDiffer
         self.baseNewDiffer = baseNewDiffer
         self.response = None
-        wid = self.wTree.get_object('conflictSolvingDlg')
+        self.diffDialog = diffDialog
+        
+        self.wid = self.wTree.get_object('conflictSolvingDlg')
         self.__UpdateConflictsTreeView()
         
-        id1 = self.wTree.get_object('acceptMineBtn').connect('clicked', self.on_accept_mine_btn_clicked)
-        id2 = self.wTree.get_object('acceptTheirsBtn').connect('clicked', self.on_accept_theirs_btn_clicked)
-        id3 = self.wTree.get_object('showMineDiffBtn').connect('clicked', self.on_show_mine_diff_btn_clicked)
-        id4 = self.wTree.get_object('showTheirsDiffBtn').connect('clicked', self.on_show_theirs_diff_btn_clicked)
-        id5 = self.wTree.get_object('showMergedProjectBtn').connect('clicked', self.on_show_merged_project_btn_clicked)
+        self.wTree.get_object('acceptMineBtn').connect('clicked', self.on_accept_mine_btn_clicked)
+        self.wTree.get_object('acceptTheirsBtn').connect('clicked', self.on_accept_theirs_btn_clicked)
+        self.wTree.get_object('showMineDiffBtn').connect('clicked', self.on_show_mine_diff_btn_clicked)
+        self.wTree.get_object('showTheirsDiffBtn').connect('clicked', self.on_show_theirs_diff_btn_clicked)
+        self.wTree.get_object('showMergedProjectBtn').connect('clicked', self.on_show_merged_project_btn_clicked)
+        
+            
+        
+    
+    def Run(self):
         while 1:
-            response = wid.run()
+            response = self.wid.run()
             if response == 0:
                 print 'remaining conflicts',len(self.conflictSolver.GetUnresolvedConflicts())
                 if len(self.conflictSolver.GetUnresolvedConflicts()) > 0:
-                    self.ShowError(wid, 'You must resolve all conflicts')
+                    self.ShowError(self.wid, 'You must resolve all conflicts')
                 else:
-                    wid.hide()
+                    self.wid.hide()
                     self.response = True
                     break
                     
             else:
-                wid.hide()
+                self.wid.hide()
                 self.response = False
                 break
-            
-        self.wTree.get_object('acceptMineBtn').disconnect(id1)
-        self.wTree.get_object('acceptTheirsBtn').disconnect(id2)
-        self.wTree.get_object('showMineDiffBtn').disconnect(id3)
-        self.wTree.get_object('showTheirsDiffBtn').disconnect(id4)
-        self.wTree.get_object('showMergedProjectBtn').disconnect(id5)
-   
+    
     def Response(self):
         return self.response
     
     def on_show_mine_diff_btn_clicked(self, wid):
         print 'showing mine diff'
-        mineDiff = CDiffDialog(self.wTree, self.baseWorkDiffer, [c.GetBaseWorkDiff() for c in self.conflictSolver.GetUnresolvedConflicts()])
+        if self.diffDialog is None:
+            self.diffDialog = CDiffDialog(self.wTree)
+        self.diffDialog.SetDiffer(self.baseWorkDiffer)
+        self.diffDialog.SetConflicts([c.GetBaseWorkDiff() for c in self.conflictSolver.GetUnresolvedConflicts()])
+        self.diffDialog.Run()
         
     def on_show_theirs_diff_btn_clicked(self, wid):
         print 'showing theirs diff'
-        theirsDiff = CDiffDialog(self.wTree, self.baseNewDiffer, [c.GetBaseNewDiff() for c in self.conflictSolver.GetUnresolvedConflicts()])
+        if self.diffDialog is None:
+            self.diffDialog = CDiffDialog(self.wTree)
+        self.diffDialog.SetDiffer(self.baseNewDiffer)
+        self.diffDialog.SetConflicts([c.GetBaseNewDiff() for c in self.conflictSolver.GetUnresolvedConflicts()])
+        self.diffDialog.Run()
+        
     
     
     def on_show_merged_project_btn_clicked(self, wid):
         falseDiffer = CDiffer(self.conflictSolver.GetMerger().GetProject(), self.conflictSolver.GetMerger().GetProject())
-        merged = CDiffDialog(self.wTree, falseDiffer, None)
+        if self.diffDialog is None:
+            self.diffDialog = CDiffDialog(self.wTree)
+        self.diffDialog.SetDiffer(falseDiffer)
+        self.diffDialog.SetConflicts(None)
+        self.diffDialog.Run()
     
     
             
