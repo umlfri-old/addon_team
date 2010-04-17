@@ -4,16 +4,12 @@ Created on 27.2.2010
 @author: Peterko
 '''
 
-from lib.Addons.Plugin.Client.Interface import CInterface
 from gui import Gui
-import os
+
 from structure import *
 from support import *
 from zipfile import is_zipfile, ZIP_DEFLATED, ZipFile
-import inspect
 import uuid
-import time
-from teamExceptions import *
 from cStringIO import StringIO
 
 class Plugin(object):
