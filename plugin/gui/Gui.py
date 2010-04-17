@@ -29,6 +29,7 @@ class Gui(object):
         gladeFile = os.path.join(os.path.dirname(__file__), "gui.glade")
         self.wTree.add_from_file( gladeFile )
         self.diffDialog = None
+        self.conflictSolvingDialog = None
         
         dic = { 
             
@@ -73,9 +74,11 @@ class Gui(object):
     def ConflictSolvingDialog(self, conflictSolver, baseWorkDiffer, baseNewDiffer):
         if self.diffDialog is None:
             self.diffDialog = CDiffDialog(self.wTree)
-        conflictsDialog = CConflictsDialog(self.wTree, conflictSolver, baseWorkDiffer, baseNewDiffer, self.diffDialog)
-        conflictsDialog.Run()
-        return conflictsDialog.Response()
+        if self.conflictSolvingDialog is None:
+            self.conflictSolvingDialog = CConflictsDialog(self.wTree)
+        self.conflictSolvingDialog.SetAttributes(conflictSolver, baseWorkDiffer, baseNewDiffer, self.diffDialog)
+        self.conflictSolvingDialog.Run()
+        return self.conflictSolvingDialog.Response()
     
     
             
@@ -104,34 +107,6 @@ class Gui(object):
         else:
             return None
         
-    def OpenConflictProjectDialog(self):
-        dialog = gtk.FileChooserDialog("Open..",
-                               None,
-                               gtk.FILE_CHOOSER_ACTION_OPEN,
-                               (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-        dialog.set_default_response(gtk.RESPONSE_OK)
-
-
-        filter = gtk.FileFilter()
-        filter.set_name("UML .FRI Clear XML Projects")
-        filter.add_pattern('*'+PROJECT_CLEARXML_EXTENSION)
-        dialog.add_filter(filter)
-        
-        
-        filter = gtk.FileFilter()
-        filter.set_name("All files")
-        filter.add_pattern("*")
-        dialog.add_filter(filter)
-        
-        
-        response = dialog.run()
-        result = None
-        if response == gtk.RESPONSE_OK:
-            result = dialog.get_filename()
-        
-        dialog.destroy()
-        return result
     
     def ChooseRevisionDialog(self):
         wid = self.wTree.get_object('chooseRevisionDlg')

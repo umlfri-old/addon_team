@@ -44,25 +44,25 @@ class Plugin(object):
         
         self.interface.StartAutocommit()
         
-        self.pluginAdapter.AddNotification('team-exception', self.TeamException)
-        
         self.pluginAdapter.AddNotification('project-opened', self.ProjectOpened)
         
-        self.pluginAdapter.AddNotification('send-supported', self.ReceiveSupported)
+        self.pluginAdapter.AddNotification('team-exception', self.TeamException)
         
-        self.pluginAdapter.AddNotification('send-log', self.ReceiveLog)
-        self.pluginAdapter.AddNotification('send-file-data', self.ReceiveFileData)
-        self.pluginAdapter.AddNotification('continue-diff-project', self.ContinueDiffProject)
-        self.pluginAdapter.AddNotification('continue-diff-revisions', self.ContinueDiffRevisions)
+        self.pluginAdapter.AddNotification('team-send-supported', self.ReceiveSupported)
         
-        self.pluginAdapter.AddNotification('get-authorization', self.GetAuthorization)
-        self.pluginAdapter.AddNotification('send-result', self.ReceiveResult)
-        self.pluginAdapter.AddNotification('solve-conflicts', self.SolveConflicts)
-        self.pluginAdapter.AddNotification('send-register-implementation-for-checkout', self.RegisterImplementationForCheckout)
-        self.pluginAdapter.AddNotification('ask-compatible', self.AskCompatible)
-        self.pluginAdapter.AddNotification('load-project', self.LoadProject)
+        self.pluginAdapter.AddNotification('team-send-log', self.ReceiveLog)
+        self.pluginAdapter.AddNotification('team-send-file-data', self.ReceiveFileData)
+        self.pluginAdapter.AddNotification('team-continue-diff-project', self.ContinueDiffProject)
+        self.pluginAdapter.AddNotification('team-continue-diff-revisions', self.ContinueDiffRevisions)
         
-        self.pluginAdapter.Notify('register-for-checkout')
+        self.pluginAdapter.AddNotification('team-get-authorization', self.GetAuthorization)
+        self.pluginAdapter.AddNotification('team-send-result', self.ReceiveResult)
+        self.pluginAdapter.AddNotification('team-solve-conflicts', self.SolveConflicts)
+        self.pluginAdapter.AddNotification('team-send-register-implementation-for-checkout', self.RegisterImplementationForCheckout)
+        self.pluginAdapter.AddNotification('team-ask-compatible', self.AskCompatible)
+        self.pluginAdapter.AddNotification('team-load-project', self.LoadProjectFile)
+        
+        self.pluginAdapter.Notify('team-register-for-checkout')
         
         
         # add menu
@@ -79,10 +79,11 @@ class Plugin(object):
         self.checkoutMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkout,5,'Checkout',None,None)
         self.logsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.ShowLogs,6,'Show logs',None,None)
         
-        
+        self.__ResetMenuSensitivity()
         self.ProjectOpened()
                     
-    def LoadProject(self, fileName):
+    def LoadProjectFile(self, fileName):
+        
         self.pluginAdapter.LoadProject(fileName)
        
     def AskCompatible(self):    
@@ -97,7 +98,7 @@ class Plugin(object):
             fileName = self.__LoadApplicationProject().GetFileName()
             
             self.pluginAdapter.Notify('team-project-opened', fileName)
-            self.pluginAdapter.Notify('get-supported')
+            self.pluginAdapter.Notify('team-get-supported')
         
             
     
@@ -116,7 +117,7 @@ class Plugin(object):
         self.gui.LogsDialog(logs)
     
     def ReceiveSupported(self, supported): 
-        print 'returning supported'
+        
         self.diffMenu.SetSensitive('diff' in supported)
         self.updateMenu.SetSensitive('update' in supported)
         self.checkinMenu.SetSensitive('checkin' in supported)
@@ -195,7 +196,7 @@ class Plugin(object):
             self.pluginGuiManager.DisplayWarning('No project loaded')
             return
 
-        self.pluginAdapter.Notify('get-file-data', 'diff-project', 'diff-project')
+        self.pluginAdapter.Notify('team-get-file-data', 'diff-project', 'diff-project')
         
     def ContinueDiffProject(self):
         project = self.__LoadApplicationProject()
@@ -213,8 +214,8 @@ class Plugin(object):
 #       
 
     def DiffRevisions(self, rev1, rev2):
-        self.pluginAdapter.Notify('get-file-data', 'diff-revisions1', 'diff-revisions', rev1)
-        self.pluginAdapter.Notify('get-file-data', 'diff-revisions2', 'diff-revisions', rev2)
+        self.pluginAdapter.Notify('team-get-file-data', 'diff-revisions1', 'diff-revisions', rev1)
+        self.pluginAdapter.Notify('team-get-file-data', 'diff-revisions2', 'diff-revisions', rev2)
         
 
         
@@ -244,7 +245,7 @@ class Plugin(object):
      
     def GetAuthorization(self, actionId):        
         username, password = self.gui.AuthDialog()
-        self.pluginAdapter.Notify('continue-'+actionId, username, password)
+        self.pluginAdapter.Notify('team-continue-'+actionId, username, password)
         
     def Update(self, arg):
         project = self.__LoadApplicationProject()
@@ -261,8 +262,8 @@ class Plugin(object):
                 revision = None
             else:
                 revision = updateToRevision
-                
-            self.pluginAdapter.Notify('update', revision)
+            
+            self.pluginAdapter.Notify('team-update', revision)
             
             
                 
@@ -279,7 +280,7 @@ class Plugin(object):
         project.Save()
         
         msg = self.gui.CheckinMessageDialog()
-        self.pluginAdapter.Notify('checkin', msg)
+        self.pluginAdapter.Notify('team-checkin', msg)
             
                         
             
@@ -289,7 +290,7 @@ class Plugin(object):
             self.pluginGuiManager.DisplayWarning('No project loaded')
             return
         
-        self.pluginAdapter.Notify('revert')
+        self.pluginAdapter.Notify('team-revert')
         
     
         
@@ -302,30 +303,38 @@ class Plugin(object):
             url = result[1]
             directory = result[2]
             revision = result[3]
-            self.pluginAdapter.Notify('checkout',implId, url, directory, revision)
+            self.pluginAdapter.Notify('team-checkout',implId, url, directory, revision)
             
       
     def SolveConflictsInOpenedProject(self, arg):
         
-        self.pluginAdapter.Notify('solve-conflicts-in-opened-project')      
+        self.pluginAdapter.Notify('team-solve-conflicts-in-opened-project')      
             
     def SolveConflicts(self, triple, prFile):
+        
         mine = self.__GetProjectXmlFromFile(triple['mine'])
         base = self.__GetProjectXmlFromFile(triple['base'])
         upd = self.__GetProjectXmlFromFile(triple['new'])
         updater = CUpdater(mine, base, upd)
         if updater.IsInConflict():
-            resolved, newXml = self.SolveConflictTriple(triple)
+            
+            resolved, newXml = self.SolveConflictTriple(updater)
         
+        
+            
+            
+            
             if resolved:
                 self.__SaveProjectXmlToExistingFile(newXml, prFile)
             
-                self.pluginAdapter.Notify('resolve')
+                self.pluginAdapter.Notify('team-resolve')
                 
                     
         else:
+            # not in conflict
+            # save merged file
             self.__SaveProjectXmlToExistingFile(updater.GetNewXml(), prFile)
-            self.pluginAdapter.Notify('resolve')
+            self.pluginAdapter.Notify('team-resolve')
             
                 
                 
@@ -336,27 +345,30 @@ class Plugin(object):
             self.interface.GetAdapter().DisplayWarning('No project loaded')
             return
         
-        self.pluginAdapter.Notify('get-log')
+        self.pluginAdapter.Notify('team-get-log')
         
     def RegisterImplementationForCheckout(self, id, description):
         self.implementations[id] = description
         self.__ResetMenuSensitivity()
         
         
-    def SolveConflictTriple(self, triple):    
-        if triple is not None:
-            upd = self.__GetProjectXmlFromFile(triple['new'])
-            base = self.__GetProjectXmlFromFile(triple['base'])
-            mine = self.__GetProjectXmlFromFile(triple['mine'])
-            
-            updater = CUpdater(mine, base, upd)
-            
-            conflicter = updater.GetConflicter()
-            
-            merger = updater.GetMerger()
-            
-            conflictSolver = CConflictSolver(conflicter.GetConflicting(), merger)
-            return self.gui.ConflictSolvingDialog(conflictSolver, conflicter.GetBaseWorkDiffer(), conflicter.GetBaseNewDiffer()), merger.GetProject().GetSaveXml()
+    def SolveConflictTriple(self, updater):    
+        if updater is not None:
+            if updater.IsInConflict():
+                
+                conflicter = updater.GetConflicter()
+                
+                
+                
+                merger = updater.GetMerger()
+                
+                conflictSolver = CConflictSolver(conflicter.GetConflicting(), merger)
+                result = self.gui.ConflictSolvingDialog(conflictSolver, conflicter.GetBaseWorkDiffer(), conflicter.GetBaseNewDiffer())
+                return result, merger.GetProject().GetSaveXml()
+            else:
+                return False, 'None'
+        else:
+            return False, 'None'
                 
     
         

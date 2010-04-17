@@ -13,16 +13,15 @@ class CConflictsDialog(object):
     '''
 
 
-    def __init__(self, wTree, conflictSolver, baseWorkDiffer, baseNewDiffer, diffDialog):
+    def __init__(self, wTree):
         self.wTree = wTree
-        self.conflictSolver = conflictSolver
-        self.baseWorkDiffer = baseWorkDiffer
-        self.baseNewDiffer = baseNewDiffer
+        self.conflictSolver = None
+        self.baseWorkDiffer = None
+        self.baseNewDiffer = None
         self.response = None
-        self.diffDialog = diffDialog
+        
         
         self.wid = self.wTree.get_object('conflictSolvingDlg')
-        self.__UpdateConflictsTreeView()
         
         self.wTree.get_object('acceptMineBtn').connect('clicked', self.on_accept_mine_btn_clicked)
         self.wTree.get_object('acceptTheirsBtn').connect('clicked', self.on_accept_theirs_btn_clicked)
@@ -30,7 +29,11 @@ class CConflictsDialog(object):
         self.wTree.get_object('showTheirsDiffBtn').connect('clicked', self.on_show_theirs_diff_btn_clicked)
         self.wTree.get_object('showMergedProjectBtn').connect('clicked', self.on_show_merged_project_btn_clicked)
         
-            
+    def SetAttributes(self, conflictSolver, baseWorkDiffer, baseNewDiffer, diffDialog):    
+        self.conflictSolver = conflictSolver
+        self.baseWorkDiffer = baseWorkDiffer
+        self.baseNewDiffer = baseNewDiffer
+        self.diffDialog = diffDialog    
         
     
     def Run(self):
