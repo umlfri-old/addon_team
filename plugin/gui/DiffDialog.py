@@ -30,15 +30,16 @@ class CDiffDialog(object):
         
         self.dialog = self.wTree.get_object('diffResultsDlg')
         self.drawingArea =self.wTree.get_object('diagramDiffDrawingArea')
+        self.diffLabel = self.wTree.get_object('diffLabel')
         
-        self.newDiagram = None
-        self.oldDiagram = None
-        self.pixmap = None
+        
+        
         
         
         
         
         self.wTree.get_object('projectTreeTreeView').connect('cursor-changed', self.on_project_tree_view_cursor_changed)
+        self.wTree.get_object('dataDiffTreeView').connect('cursor-changed', self.on_data_diff_view_cursor_changed)
         
         self.drawingArea.connect('configure-event', self.drawingareaconfigure)
         self.drawingArea.connect('expose-event', self.drawingareaexpose)
@@ -53,6 +54,13 @@ class CDiffDialog(object):
       
     def Run(self):
         self.__UpdateProjectTreeDiffTreeStore()
+        
+        self.__UpdateDataDiffTreeView(None, None)
+        
+        self.newDiagram = None
+        self.oldDiagram = None
+        self.pixmap = None
+        
         self.dialog.run()
         self.dialog.hide()  
 
@@ -84,7 +92,7 @@ class CDiffDialog(object):
             if (self.oldDiagram or self.newDiagram) is not None:
                 if r.GetElement().GetParentDiagram() == (self.oldDiagram or self.newDiagram):
                     diffDrawing = CDiffDrawing(self.context, r, self.oldDiagram, self.newDiagram)
-                    print 'drawing diff'
+                    
                     diffDrawing.Paint()
         
         self.drawingArea.set_size_request(int(size[0]), int(size[1]))
@@ -120,9 +128,12 @@ class CDiffDialog(object):
         
     
     def __UpdateDataDiffTreeView(self, oldObj, newObj):
-        print 'updating data diff tree view'
+        
         treeModel = self.wTree.get_object('dataDiffTreeStore')
-        ddtv = CDataDiffTreeView(oldObj, newObj, self.differ, treeModel)
+        if oldObj is None and newObj is None:
+            treeModel.clear()
+        else:
+            ddtv = CDataDiffTreeView(oldObj, newObj, self.differ, treeModel, self.conflicts)
         
     
             
@@ -130,7 +141,7 @@ class CDiffDialog(object):
         sel = treeView.get_selection()
         (model, iter) = sel.get_selected()
         node = model.get_value(iter, 3)
-        print 'cursor changed'
+        
         if node is not None:
             if isinstance(node.GetObject(), CDiagram):
                 
@@ -144,6 +155,20 @@ class CDiffDialog(object):
             oldObj = self.differ.GetOldProject().GetById(obj.GetId())
             newObj = self.differ.GetNewProject().GetById(obj.GetId())
             self.__UpdateDataDiffTreeView(oldObj, newObj)
+            
+        diff = model.get_value(iter, 5)
+        if diff is not None:
+            self.diffLabel.set_text(str(diff))
+        else:
+            self.diffLabel.set_text('')
         
+    def on_data_diff_view_cursor_changed(self, treeView):
+        sel = treeView.get_selection()
+        (model, iter) = sel.get_selected()
+        diff = model.get_value(iter, 4)
+        if diff is not None:
+            self.diffLabel.set_text(str(diff))
+        else:
+            self.diffLabel.set_text('')
         
         

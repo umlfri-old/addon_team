@@ -57,3 +57,5 @@ class CConnectionView(CBaseView):
         else:
             #uprava
             self.viewData[path[0]][path[1]].update(newState)
+            
+    

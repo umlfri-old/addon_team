@@ -46,3 +46,6 @@ class CConnection(CBase):
         
         self.data.update(newState)
         self.__updateSourceDestination()
+        
+    def __str__(self):
+        return 'Connection object (source: \"'+str(self.__source)+'\", destination:\"'+str(self.__destination)+'\")'

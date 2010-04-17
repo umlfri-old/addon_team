@@ -25,7 +25,7 @@ class CDiffDrawing(CBaseDrawing):
         self.newDiagram = newDiagram
         
     def Paint(self):
-        print 'painting'
+        
         
         if self.diff.GetAction() == EDiffActions.DELETE:
             self.ChangeColor(self.context, 255, 0, 0, 0.2)

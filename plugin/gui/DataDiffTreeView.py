@@ -13,7 +13,7 @@ class CDataDiffTreeView(object):
     '''
 
 
-    def __init__(self, objectOld, objectNew, differ, model):
+    def __init__(self, objectOld, objectNew, differ, model, conflicts):
         '''
         Constructor
         '''
@@ -21,6 +21,7 @@ class CDataDiffTreeView(object):
         self.objectNew = objectNew
         self.differ = differ
         self.model = model
+        self.conflicts = conflicts
         self.Create()
         
     def Create(self):
@@ -32,6 +33,38 @@ class CDataDiffTreeView(object):
         else:
             self.__ShowData(self.objectOld)
             self.__ShowDiffs()
+            self.__ShowConflicts()
+    
+    
+    def __ShowConflicts(self):
+        
+        def func(model, path, iter, displayedConflicts):
+            for dp in [c.GetDataPath() for c in displayedConflicts]:
+                found = True
+                if len(path) == len(dp):
+            
+                    for i,x in enumerate(path):
+                        it = model.get_iter(path[0:i+1])
+                        value = model.get_value(it, 0)
+                        if str(value) != str(dp[i]):
+                            found = False
+                            break
+                else:
+                    found = False 
+                
+                if found:
+                    iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"conflict.png")
+                    icon = gtk.gdk.pixbuf_new_from_file(iconfile)
+                
+                    model.set_value(iter, 3, icon)
+        
+        if self.conflicts is not None:
+            displayedConflicts = []
+            for c in self.conflicts:
+                if c.GetElement() == self.objectNew or c.GetElement() == self.objectOld:
+                    displayedConflicts.append(c)
+            
+            self.model.foreach(func, displayedConflicts)
 
     def __ShowData(self, obj, action = None):
         icon = None
@@ -44,24 +77,24 @@ class CDataDiffTreeView(object):
                 
             icon = gtk.gdk.pixbuf_new_from_file(iconfile)
         
-        self.__Append(obj.GetData(), None, icon)
+        self.__Append(obj.GetData(), None, icon, None, None)
         
-    def __Append(self, data, iter = None, icon = None, conflictIcon = None):
+    def __Append(self, data, iter = None, icon = None, conflictIcon = None, diff=None):
         if type(data) == type({}):
             for k,v in data.items():
                 if type(v) == type([]):
-                    it = self.model.append(iter, [k, None, icon, conflictIcon])
+                    it = self.model.append(iter, [k, None, icon, conflictIcon, diff])
                     for i,d in enumerate(v):
-                        self.__Append({i:d}, it, icon, conflictIcon)
+                        self.__Append({i:d}, it, icon, conflictIcon, diff)
                 elif type(v) == type({}):
-                    it = self.model.append(iter, [k, None, icon, conflictIcon])
+                    it = self.model.append(iter, [k, None, icon, conflictIcon, diff])
                     self.__Append(v, it, icon, conflictIcon)
                 else:
-                    self.model.append(iter, [k,v,icon, conflictIcon])
+                    self.model.append(iter, [k,v,icon, conflictIcon, diff])
                     
         elif type(data) == type([]):
             for i,d in enumerate(data):
-                self.__Append({i:d}, iter, icon, conflictIcon)
+                self.__Append({i:d}, iter, icon, conflictIcon, diff)
             
             
     def __ShowDiffs(self):
@@ -95,7 +128,7 @@ class CDataDiffTreeView(object):
                 if type(diff.GetNewState()) == type([]):
                     self.__Append(diff.GetNewState(), iter, icon)
                 else:
-                    self.__Append({model.iter_n_children(iter):diff.GetNewState()}, iter, icon, None)
+                    self.__Append({model.iter_n_children(iter):diff.GetNewState()}, iter, icon, None, diff)
                     
                 self.__MarkParentAsModified(model.get_path(iter), True)
                 return True
@@ -143,6 +176,7 @@ class CDataDiffTreeView(object):
                 it = model.iter_nth_child(iter, index)
             
                 model.set_value(it, 2, icon)
+                model.set_value(it, 4, diff)
                 
                 self.__MarkParentAsModified(model.get_path(it))
                 
@@ -179,6 +213,7 @@ class CDataDiffTreeView(object):
                 icon = gtk.gdk.pixbuf_new_from_file(iconfile)
                 model.set_value(iter, 1, diff.GetNewState().values()[0])
                 model.set_value(iter, 2, icon)
+                model.set_value(iter, 4, diff)
                 self.__MarkParentAsModified(model.get_path(iter))
         
         print diff
