@@ -45,18 +45,22 @@ class Plugin(object):
         self.interface.StartAutocommit()
         
         self.pluginAdapter.AddNotification('team-exception', self.TeamException)
+        
         self.pluginAdapter.AddNotification('project-opened', self.ProjectOpened)
+        
         self.pluginAdapter.AddNotification('send-supported', self.ReceiveSupported)
         
         self.pluginAdapter.AddNotification('send-log', self.ReceiveLog)
         self.pluginAdapter.AddNotification('send-file-data', self.ReceiveFileData)
         self.pluginAdapter.AddNotification('continue-diff-project', self.ContinueDiffProject)
         self.pluginAdapter.AddNotification('continue-diff-revisions', self.ContinueDiffRevisions)
-        self.pluginAdapter.AddNotification('continue-revert', self.ContinueRevert)
+        
         self.pluginAdapter.AddNotification('get-authorization', self.GetAuthorization)
         self.pluginAdapter.AddNotification('send-result', self.ReceiveResult)
         self.pluginAdapter.AddNotification('solve-conflicts', self.SolveConflicts)
         self.pluginAdapter.AddNotification('send-register-implementation-for-checkout', self.RegisterImplementationForCheckout)
+        self.pluginAdapter.AddNotification('ask-compatible', self.AskCompatible)
+        self.pluginAdapter.AddNotification('load-project', self.LoadProject)
         
         self.pluginAdapter.Notify('register-for-checkout')
         
@@ -78,38 +82,24 @@ class Plugin(object):
         
         self.ProjectOpened()
                     
+    def LoadProject(self, fileName):
+        self.pluginAdapter.LoadProject(fileName)
        
-        
-      
+    def AskCompatible(self):    
+        response = self.gui.ShowQuestion(self.incompatibleText)
+        if response:
+            self.pluginAdapter.Notify('make-compatible')
       
     def ProjectOpened(self):
-
+        self.__ResetMenuSensitivity()
+        
         if self.__CanRunPlugin():
             fileName = self.__LoadApplicationProject().GetFileName()
-            # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
-#            self.implementation = self.__ChooseCorrectImplementation(fileName)
-#            
-#            if self.implementation.IsInConflict():
-#                self.SolveConflicts(None, fileName)
-#            
-#            
-#            if not self.implementation.IsCompatible():
-#                response = self.gui.ShowQuestion(self.incompatibleText)
-#                if response:
-#                    self.implementation.MakeCompatible()
-#                else:
-#                    self.__ResetMenuSensitivity()
-#            else:
-#                self.diffMenu.SetSensitive('diff' in self.implementation.supported)
-#                self.updateMenu.SetSensitive('update' in self.implementation.supported)
-#                self.checkinMenu.SetSensitive('checkin' in self.implementation.supported)
-#                self.revertMenu.SetSensitive('revert' in self.implementation.supported)
-#                self.logsMenu.SetSensitive('log' in self.implementation.supported)
-                
+            
             self.pluginAdapter.Notify('team-project-opened', fileName)
             self.pluginAdapter.Notify('get-supported')
-        else:
-            self.__ResetMenuSensitivity()
+        
+            
     
     
     def ReceiveResult(self, result):
@@ -132,7 +122,7 @@ class Plugin(object):
         self.checkinMenu.SetSensitive('checkin' in supported)
         self.revertMenu.SetSensitive('revert' in supported)
         self.logsMenu.SetSensitive('log' in supported)  
-        #self.checkoutMenu.SetSensitive('checkout' in supported)
+        
         self.solveConflictsMenu.SetSensitive('resolve' in supported) 
     
     
@@ -301,11 +291,7 @@ class Plugin(object):
         
         self.pluginAdapter.Notify('revert')
         
-    def ContinueRevert(self, fileName):
-        
-        self.pluginAdapter.LoadProject(fileName)
-        self.pluginGuiManager.DisplayWarning('Reverted')
-        
+    
         
     def Checkout(self, arg):
 
@@ -335,13 +321,12 @@ class Plugin(object):
                 self.__SaveProjectXmlToExistingFile(newXml, prFile)
             
                 self.pluginAdapter.Notify('resolve')
-                self.pluginAdapter.LoadProject(prFile)
+                
                     
         else:
             self.__SaveProjectXmlToExistingFile(updater.GetNewXml(), prFile)
             self.pluginAdapter.Notify('resolve')
-            self.pluginAdapter.LoadProject(prFile)
-            self.pluginGuiManager.DisplayWarning('Updated without conflicts')
+            
                 
                 
      
