@@ -10,7 +10,6 @@ import os
 from structure import *
 from support import *
 from zipfile import is_zipfile, ZIP_DEFLATED, ZipFile
-import implementation
 import inspect
 import uuid
 import time
@@ -31,48 +30,49 @@ class Plugin(object):
         # load interface
         self.interface = interface
         self.interface.SetGtkMainloop()
+        
         self.pluginAdapter = self.interface.GetAdapter()
         self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
         
         
-        self.implementation = None
+        self.receivedFileData = {}
+        self.implementations = {}
+        
         
         self.gui = Gui(self)
         
         
-        
         self.interface.StartAutocommit()
+        
+        self.pluginAdapter.AddNotification('team-exception', self.TeamException)
         self.pluginAdapter.AddNotification('project-opened', self.ProjectOpened)
+        self.pluginAdapter.AddNotification('send-supported', self.ReceiveSupported)
+        
+        self.pluginAdapter.AddNotification('send-log', self.ReceiveLog)
+        self.pluginAdapter.AddNotification('send-file-data', self.ReceiveFileData)
+        self.pluginAdapter.AddNotification('continue-diff-project', self.ContinueDiffProject)
+        self.pluginAdapter.AddNotification('continue-diff-revisions', self.ContinueDiffRevisions)
+        self.pluginAdapter.AddNotification('continue-revert', self.ContinueRevert)
+        self.pluginAdapter.AddNotification('get-authorization', self.GetAuthorization)
+        self.pluginAdapter.AddNotification('send-result', self.ReceiveResult)
+        self.pluginAdapter.AddNotification('solve-conflicts', self.SolveConflicts)
+        self.pluginAdapter.AddNotification('send-register-implementation-for-checkout', self.RegisterImplementationForCheckout)
+        
+        self.pluginAdapter.Notify('register-for-checkout')
         
         
         # add menu
-        
         self.teamMenuRoot = self.pluginGuiManager.GetMainMenu().AddMenuItem(str(uuid.uuid1()) ,None, -2,'Team',None,None)
-        
-        
-        
         #add submenu
         self.teamMenuRoot.AddSubmenu()
         self.teamMenuSubmenu = self.teamMenuRoot.GetSubmenu()
         
         self.diffMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.DiffProject,0,'Diff project',None,None)
-        
-        
         self.updateMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Update,1,'Update',None,None)
-        
-        
         self.checkinMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkin,2,'Checkin',None,None)
-        
-        
         self.revertMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Revert,3,'Revert',None,None)
-        
-                            
-        self.solveConflictsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.SolveConflicts ,4,'Solve conflicts',None,None)
-        
-        
+        self.solveConflictsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.SolveConflictsInOpenedProject ,4,'Solve conflicts',None,None)
         self.checkoutMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkout,5,'Checkout',None,None)
-        
-        
         self.logsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.ShowLogs,6,'Show logs',None,None)
         
         
@@ -87,34 +87,66 @@ class Plugin(object):
         if self.__CanRunPlugin():
             fileName = self.__LoadApplicationProject().GetFileName()
             # vyber implementaciu (svn, cvs, git, z dostupnych pluginov)
-            self.implementation = self.__ChooseCorrectImplementation(fileName)
-            
-            if self.implementation.IsInConflict():
-                self.SolveConflicts(None, fileName)
-            
-            
-            if not self.implementation.IsCompatible():
-                response = self.gui.ShowQuestion(self.incompatibleText)
-                if response:
-                    self.implementation.MakeCompatible()
-                else:
-                    self.__ResetMenuSensitivity()
-            else:
-                self.diffMenu.SetSensitive('diff' in self.implementation.supported)
-                self.updateMenu.SetSensitive('update' in self.implementation.supported)
-                self.checkinMenu.SetSensitive('checkin' in self.implementation.supported)
-                self.revertMenu.SetSensitive('revert' in self.implementation.supported)
-                self.logsMenu.SetSensitive('log' in self.implementation.supported)
+#            self.implementation = self.__ChooseCorrectImplementation(fileName)
+#            
+#            if self.implementation.IsInConflict():
+#                self.SolveConflicts(None, fileName)
+#            
+#            
+#            if not self.implementation.IsCompatible():
+#                response = self.gui.ShowQuestion(self.incompatibleText)
+#                if response:
+#                    self.implementation.MakeCompatible()
+#                else:
+#                    self.__ResetMenuSensitivity()
+#            else:
+#                self.diffMenu.SetSensitive('diff' in self.implementation.supported)
+#                self.updateMenu.SetSensitive('update' in self.implementation.supported)
+#                self.checkinMenu.SetSensitive('checkin' in self.implementation.supported)
+#                self.revertMenu.SetSensitive('revert' in self.implementation.supported)
+#                self.logsMenu.SetSensitive('log' in self.implementation.supported)
+                
+            self.pluginAdapter.Notify('team-project-opened', fileName)
+            self.pluginAdapter.Notify('get-supported')
         else:
             self.__ResetMenuSensitivity()
+    
+    
+    def ReceiveResult(self, result):
+        self.pluginGuiManager.DisplayWarning(result)
+    
+    
+    def TeamException(self, exc):
+        print 'caught team exception', exc
+        
+        self.pluginGuiManager.DisplayWarning(str(exc))
+            
+            
+    def ReceiveLog(self, logs):        
+        self.gui.LogsDialog(logs)
+    
+    def ReceiveSupported(self, supported): 
+        print 'returning supported'
+        self.diffMenu.SetSensitive('diff' in supported)
+        self.updateMenu.SetSensitive('update' in supported)
+        self.checkinMenu.SetSensitive('checkin' in supported)
+        self.revertMenu.SetSensitive('revert' in supported)
+        self.logsMenu.SetSensitive('log' in supported)  
+        #self.checkoutMenu.SetSensitive('checkout' in supported)
+        self.solveConflictsMenu.SetSensitive('resolve' in supported) 
+    
+    
+    def ReceiveFileData(self, data, idData):
+        self.receivedFileData[idData] = data
+    
     
     def __ResetMenuSensitivity(self):
         self.diffMenu.SetSensitive(False)
         self.updateMenu.SetSensitive(False)
         self.checkinMenu.SetSensitive(False)
         self.revertMenu.SetSensitive(False)
-        self.solveConflictsMenu.SetSensitive(True)
-        self.checkoutMenu.SetSensitive(True)
+        self.solveConflictsMenu.SetSensitive(False)
+        self.checkoutMenu.SetSensitive(False or self.implementations != {})
         self.logsMenu.SetSensitive(False)
         
     def __CanRunPlugin(self):
@@ -159,22 +191,6 @@ class Plugin(object):
         return result
     
     
-    def __ChooseCorrectImplementation(self, fileName):
-        result = None
-        # vyber nejaky
-        for name in dir(implementation):
-            obj = getattr(implementation, name)
-            if inspect.isclass(obj):
-                r = obj(fileName)
-                if r.IsProjectVersioned():
-                    return r
-        # ak nenajdes, zober dummy implementation
-        if result is None:
-            
-            result = implementation.CDummyImplementation(fileName)
-        return result
-    
-    
     def __LoadApplicationProject(self):
         '''
         Load project
@@ -188,21 +204,44 @@ class Plugin(object):
         if project is None:
             self.pluginGuiManager.DisplayWarning('No project loaded')
             return
+
+        self.pluginAdapter.Notify('get-file-data', 'diff-project', 'diff-project')
         
+    def ContinueDiffProject(self):
+        project = self.__LoadApplicationProject()
+        if project is None:
+            self.pluginGuiManager.DisplayWarning('No project loaded')
+            return
         
         myProject1 = CProject(project)
-        fileData = self.implementation.GetFileData()
+        fileData = self.receivedFileData['diff-project']
         myProject2 = CProject(None, self.__GetProjectXmlFromFileData(fileData))
         
         self.DiffProjects(myProject1, myProject2)
+        self.receivedFileData.pop('diff-project')
         
 #       
 
-    def LoadProject(self, rev = None):
-        fd = self.implementation.GetFileData(rev)
-        project = CProject(None, self.__GetProjectXmlFromFileData(fd))
-        return project
+    def DiffRevisions(self, rev1, rev2):
+        self.pluginAdapter.Notify('get-file-data', 'diff-revisions1', 'diff-revisions', rev1)
+        self.pluginAdapter.Notify('get-file-data', 'diff-revisions2', 'diff-revisions', rev2)
+        
 
+        
+    def ContinueDiffRevisions(self):
+        fd1 = self.receivedFileData.get('diff-revisions1',None)
+        fd2 = self.receivedFileData.get('diff-revisions2',None)
+        if fd1 is None or fd2 is None:
+            # este tam nie su vsetky data, pockaj si na ne
+            pass
+        else:
+            project1 = CProject(None, self.__GetProjectXmlFromFileData(fd1))
+            project2 = CProject(None, self.__GetProjectXmlFromFileData(fd2))
+            self.DiffProjects(project1, project2)
+            self.receivedFileData.pop('diff-revisions1')
+            self.receivedFileData.pop('diff-revisions2')
+        
+    
     def DiffProjects(self, project1, project2):
         differ = CDiffer(project2, project1)
         res = differ.projectTreeDiff + differ.visualDiff + differ.dataDiff
@@ -211,7 +250,12 @@ class Plugin(object):
             print r
         print '------------'
         self.gui.DiffResultsDialog(differ)
-            
+     
+     
+    def GetAuthorization(self, actionId):        
+        username, password = self.gui.AuthDialog()
+        self.pluginAdapter.Notify('continue-'+actionId, username, password)
+        
     def Update(self, arg):
         project = self.__LoadApplicationProject()
         
@@ -228,30 +272,7 @@ class Plugin(object):
             else:
                 revision = updateToRevision
                 
-            result = self.implementation.Update(revision)
-            if self.implementation.IsInConflict():
-                ct = self.implementation.GetConflictingFiles()
-                if ct is not None:
-                # nastal konflikt svn mi vratilo nazvy suborov (mine, base, upd)
-                    mine = self.__GetProjectXmlFromFile(ct['mine'])
-                    base = self.__GetProjectXmlFromFile(ct['base'])
-                    upd = self.__GetProjectXmlFromFile(ct['new'])
-                    updater = CUpdater(mine, base, upd)
-                    if updater.IsInConflict():
-                        
-                        self.SolveConflicts(arg, self.implementation.GetFileName())
-                    
-                    else:
-                        self.__SaveProjectXmlToExistingFile(updater.GetNewXml(), self.implementation.GetFileName())
-                        self.implementation.Resolve()
-                        self.pluginGuiManager.DisplayWarning(result)
-                        self.pluginAdapter.LoadProject(self.implementation.GetFileName())
-            
-            
-            else:
-                
-                self.pluginGuiManager.DisplayWarning(result)
-                self.pluginAdapter.LoadProject(self.implementation.GetFileName())
+            self.pluginAdapter.Notify('update', revision)
             
             
                 
@@ -268,90 +289,59 @@ class Plugin(object):
         project.Save()
         
         msg = self.gui.CheckinMessageDialog()
-        result = self.__Checkin(msg)
-        print 'OUT RESULT',result
-        self.pluginGuiManager.DisplayWarning(result)
-    
-    def __Checkin(self, msg):
-        if msg is not None:
-            username = None
-            password = None
-            repeats = 0
-            while 1:
-                repeats += 1
-                try:
-                    result = self.implementation.Checkin(msg, username, password)
-                    print result
-                    return result
-                except AuthorizationError, e:
-                    if repeats > 3:
-                        return 'Authorization failed'
-                    username, password = self.gui.AuthDialog()
-                    if username is None or password is None:
-                        return 'Authorization failed'
-                     
-            
-        else:
-            return 'Message cannot be None'
+        self.pluginAdapter.Notify('checkin', msg)
             
                         
             
     def Revert(self, arg):
         project = self.__LoadApplicationProject()
         if project is None:
-            self.interface.GetAdapter().DisplayWarning('No project loaded')
+            self.pluginGuiManager.DisplayWarning('No project loaded')
             return
         
+        self.pluginAdapter.Notify('revert')
         
-        self.implementation.Revert()
-        self.pluginAdapter.LoadProject(self.implementation.GetFileName())
+    def ContinueRevert(self, fileName):
+        
+        self.pluginAdapter.LoadProject(fileName)
+        self.pluginGuiManager.DisplayWarning('Reverted')
         
         
     def Checkout(self, arg):
-        # najdi vsetky implementacie
-        impls = []
-        for name in dir(implementation):
-            obj = getattr(implementation, name)
-            if inspect.isclass(obj):
-                try:
-                    if 'checkout' in obj.supported:
-                        impls.append(obj)
-                except:
-                    pass
-                        
-        
-        # otvor checkout dialog
-        result = self.gui.CheckoutDialog(impls)
+
+        result = self.gui.CheckoutDialog(self.implementations)
         if result is not None:
             # vyber implementaciu
-            self.implementation = result[0]
-            # sprav checkout
-            result = self.implementation.Checkout(result[1], result[2], result[3])
-            self.pluginGuiManager.DisplayWarning(result)
+            implId = result[0]
+            url = result[1]
+            directory = result[2]
+            revision = result[3]
+            self.pluginAdapter.Notify('checkout',implId, url, directory, revision)
             
+      
+    def SolveConflictsInOpenedProject(self, arg):
+        
+        self.pluginAdapter.Notify('solve-conflicts-in-opened-project')      
             
-    def SolveConflicts(self, arg, fileName = None):
-        if fileName is None:
-            prFile = self.gui.OpenConflictProjectDialog()
-        else:
-            prFile = fileName
-        if prFile is not None:
-            
-            self.implementation = self.__ChooseCorrectImplementation(prFile)
-            
-            triple = self.implementation.GetConflictingFiles()
-            
-            
-            
+    def SolveConflicts(self, triple, prFile):
+        mine = self.__GetProjectXmlFromFile(triple['mine'])
+        base = self.__GetProjectXmlFromFile(triple['base'])
+        upd = self.__GetProjectXmlFromFile(triple['new'])
+        updater = CUpdater(mine, base, upd)
+        if updater.IsInConflict():
             resolved, newXml = self.SolveConflictTriple(triple)
-            print 'resolved',resolved
+        
             if resolved:
                 self.__SaveProjectXmlToExistingFile(newXml, prFile)
-                self.implementation.Resolve()
-                self.pluginAdapter.LoadProject(self.implementation.GetFileName())
-                
-            else:
-                pass
+            
+                self.pluginAdapter.Notify('resolve')
+                self.pluginAdapter.LoadProject(prFile)
+                    
+        else:
+            self.__SaveProjectXmlToExistingFile(updater.GetNewXml(), prFile)
+            self.pluginAdapter.Notify('resolve')
+            self.pluginAdapter.LoadProject(prFile)
+            self.pluginGuiManager.DisplayWarning('Updated without conflicts')
                 
                 
      
@@ -361,9 +351,11 @@ class Plugin(object):
             self.interface.GetAdapter().DisplayWarning('No project loaded')
             return
         
+        self.pluginAdapter.Notify('get-log')
         
-        logs = self.implementation.Log()
-        self.gui.LogsDialog(logs)
+    def RegisterImplementationForCheckout(self, id, description):
+        self.implementations[id] = description
+        self.__ResetMenuSensitivity()
         
         
     def SolveConflictTriple(self, triple):    

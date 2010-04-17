@@ -34,6 +34,7 @@ class CConflictsDialog(object):
         
     
     def Run(self):
+        self.__UpdateConflictsTreeView()
         while 1:
             response = self.wid.run()
             if response == 0:

@@ -83,8 +83,8 @@ class Gui(object):
         wid = self.wTree.get_object('checkoutDlg')
         implementationListStore = self.wTree.get_object('implementationListStore')
         implementationListStore.clear()
-        for impl in implementations:
-            implementationListStore.append([impl.description])
+        for ID, desc in implementations.items():
+            implementationListStore.append([desc, ID])
         implComboBox = self.wTree.get_object('implementationComboBox')
 
         
@@ -92,7 +92,7 @@ class Gui(object):
         response = wid.run()
         wid.hide()
         if response == 0:
-            impl = implementations[implComboBox.get_active()]
+            implId = implementationListStore.get_value(implComboBox.get_active_iter(), 1)
             url = self.wTree.get_object('checkoutRepoTxt').get_text()
             directory = self.wTree.get_object('checkoutDirChooser').get_filename()
             checkRevision = self.wTree.get_object('specifyRevisionCheck').get_active()
@@ -100,7 +100,7 @@ class Gui(object):
                 revision = self.wTree.get_object('checkoutRevisionTxt').get_text()
             else:
                 revision = None
-            return (impl, url, directory, revision)
+            return (implId, url, directory, revision)
         else:
             return None
         
@@ -193,9 +193,9 @@ class Gui(object):
             rev1 = model.get_value(iter1, 0)
             rev2 = model.get_value(iter2, 0)
             
-            project1 = self.plugin.LoadProject(rev1)
-            project2 = self.plugin.LoadProject(rev2)
-            self.plugin.DiffProjects(project1, project2)
+#            project1 = self.plugin.LoadProject(rev1)
+#            project2 = self.plugin.LoadProject(rev2)
+            self.plugin.DiffRevisions(rev1, rev2)
         
     
     

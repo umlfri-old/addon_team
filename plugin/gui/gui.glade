@@ -85,6 +85,8 @@
     <columns>
       <!-- column-name implementation_name -->
       <column type="gchararray"/>
+      <!-- column-name implementation_id -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkListStore" id="conflictsListStore">
