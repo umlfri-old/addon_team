@@ -102,3 +102,6 @@ class CDiagram(CBase):
         except:
             pass
         
+        
+    def __str__(self):
+        return 'Diagram '+self.GetName()

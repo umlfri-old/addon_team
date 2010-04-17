@@ -10,12 +10,13 @@ class CDiffResult(object):
     '''
 
 
-    def __init__(self, action, element, previousState = None, newState = None, dataPath = None):
+    def __init__(self, action, element, previousState = None, newState = None, dataPath = None, message = None):
         '''
         Constructor
         '''
         self.__action = action
         self.__element = element
+        self.__message = message
         if type(previousState) == type([]) and len(previousState) == 1:
             self.__previousState = previousState[0]
         else:
@@ -41,8 +42,11 @@ class CDiffResult(object):
     def GetDataPath(self):
         return self.__dataPath
     
+    def GetMessage(self):
+        return self.__message
+    
     def __str__(self):
-        return str(self.__action) + ' : ' + str(self.__element) + ' : ' +str(self.__previousState) + ' : ' + str(self.__newState) + ' : ' + str(self.__dataPath)
+        return self.__message
     
     def __eq__(self, other):
         if other is None:

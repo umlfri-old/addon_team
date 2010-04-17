@@ -47,3 +47,5 @@ class CElement(CBase):
             print 'updating'
             r.update(newState)
             
+    def __str__(self):
+        return "Element "+self.GetName()
