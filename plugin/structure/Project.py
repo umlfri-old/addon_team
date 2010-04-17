@@ -9,10 +9,12 @@ from Connection import CConnection
 from ElementView import CElementView
 from ConnectionView import CConnectionView
 from imports.etree import etree
-from lib.consts import UMLPROJECT_NAMESPACE
-from lib.lib import Indent
+#from lib.consts import UMLPROJECT_NAMESPACE
+from imports.Indent import Indent
 from ProjectTreeNode import CProjectTreeNode
 from Base import CBase
+
+UMLPROJECT_NAMESPACE = '{http://umlfri.kst.fri.uniza.sk/xmlschema/umlproject.xsd}'
 
 
 class CProject(object):

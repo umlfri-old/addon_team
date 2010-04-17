@@ -6,9 +6,9 @@ Created on 28.3.2010
 
 from imports.gtk2 import gtk, cairo
 from imports.gtk2 import pygtk
-from lib.consts import PROJECT_CLEARXML_EXTENSION
+
 from structure import *
-import math
+
 import os.path
 from DiffDialog import CDiffDialog
 from ConflictsDialog import CConflictsDialog
