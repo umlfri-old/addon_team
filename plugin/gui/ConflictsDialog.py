@@ -28,6 +28,7 @@ class CConflictsDialog(object):
         self.wTree.get_object('showMineDiffBtn').connect('clicked', self.on_show_mine_diff_btn_clicked)
         self.wTree.get_object('showTheirsDiffBtn').connect('clicked', self.on_show_theirs_diff_btn_clicked)
         self.wTree.get_object('showMergedProjectBtn').connect('clicked', self.on_show_merged_project_btn_clicked)
+        self.wTree.get_object('conflictsTreeView').connect_after('cursor-changed', self.on_conflicts_tree_view_cursor_changed)
         
     def SetAttributes(self, conflictSolver, baseWorkDiffer, baseNewDiffer, diffDialog):    
         self.conflictSolver = conflictSolver
@@ -97,13 +98,32 @@ class CConflictsDialog(object):
         if self.conflictSolver is not None:
             print 'BEFORE',len(self.conflictSolver.GetUnresolvedConflicts())
             conflictsTreeView = self.wTree.get_object('conflictsTreeView')
+            
             treeselection = conflictsTreeView.get_selection()
+            treeselection.set_mode(gtk.SELECTION_SINGLE)
             (model, iter) = treeselection.get_selected()
             if iter is not None:
                 conflict = model.get_value(iter, 1)
                 self.conflictSolver.ResolveConflict(conflict, solution)
                 print 'AFTER',len(self.conflictSolver.GetUnresolvedConflicts())
                 self.__UpdateConflictsTreeView()
+                
+                
+    def on_conflicts_tree_view_cursor_changed(self, treeView):
+        def func(model, path, iter, related):
+            if model.get_value(iter, 1) in related:
+                treeView.get_selection().select_iter(iter)
+        
+        
+        selection = treeView.get_selection()
+        selection.set_mode(gtk.SELECTION_SINGLE)
+        (model,iter) = selection.get_selected()
+        conflict = model.get_value(iter, 1)
+        related = self.conflictSolver.FindRelatedConflicts(conflict)
+        selection.set_mode(gtk.SELECTION_MULTIPLE)
+        
+        model.foreach(func, related)
+        return False
                 
     def __UpdateConflictsTreeView(self):
         if self.conflictSolver is not None:
