@@ -57,6 +57,7 @@ class Plugin(object):
         self.pluginAdapter.AddNotification('team-send-register-implementation-for-checkout', self.RegisterImplementationForCheckout)
         self.pluginAdapter.AddNotification('team-ask-compatible', self.AskCompatible)
         self.pluginAdapter.AddNotification('team-load-project', self.LoadProjectFile)
+        self.pluginAdapter.AddNotification('team-ask-server-cert', self.AskServerCert)
         
         self.pluginAdapter.Notify('team-register-for-checkout')
         
@@ -111,6 +112,11 @@ class Plugin(object):
             
     def ReceiveLog(self, logs):        
         self.gui.LogsDialog(logs)
+        
+    def AskServerCert(self, actionId, message, *param):
+        response = self.gui.ShowQuestion(message+'\nAccept server certificate?')
+        if response:
+            self.pluginAdapter.Notify(actionId, None, None, response, *param)
     
     def ReceiveSupported(self, supported): 
         
@@ -192,7 +198,7 @@ class Plugin(object):
             self.pluginGuiManager.DisplayWarning('No project loaded')
             return
 
-        self.pluginAdapter.Notify('team-get-file-data', None, None,'diff-project', 'diff-project')
+        self.pluginAdapter.Notify('team-get-file-data', None, None, False, 'diff-project', 'diff-project')
         
     def ContinueDiffProject(self):
         project = self.__LoadApplicationProject()
@@ -210,8 +216,8 @@ class Plugin(object):
 #       
 
     def DiffRevisions(self, rev1, rev2):
-        self.pluginAdapter.Notify('team-get-file-data', None, None,'diff-revisions1', 'diff-revisions', rev1)
-        self.pluginAdapter.Notify('team-get-file-data', None, None,'diff-revisions2', 'diff-revisions', rev2)
+        self.pluginAdapter.Notify('team-get-file-data', None, None,False,'diff-revisions1', 'diff-revisions', rev1)
+        self.pluginAdapter.Notify('team-get-file-data', None, None,False,'diff-revisions2', 'diff-revisions', rev2)
         
 
         
@@ -259,7 +265,7 @@ class Plugin(object):
             else:
                 revision = updateToRevision
             
-            self.pluginAdapter.Notify('team-update', None, None, revision)
+            self.pluginAdapter.Notify('team-update', None, None, False, revision)
             
             
                 
@@ -276,7 +282,7 @@ class Plugin(object):
         project.Save()
         
         msg = self.gui.CheckinMessageDialog()
-        self.pluginAdapter.Notify('team-checkin', None, None, msg)
+        self.pluginAdapter.Notify('team-checkin', None, None, False, msg)
             
                         
             
@@ -299,7 +305,7 @@ class Plugin(object):
             url = result[1]
             directory = result[2]
             revision = result[3]
-            self.pluginAdapter.Notify('team-checkout',None, None, implId, url, directory, revision)
+            self.pluginAdapter.Notify('team-checkout',None, None, False, implId, url, directory, revision)
             
       
     def SolveConflictsInOpenedProject(self, arg):
@@ -341,7 +347,7 @@ class Plugin(object):
             self.interface.GetAdapter().DisplayWarning('No project loaded')
             return
         
-        self.pluginAdapter.Notify('team-get-log', None, None)
+        self.pluginAdapter.Notify('team-get-log', None, None, False)
         
     def RegisterImplementationForCheckout(self, id, description):
         self.implementations[id] = description
