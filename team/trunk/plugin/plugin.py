@@ -192,7 +192,7 @@ class Plugin(object):
             self.pluginGuiManager.DisplayWarning('No project loaded')
             return
 
-        self.pluginAdapter.Notify('team-get-file-data', 'diff-project', 'diff-project')
+        self.pluginAdapter.Notify('team-get-file-data', None, None,'diff-project', 'diff-project')
         
     def ContinueDiffProject(self):
         project = self.__LoadApplicationProject()
@@ -210,8 +210,8 @@ class Plugin(object):
 #       
 
     def DiffRevisions(self, rev1, rev2):
-        self.pluginAdapter.Notify('team-get-file-data', 'diff-revisions1', 'diff-revisions', rev1)
-        self.pluginAdapter.Notify('team-get-file-data', 'diff-revisions2', 'diff-revisions', rev2)
+        self.pluginAdapter.Notify('team-get-file-data', None, None,'diff-revisions1', 'diff-revisions', rev1)
+        self.pluginAdapter.Notify('team-get-file-data', None, None,'diff-revisions2', 'diff-revisions', rev2)
         
 
         
@@ -239,9 +239,9 @@ class Plugin(object):
         self.gui.DiffResultsDialog(differ)
      
      
-    def GetAuthorization(self, actionId):        
+    def GetAuthorization(self, actionId, *params):        
         username, password = self.gui.AuthDialog()
-        self.pluginAdapter.Notify('team-continue-'+actionId, username, password)
+        self.pluginAdapter.Notify(actionId, username, password, *params)
         
     def Update(self, arg):
         project = self.__LoadApplicationProject()
@@ -259,7 +259,7 @@ class Plugin(object):
             else:
                 revision = updateToRevision
             
-            self.pluginAdapter.Notify('team-update', revision)
+            self.pluginAdapter.Notify('team-update', None, None, revision)
             
             
                 
@@ -276,7 +276,7 @@ class Plugin(object):
         project.Save()
         
         msg = self.gui.CheckinMessageDialog()
-        self.pluginAdapter.Notify('team-checkin', msg)
+        self.pluginAdapter.Notify('team-checkin', None, None, msg)
             
                         
             
@@ -299,7 +299,7 @@ class Plugin(object):
             url = result[1]
             directory = result[2]
             revision = result[3]
-            self.pluginAdapter.Notify('team-checkout',implId, url, directory, revision)
+            self.pluginAdapter.Notify('team-checkout',None, None, implId, url, directory, revision)
             
       
     def SolveConflictsInOpenedProject(self, arg):
@@ -341,7 +341,7 @@ class Plugin(object):
             self.interface.GetAdapter().DisplayWarning('No project loaded')
             return
         
-        self.pluginAdapter.Notify('team-get-log')
+        self.pluginAdapter.Notify('team-get-log', None, None)
         
     def RegisterImplementationForCheckout(self, id, description):
         self.implementations[id] = description
