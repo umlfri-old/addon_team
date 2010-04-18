@@ -39,7 +39,7 @@ class CConflictSolver(object):
         # pokus sa vyriesit konflikt a pozor na zavisle konflikty
         if conflict not in self.__resolvedConflicts:
         
-            relatedConflicts = self.__FindRelatedConflicts(conflict)
+            relatedConflicts = self.FindRelatedConflicts(conflict)
             print 'found related conflicts'
             for r in relatedConflicts:
                 print r
@@ -63,7 +63,7 @@ class CConflictSolver(object):
             self.__resolvedConflicts.append(conflict)
     
         
-    def __FindRelatedConflicts(self, conflict):
+    def FindRelatedConflicts(self, conflict):
         #najdi vsetky zavisle konflikty
         result = [conflict]
         print 'finding related for', conflict
