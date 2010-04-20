@@ -30,7 +30,7 @@ class CDiffDialog(object):
         
         self.dialog = self.wTree.get_object('diffResultsDlg')
         self.drawingArea =self.wTree.get_object('diagramDiffDrawingArea')
-        self.diffLabel = self.wTree.get_object('diffLabel')
+        self.diffTxt = self.wTree.get_object('diffTxt')
         
         
         
@@ -43,6 +43,8 @@ class CDiffDialog(object):
         
         self.drawingArea.connect('configure-event', self.drawingareaconfigure)
         self.drawingArea.connect('expose-event', self.drawingareaexpose)
+        self.drawingArea.add_events(gtk.gdk.BUTTON_PRESS_MASK)
+        self.drawingArea.connect('button-press-event', self.drawingareaclick)
         self.wTree.get_object('dataDiffTreeStore').clear()
         
         
@@ -79,12 +81,12 @@ class CDiffDialog(object):
         self.context.set_source_rgb(1,1,1)
         self.context.rectangle(x,y,width,height)
         self.context.fill()
-        oldDiagramDrawing = CDiagramDrawing(self.oldDiagram)
-        oldDiagramDrawing.Paint(self.context)
-        newDiagramDrawing = CDiagramDrawing(self.newDiagram)
-        newDiagramDrawing.Paint(self.context)
-        newDiagramSize = newDiagramDrawing.GetSize()
-        oldDiagramSize = oldDiagramDrawing.GetSize()
+        self.oldDiagramDrawing = CDiagramDrawing(self.oldDiagram)
+        self.oldDiagramDrawing.Paint(self.context)
+        self.newDiagramDrawing = CDiagramDrawing(self.newDiagram)
+        self.newDiagramDrawing.Paint(self.context)
+        newDiagramSize = self.newDiagramDrawing.GetSize()
+        oldDiagramSize = self.oldDiagramDrawing.GetSize()
 
         size = (newDiagramSize[0] if newDiagramSize[0] > oldDiagramSize[0] else oldDiagramSize[0]
                 ,newDiagramSize[1] if newDiagramSize[1] > oldDiagramSize[1] else oldDiagramSize[1])
@@ -98,10 +100,28 @@ class CDiffDialog(object):
         self.drawingArea.set_size_request(int(size[0]), int(size[1]))
         self.drawingArea.window.draw_drawable(self.drawingArea.get_style().fg_gc[gtk.STATE_NORMAL],
                                     self.pixmap, x, y, x, y, width, height)
+        
+    def drawingareaclick(self, widget, event):
+        print 'click'
+        if event.button == 1:
+            if self.newDiagramDrawing is not None:
+                elNew = self.newDiagramDrawing.GetElementAtPoint((event.x, event.y))
+            if self.oldDiagramDrawing is not None:
+                elOld = self.oldDiagramDrawing.GetElementAtPoint((event.x, event.y))
+            print elNew
+            print elOld
+            el = elNew or elOld
+            foundDiffs = []
+            if el is not None:
+                for diff in self.differ.visualDiff:
+                    if diff.GetElement() == el:
+                        foundDiffs.append(diff)
+            self.__ShowDiffs(foundDiffs)
     
     def drawingareaconfigure(self, widget, event):
         
         self.__UpdateDiagramDiffDrawingArea()
+        
         
         self.drawingArea.connect('size-request', self.drawingareasizerequest)
         
@@ -157,18 +177,25 @@ class CDiffDialog(object):
             self.__UpdateDataDiffTreeView(oldObj, newObj)
             
         diff = model.get_value(iter, 5)
-        if diff is not None:
-            self.diffLabel.set_text(str(diff))
-        else:
-            self.diffLabel.set_text('')
+#        if diff is not None:
+        self.__ShowDiffs([diff])
+#        else:
+#            self.diffLabel.set_text('')
+    
+    def __ShowDiffs(self, diffs):
+        self.diffTxt.get_buffer().set_text('')
+        text = ''
+        for diff in diffs:
+            text += str(diff)+'\n---\n'
+        self.diffTxt.get_buffer().set_text(text)
         
     def on_data_diff_view_cursor_changed(self, treeView):
         sel = treeView.get_selection()
         (model, iter) = sel.get_selected()
         diff = model.get_value(iter, 4)
-        if diff is not None:
-            self.diffLabel.set_text(str(diff))
-        else:
-            self.diffLabel.set_text('')
+#        if diff is not None:
+        self.diffLabel.set_text([diff])
+#        else:
+#            self.diffLabel.set_text('')
         
         
