@@ -247,7 +247,8 @@ class Plugin(object):
      
     def GetAuthorization(self, actionId, *params):        
         username, password = self.gui.AuthDialog()
-        self.pluginAdapter.Notify(actionId, username, password, *params)
+        if username is not None and password is not None:
+            self.pluginAdapter.Notify(actionId, username, password, *params)
         
     def Update(self, arg):
         project = self.__LoadApplicationProject()

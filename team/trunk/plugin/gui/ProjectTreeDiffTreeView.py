@@ -82,7 +82,7 @@ class CProjectTreeDiffTreeView(object):
             iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"insert.png")
             icon = gtk.gdk.pixbuf_new_from_file(iconfile)
             c = d.GetElement()
-            self.model.append(self.connectionsIter, [c.GetSource().GetName()+' -> '+c.GetDestination().GetName(), icon, None, c, None])
+            self.model.append(self.connectionsIter, [c.GetSource().GetName()+' -> '+c.GetDestination().GetName(), icon, None, c, None, None])
             
         self.diffs = self.differ.GetDataDiff().get(EDiffActions.DELETE, [])
         self.diffs = [d for d in self.diffs if isinstance(d.GetElement(), CConnection)]
