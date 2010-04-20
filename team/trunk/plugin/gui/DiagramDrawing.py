@@ -21,6 +21,8 @@ class CDiagramDrawing(object):
         
         self.__diagram = diagram
         self.size = [0,0]
+        self.__paintedElements = {}
+        self.__paintedConnections = {}
         
     def Paint(self, context):
         if self.__diagram is not None:
@@ -28,10 +30,18 @@ class CDiagramDrawing(object):
                 self.__PaintView(context, view, 128, 128, 128, 0.2)
                 
 
+    def GetElementAtPoint(self, point):
+        result = None
+        for el, box in self.__paintedElements.items():
+            if box[0] <= point[0] <= box[2] and box[1] <= point[1] <= box[3]:
+                result = el
+                
+        return result
     
     def __PaintView(self, context, view, r, g, b, a=None):
         if isinstance(view, CElementView):
             box = self.__PaintElement(context, view, r, g, b, a)
+            self.__paintedElements[view] = box
             if box[2] > self.size[0]:
                 self.size[0] = box[2]
             if box[3] > self.size[1]:
