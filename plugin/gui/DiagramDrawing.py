@@ -38,6 +38,9 @@ class CDiagramDrawing(object):
                 
         return result
     
+    def GetCoordsOfElement(self, el):
+        return self.__paintedElements.get(el, None)
+    
     def __PaintView(self, context, view, r, g, b, a=None):
         if isinstance(view, CElementView):
             box = self.__PaintElement(context, view, r, g, b, a)
