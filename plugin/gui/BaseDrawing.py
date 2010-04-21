@@ -17,6 +17,7 @@ class CBaseDrawing(object):
         self.defaultElementWidth, self.defaultElementHeight = 50,50
         self.defaultLabelWidth, self.defaultLabelHeight = 30,10
         self.context = context
+        self.context.new_path()
         
     def ChangeColor(self, context, r, g, b, alpha=None):
         if alpha is None:

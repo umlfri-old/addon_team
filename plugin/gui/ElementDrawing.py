@@ -24,6 +24,6 @@ class CElementDrawing(CBaseDrawing):
                       self.defaultElementWidth + int(self.elementView.GetSize()['dw']), 
                       self.defaultElementHeight + int(self.elementView.GetSize()['dh']))
         
-        box = self.context.fill_extents()
+        path = self.context.copy_path()
         self.context.fill()
-        return box   
+        return path   
