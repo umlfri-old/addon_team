@@ -38,6 +38,7 @@ class CDiffDialog(object):
         
         
         self.selection = None
+        
         self.wTree.get_object('projectTreeTreeView').connect('cursor-changed', self.on_project_tree_view_cursor_changed)
         self.wTree.get_object('dataDiffTreeView').connect('cursor-changed', self.on_data_diff_view_cursor_changed)
         
@@ -62,6 +63,7 @@ class CDiffDialog(object):
         self.newDiagram = None
         self.oldDiagram = None
         self.pixmap = None
+        self.selection = None
         
         self.dialog.run()
         self.dialog.hide()  
@@ -97,22 +99,18 @@ class CDiffDialog(object):
                     
                     diffDrawing.Paint()
         
-        pointsOfSelection = []
+        
+        
         if self.selection is not None and self.selection != []:
             print 'selection', len(self.selection), self.selection
             for sel in self.selection:
                 if sel is not None:
-                    print sel
-                    pointsOfSelection.append((sel[0] + (sel[2]-sel[0]) / 2, sel[1] + (sel[3] - sel[1]) / 2))
+                    self.context.new_path()
                     self.context.set_dash((5,5))
                     self.context.set_source_rgb(0,0,0)
-                    self.context.rectangle(sel[0],sel[1],sel[2]-sel[0], sel[3]-sel[1])
+                    self.context.append_path(sel)
                     self.context.stroke()
-            if len(pointsOfSelection) > 0:
-                self.context.move_to(pointsOfSelection[0][0],pointsOfSelection[0][1])
-                for point in pointsOfSelection:
-                    self.context.line_to(point[0], point[1])
-                self.context.stroke()
+            
         
         self.drawingArea.set_size_request(int(size[0]) + 20, int(size[1]))
         self.drawingArea.window.draw_drawable(self.drawingArea.get_style().fg_gc[gtk.STATE_NORMAL],
@@ -121,22 +119,29 @@ class CDiffDialog(object):
     def drawingareaclick(self, widget, event):
         
         if event.button == 1:
-            if self.newDiagramDrawing is not None:
-                elNew = self.newDiagramDrawing.GetElementAtPoint((event.x, event.y))
-            if self.oldDiagramDrawing is not None:
-                elOld = self.oldDiagramDrawing.GetElementAtPoint((event.x, event.y))
+            self.selection = [None]
+            el = None
             
-            sel1 = self.oldDiagramDrawing.GetCoordsOfElement(elOld or elNew)
-            sel2 = self.newDiagramDrawing.GetCoordsOfElement(elNew or elOld)
-            self.selection = [sel1, sel2]
-            self.__UpdateDiagramDiffDrawingArea()
+            if self.newDiagramDrawing is not None:
+                elNew = self.newDiagramDrawing.GetViewAtPoint((event.x, event.y))
+            if self.oldDiagramDrawing is not None:
+                elOld = self.oldDiagramDrawing.GetViewAtPoint((event.x, event.y))
+            
             el = elNew or elOld
+            sel1 = self.oldDiagramDrawing.GetSelectionOfView(el)
+            sel2 = self.newDiagramDrawing.GetSelectionOfView(el)
+            self.selection = [sel1, sel2]
+                
+            
+            
+            
             foundDiffs = []
             if el is not None:
                 for diff in self.differ.visualDiff:
                     if diff.GetElement() == el:
                         foundDiffs.append(diff)
             self.__ShowDiffs(foundDiffs)
+            self.__UpdateDiagramDiffDrawingArea()
     
     def drawingareaconfigure(self, widget, event):
         
