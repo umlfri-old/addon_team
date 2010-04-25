@@ -86,7 +86,7 @@ class Plugin(object):
     def AskCompatible(self):    
         response = self.gui.ShowQuestion(self.incompatibleText)
         if response:
-            self.pluginAdapter.Notify('make-compatible')
+            self.pluginAdapter.Notify('team-make-compatible')
       
     def ProjectOpened(self):
         self.__ResetMenuSensitivity()
