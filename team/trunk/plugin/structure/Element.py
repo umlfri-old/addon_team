@@ -7,18 +7,30 @@ from Base import CBase
 
 class CElement(CBase):
     '''
-    classdocs
+    Class representing data object of element
     '''
 
 
     def __init__(self, id, type):
         '''
         Constructor
+        @type id: string
+        @param id: identification of object
+        @type type: string
+        @param type: Type of object
         '''
         super(CElement, self).__init__(id, type)
         
     def ModifyData(self, oldState, newState, path):
-        print 'modifying element data'
+        '''
+        Modifies data in path from old state to new state
+        @type oldState: object
+        @param oldState: old state of data
+        @type newState: object
+        @param newState: new state of data
+        @type path: list
+        @param path: path to modification
+        '''
         
         r = self.data
         for item in path[0:len(path)-1]:
@@ -26,7 +38,7 @@ class CElement(CBase):
         
         if oldState is None:
             # pridanie
-            print 'inserting'
+            
             if type(r) == type([]):
                 if type(newState) == type([]):
                     r.extend(newState)
@@ -41,10 +53,10 @@ class CElement(CBase):
             
         elif newState is None:
             # odobratie
-            print 'deleting'
+            
             r[path[len(path)-1]].remove(oldState)
         else:
-            print 'updating'
+            
             r.update(newState)
             
     def __str__(self):

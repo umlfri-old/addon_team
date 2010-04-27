@@ -7,7 +7,7 @@ from DiffActions import EDiffActions
 
 class CConflictSolver(object):
     '''
-    classdocs
+    Class that manages conflicts resolving
     '''
     
     # resolutions
@@ -19,6 +19,10 @@ class CConflictSolver(object):
     def __init__(self, conflicts, merger):
         '''
         Constructor
+        @type conflicts: list
+        @param conflicts: Conflicts to be possibly solved
+        @type merger: CMerger
+        @param merger: Merger instance, provides merging of diffs
         '''
         
         self.__unresolvedConflicts = conflicts
@@ -26,21 +30,43 @@ class CConflictSolver(object):
         self.__merger = merger
         
     def GetMerger(self):
+        '''
+        Getter for merger
+        @rtype: CMerger
+        @return: merger
+        '''
         return self.__merger
         
     def GetUnresolvedConflicts(self):
+        '''
+        Getter for unresolved conflicts
+        @rtype: list
+        @return: unresolved conflicts
+        '''
         return self.__unresolvedConflicts
     
     def GetResolvedConflicts(self):
+        '''
+        Getter for resolved conflicts
+        @rtype: list
+        @return: resolved conflicts
+        '''
         return self.__resolvedConflicts
     
         
     def ResolveConflict(self, conflict, resolution):
+        '''
+        Resolves conflict (and all related conflicts) with desired resolution
+        @type conflict: CConflict
+        @param conflict: Conflict to be solved
+        @type resolution: CConflictSolver.resolutions
+        @param resolution: Desired resolution
+        '''
         # pokus sa vyriesit konflikt a pozor na zavisle konflikty
         if conflict not in self.__resolvedConflicts:
         
             relatedConflicts = self.FindRelatedConflicts(conflict)
-            print 'found related conflicts'
+            
             for r in relatedConflicts:
                 print r
             
@@ -48,7 +74,7 @@ class CConflictSolver(object):
                 self.__MoveResolvedConflicts(relatedConflicts)
                 
             elif resolution == CConflictSolver.ACCEPT_MINE:
-                print 'accepting mine'
+                
                 self.__MoveResolvedConflicts(relatedConflicts)
                 self.__merger.MergeDiffs(list(set([conflict.GetBaseWorkDiff() for conflict in relatedConflicts])))
                 
@@ -58,29 +84,37 @@ class CConflictSolver(object):
         
          
     def __MoveResolvedConflicts(self, conflicts):
+        '''
+        Moves conflicts from unresolved to resolved
+        @type conflicts: list
+        @param conflicts: resolved conflicts 
+        '''
         for conflict in conflicts:
             self.__unresolvedConflicts.remove(conflict)
             self.__resolvedConflicts.append(conflict)
     
         
     def FindRelatedConflicts(self, conflict):
+        '''
+        Finds related conflict for given conflict
+        @type conflict: CConflict
+        @param conflict: Base conflict
+        '''
         #najdi vsetky zavisle konflikty
         result = [conflict]
-        print 'finding related for', conflict
+        
         baseWorkDiff = conflict.GetBaseWorkDiff()
         baseNewDiff = conflict.GetBaseNewDiff()
-        print 'base work diff', baseWorkDiff
-        print 'base new diff', baseNewDiff
         if baseWorkDiff.GetAction() == EDiffActions.DELETE or baseNewDiff.GetAction() == EDiffActions.DELETE:
             for c in self.__unresolvedConflicts:
                 if c not in result:
                     if c.GetBaseWorkDiff() == baseWorkDiff:
                         result.append(c)
-                        print 'found', c
+                        
                         
                     elif c.GetBaseNewDiff() == baseNewDiff:
                         result.append(c)
-                        print 'found', c
+                        
                         
             for c in self.__unresolvedConflicts:
                 if c not in result:

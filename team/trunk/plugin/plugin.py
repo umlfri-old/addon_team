@@ -14,14 +14,16 @@ from cStringIO import StringIO
 
 class Plugin(object):
     '''
-    classdocs
+    Team plugin for UML .FRI
     '''
     
     incompatibleText = 'Project is under version control, but is incompatible with Team plugin. Would you like to make it compatible? (There will be no physical changes to project file)'
     
     def __init__(self, interface):
         '''
-        Constructor
+        Constructor for Team plugin, initialize all notifications and menus
+        @type interface: CInterface
+        @param interface: Plugin system interface  
         '''
         # load interface
         self.interface = interface
@@ -78,17 +80,28 @@ class Plugin(object):
         
         self.__ResetMenuSensitivity()
         self.ProjectOpened()
+
                     
     def LoadProjectFile(self, fileName):
-        
+        '''
+        Loads project with filename in application
+        @type fileName: string
+        @param fileName: path to file  
+        '''
         self.pluginAdapter.LoadProject(fileName)
        
     def AskCompatible(self):    
+        '''
+        Asks user if he wants to make project file compatible with version system. Notify implementations.
+        '''
         response = self.gui.ShowQuestion(self.incompatibleText)
         if response:
             self.pluginAdapter.Notify('team-make-compatible')
       
     def ProjectOpened(self):
+        '''
+        Hook executed when project file is opened. Checks if plugin can run, resets menu sensitivity, notify implementations.
+        '''
         self.__ResetMenuSensitivity()
         
         if self.__CanRunPlugin():
@@ -101,24 +114,50 @@ class Plugin(object):
     
     
     def ReceiveResult(self, result):
+        '''
+        Hook executed when receiving result from implementations. Displays dialog with result
+        @type result: string
+        @param result: String to be displayed 
+        '''
         self.pluginGuiManager.DisplayWarning(result)
     
     
     def TeamException(self, exc):
-        print 'caught team exception', exc
-        
+        '''
+        Hook executed when receiving exception from implementations. Displays dialog with exception
+        @type exc: Exception
+        @param exc: Exception instance  
+        '''
         self.pluginGuiManager.DisplayWarning(str(exc))
             
             
-    def ReceiveLog(self, logs):        
+    def ReceiveLog(self, logs):
+        '''
+        Hook executed when receiving logs. Displays logs window.
+        @type logs: list
+        @param logs: list with log information 
+        '''        
         self.gui.LogsDialog(logs)
         
     def AskServerCert(self, actionId, message, *param):
+        '''
+        Hook executed when implementation asks for accepting server certificate. Notify back actionId if response is positive
+        @type actionId: string
+        @param actionId: Identifier of hook that executes action in implementation.
+        @type message: string
+        @param message: Message to display in dialog
+        @param *param: additional parameters, will be send back in notify 
+        '''
         response = self.gui.ShowQuestion(message+'\nAccept server certificate?')
         if response:
             self.pluginAdapter.Notify(actionId, None, None, response, *param)
     
     def ReceiveSupported(self, supported): 
+        '''
+        Hook executed when receiving supported operations in implementation. Updates menu sensitivity
+        @type supported: list
+        @param supported: list with supported methods in implementation
+        '''
         
         self.diffMenu.SetSensitive('diff' in supported)
         self.updateMenu.SetSensitive('update' in supported)
@@ -130,10 +169,20 @@ class Plugin(object):
     
     
     def ReceiveFileData(self, data, idData):
+        '''
+        Hook executed when receiving file data from implementation
+        @type data: string
+        @param data: String with file data
+        @type idData: string
+        @param idData: identifier of data received, used later
+        '''
         self.receivedFileData[idData] = data
     
     
     def __ResetMenuSensitivity(self):
+        '''
+        Resets menu sensitivity
+        '''
         self.diffMenu.SetSensitive(False)
         self.updateMenu.SetSensitive(False)
         self.checkinMenu.SetSensitive(False)
@@ -143,6 +192,11 @@ class Plugin(object):
         self.logsMenu.SetSensitive(False)
         
     def __CanRunPlugin(self):
+        '''
+        Checks if plugin can run
+        @rtype: bool
+        @return: True if plugin can run, False otherwise
+        '''
         p = self.__LoadApplicationProject()
         if p is None:
             return False
@@ -152,6 +206,13 @@ class Plugin(object):
             return True
     
     def __SaveProjectXmlToExistingFile(self, xml, fileName):
+        '''
+        Saves project filedata in existing file, checks if file is zipped
+        @type xml: string
+        @param xml: file data
+        @type fileName: string
+        @param fileName: path to existing file
+        '''
         if is_zipfile(fileName):
             # uloz zipko
             fZip = ZipFile(fileName, 'w', ZIP_DEFLATED)
@@ -163,6 +224,13 @@ class Plugin(object):
             f.close()
     
     def __GetProjectXmlFromFile(self, fileName):
+        '''
+        Gets project xml from file specified with filename
+        @type fileName: string
+        @param fileName: path to file 
+        @rtype: string
+        @return: string with xml project data
+        '''
         if is_zipfile(fileName):
             f = ZipFile(fileName,'r')
             result = f.read('content.xml')
@@ -173,7 +241,13 @@ class Plugin(object):
         return result
     
     def __GetProjectXmlFromFileData(self, fd):
-        
+        '''
+        Gets project xml from file data. File data can be read zipped file.
+        @type fd: string
+        @param fd: file data
+        @rtype: string
+        @return: string with xml project data
+        '''
         result = ''
         try:
             fileLikeObject = StringIO(fd)
@@ -186,13 +260,17 @@ class Plugin(object):
     
     def __LoadApplicationProject(self):
         '''
-        Load project
+        Gets project
+        @rtype: IProject
+        @return: Project
         '''
         return self.pluginAdapter.GetProject()
     
     
     def DiffProject(self, arg):
-        
+        '''
+        Executes diff of two project, notify implementation to get file data
+        '''
         project = self.__LoadApplicationProject()
         if project is None:
             self.pluginGuiManager.DisplayWarning('No project loaded')
@@ -200,7 +278,11 @@ class Plugin(object):
 
         self.pluginAdapter.Notify('team-get-file-data', None, None, False, 'diff-project', 'diff-project')
         
+        
     def ContinueDiffProject(self):
+        '''
+        Continues diffing
+        '''
         project = self.__LoadApplicationProject()
         if project is None:
             self.pluginGuiManager.DisplayWarning('No project loaded')
@@ -216,12 +298,18 @@ class Plugin(object):
 #       
 
     def DiffRevisions(self, rev1, rev2):
+        '''
+        Begin diff of two revision, notify implementation to get file data
+        '''
         self.pluginAdapter.Notify('team-get-file-data', None, None,False,'diff-revisions1', 'diff-revisions', rev1)
         self.pluginAdapter.Notify('team-get-file-data', None, None,False,'diff-revisions2', 'diff-revisions', rev2)
         
 
         
     def ContinueDiffRevisions(self):
+        '''
+        Continues diff of two revisions
+        '''
         fd1 = self.receivedFileData.get('diff-revisions1',None)
         fd2 = self.receivedFileData.get('diff-revisions2',None)
         if fd1 is None or fd2 is None:
@@ -236,21 +324,32 @@ class Plugin(object):
         
     
     def DiffProjects(self, project1, project2):
+        '''
+        Diff two projects
+        @type project1: CProject
+        @param project1: first project to be compared
+        @type project2: CPorject
+        @param project2: second project to be compared
+        '''
         differ = CDiffer(project2, project1)
-        res = differ.projectTreeDiff + differ.visualDiff + differ.dataDiff
-        print 'DIFFFFFFFFFS'
-        for r in res:
-            print r
-        print '------------'
         self.gui.DiffResultsDialog(differ)
      
      
-    def GetAuthorization(self, actionId, *params):        
+    def GetAuthorization(self, actionId, *params):
+        '''
+        Hook executed when implementation asks for authorization
+        @type actionId: string
+        @param actionId: action identifier that will be notified back
+        @param *params: additional params will be send back 
+        '''    
         username, password = self.gui.AuthDialog()
         if username is not None and password is not None:
             self.pluginAdapter.Notify(actionId, username, password, *params)
         
     def Update(self, arg):
+        '''
+        Executes update, notify implementation about update
+        '''
         project = self.__LoadApplicationProject()
         
         if project is None:
@@ -275,6 +374,9 @@ class Plugin(object):
             
     
     def Checkin(self, arg):
+        '''
+        Executes checkin, notify implementation
+        '''
         project = self.__LoadApplicationProject()
         if project is None:
             self.pluginGuiManager.DisplayWarning('No project loaded')
@@ -288,6 +390,9 @@ class Plugin(object):
                         
             
     def Revert(self, arg):
+        '''
+        Executes revert, notify implementation
+        '''
         project = self.__LoadApplicationProject()
         if project is None:
             self.pluginGuiManager.DisplayWarning('No project loaded')
@@ -298,7 +403,9 @@ class Plugin(object):
     
         
     def Checkout(self, arg):
-
+        '''
+        Executes checkout, notify implementation
+        '''
         result = self.gui.CheckoutDialog(self.implementations)
         if result is not None:
             # vyber implementaciu
@@ -310,11 +417,19 @@ class Plugin(object):
             
       
     def SolveConflictsInOpenedProject(self, arg):
-        
+        '''
+        Notify implementation about solving conflicts
+        '''
         self.pluginAdapter.Notify('team-solve-conflicts-in-opened-project')      
             
     def SolveConflicts(self, triple, prFile):
-        
+        '''
+        Solve conflicts
+        @type triple: dic
+        @param triple: dictionary with mine, base and new project files
+        @type prFile: string
+        @param prFile: file where resolved project will be saved
+        '''
         mine = self.__GetProjectXmlFromFile(triple['mine'])
         base = self.__GetProjectXmlFromFile(triple['base'])
         upd = self.__GetProjectXmlFromFile(triple['new'])
@@ -343,6 +458,9 @@ class Plugin(object):
                 
      
     def ShowLogs(self, arg):
+        '''
+        Executes showing logs
+        '''
         project = self.__LoadApplicationProject()
         if project is None:
             self.interface.GetAdapter().DisplayWarning('No project loaded')
@@ -351,11 +469,25 @@ class Plugin(object):
         self.pluginAdapter.Notify('team-get-log', None, None, False)
         
     def RegisterImplementationForCheckout(self, id, description):
+        '''
+        Hook executed when implementation register itself for checkout
+        @type id: string
+        @param id: implementation identification
+        @type description: string
+        @param description: description of CVS
+        '''
         self.implementations[id] = description
         self.__ResetMenuSensitivity()
         
         
-    def SolveConflictTriple(self, updater):    
+    def SolveConflictTriple(self, updater):   
+        '''
+        Executes conflict solving
+        @type updater: CUpdater
+        @param updater: updater
+        @rtype: bool, string
+        @return: True if conflicts were solved, xml of solved project
+        ''' 
         if updater is not None:
             if updater.IsInConflict():
                 

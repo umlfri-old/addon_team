@@ -10,13 +10,19 @@ from imports.gtk2 import gtk
 
 class CProjectTreeDiffTreeView(object):
     '''
-    classdocs
+    Class representing project tree diff view
     '''
 
 
     def __init__(self, differ, model, conflicts):
         '''
         Constructor
+        @type differ: CDiffer
+        @param differ: differ
+        @type model: gtk.TreeModel
+        @param model: model where diff will be held
+        @type conflicts: list
+        @param conflicts: list of conflicts, possible conflicts between objects
         '''
         self.differ = differ
         self.conflicts = conflicts
@@ -29,6 +35,10 @@ class CProjectTreeDiffTreeView(object):
         self.Create()
         
     def Create(self):
+        '''
+        Fills model with appropriate data
+        
+        '''
         self.model.clear()
         self.__Append(self.projectOld.GetProjectTreeRoot())
         self.__AppendConnections()
@@ -36,17 +46,37 @@ class CProjectTreeDiffTreeView(object):
         self.__ShowConflicts()
         
     def __Append(self, node, iter=None, icon = None, icon2 = None, conflictIcon = None, diff = None):
-        
+        '''
+        Appends nodes to model recursively
+        @type node: CProjectTreeNode
+        @param node: node to be appended
+        @type iter: gtk.TreeIter
+        @param iter: parent iter under which node will be appended
+        @type icon: gtk.gdk.Pixbuf
+        @param icon: icon to be displayed
+        @type icon2: gtk.gdk.Pixbuf
+        @param icon2: other icon to be displayed
+        @type conflictIcon: gtk.gdk.Pixbuf
+        @param conflictIcon: conflict icon to be displayed or None
+        @type diff: CDiffResult
+        @param diff: diff that will be associated with node
+        '''
         iter = self.model.append(iter, [node.GetObject().GetName(), icon, icon2, node, conflictIcon, diff])
         for child in node.GetChildsOrdered():
             self.__Append(child, iter, icon, icon2, conflictIcon)
             
     def __AppendConnections(self):
+        '''
+        Adds connections to project tree model
+        '''
         self.connectionsIter = self.model.append(None, ['Connections', None, None, None, None, None])
         for c in self.projectOld.GetConnections().values():
             self.model.append(self.connectionsIter, [c.GetSource().GetName()+' -> '+c.GetDestination().GetName(), None, None, c, None, None])
             
     def __ShowDiffs(self):
+        '''
+        Shows all diffs
+        '''
         self.diffs = self.differ.GetProjectTreeDiff().get(EDiffActions.INSERT, [])
         while len(self.diffs) > 0:
             diff = self.diffs[0]
@@ -76,7 +106,6 @@ class CProjectTreeDiffTreeView(object):
         
         self.diffs = self.differ.GetDataDiff().get(EDiffActions.INSERT, [])
         self.diffs = [d for d in self.diffs if isinstance(d.GetElement(), CConnection)]
-        print 'insert connections'
         print self.diffs
         for d in self.diffs:
             iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"insert.png")
@@ -100,6 +129,11 @@ class CProjectTreeDiffTreeView(object):
             
         
     def __ShowInsertDiff(self, diff):
+        '''
+        Shows insert diffs
+        @type diff: CDiffResult
+        @param diff: diff
+        '''
         def func(model, path, iter, diff):
             
             if model.get_value(iter, 3) is not None and model.get_value(iter,3) == diff.GetElement().GetParent():
@@ -120,6 +154,11 @@ class CProjectTreeDiffTreeView(object):
         
         
     def __ShowDeleteDiff(self, diff):
+        '''
+        Shows deleted diffs
+        @type diff: CDiffResult
+        @param diff: diff
+        '''
         def func(model, path, iter, diff):
             if model.get_value(iter, 3) is not None and model.get_value(iter,3) == diff.GetElement():
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"delete.png")
@@ -136,6 +175,11 @@ class CProjectTreeDiffTreeView(object):
         
         
     def __ShowMoveDiff(self, diff):
+        '''
+        Shows moved diffs
+        @type diff: CDiffResult
+        @param diff: diff
+        '''
         def func1(model, path, iter, diff):
             if model.get_value(iter, 3) is not None and model.get_value(iter,3)  == diff.GetElement():
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"delete-move.png")
@@ -168,6 +212,11 @@ class CProjectTreeDiffTreeView(object):
     
     
     def __ShowOrderChangeDiff(self, diff):
+        '''
+        Shows change order diffs
+        @type diff: CDiffResult
+        @param diff: diff
+        '''
         def func1(model, path, iter, diff):
             if model.get_value(iter, 3) is not None and model.get_value(iter,3) == diff.GetElement():
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"order-change-old.png")
@@ -201,6 +250,11 @@ class CProjectTreeDiffTreeView(object):
         self.model.foreach(func2, diff)
     
     def __ShowDeleteConnectionsDiff(self, diff):
+        '''
+        Shows deleted connetctions diffs
+        @type diff: CDiffResult
+        @param diff: diff
+        '''
         def func(model, path, iter, diff):
             if model.get_value(iter, 3) is not None and model.get_value(iter,3) == diff.GetElement():
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"delete.png")
@@ -213,6 +267,11 @@ class CProjectTreeDiffTreeView(object):
         self.model.foreach(func, diff)
     
     def __ShowModifiedDiff(self, diff):
+        '''
+        Shows modified diffs
+        @type diff: CDiffResult
+        @param diff: diff
+        '''
         def func(model, path, iter, diff):
             if model.get_value(iter, 3) is not None and model.get_value(iter,3).GetObject()== diff.GetElement():
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"modify.png")
@@ -228,6 +287,13 @@ class CProjectTreeDiffTreeView(object):
     
     
     def __MarkParentAsModified(self, path, include = False):
+        '''
+        Marks parent of any diff as modified
+        @type path: tuple
+        @param path: path with diff
+        @type include: bool
+        @param include: True if path should be marked too, False otherwise
+        '''
         if include == False:
             path = path[0:-1]
         for i,x in enumerate(path):
@@ -238,6 +304,9 @@ class CProjectTreeDiffTreeView(object):
             self.model.set_value(newiter, 2, icon)
             
     def __ShowConflicts(self):
+        '''
+        Shows conflicts in project tree
+        '''
         def func(model, path, iter):
             if model.get_value(iter, 3) is not None and model.get_value(iter,3).GetObject() in  [c.GetElement() for c in self.conflicts]:
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"conflict.png")
