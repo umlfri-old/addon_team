@@ -19,13 +19,17 @@ UMLPROJECT_NAMESPACE = '{http://umlfri.kst.fri.uniza.sk/xmlschema/umlproject.xsd
 
 class CProject(object):
     '''
-    classdocs
+    Class representing UML .FRI project
     '''
 
 
     def __init__(self, project=None,xmlData=None):
         '''
         Constructor
+        @type project: IProject
+        @param project: Project from plugin system from which our project can be created
+        @type xmlData: string
+        @param xmlData: Xml data from which our project can be constructed
         '''
         self.__diagrams = {}
         self.__elements = {}
@@ -42,6 +46,11 @@ class CProject(object):
             self.__LoadProjectFromApp(project)
     
     def __LoadProjectFromApp(self, project):
+        '''
+        Loads project from application IProject
+        @type project: IProject
+        @param project: Project from plugin system
+        '''
         #self.__saveVersion = (1,1,0)
         #self.__metamodelUri = project.GetMetamodel().GetUri()
         #self.__metamodelVersion = project.GetMetamodel().GetVersion()
@@ -51,6 +60,14 @@ class CProject(object):
             self.__LoadProjectRecursive(root, None)
    
     def __LoadProjectRecursive(self, root, treeParent):
+        '''
+        Loads project from application project recursivly from root
+        @type root: IElementObject
+        @param root: root element
+        @type treeParent: IElementObject
+        @param treeParent: parent of root element
+        
+        '''
         if root is not None:
             
             if root.GetClass().find('Element') != -1:
@@ -148,6 +165,8 @@ class CProject(object):
     def __LoadProjectFromXml(self, xmlData):
         '''
         Create all project structure from xml data
+        @type xmlData: string
+        @param xmlData: xml data 
         '''
         # need to get plain xml file data
         root = etree.XML(xmlData)
@@ -204,6 +223,13 @@ class CProject(object):
                         
     
     def __CreateProjectTree(self, element, parent):
+        '''
+        Creates project tree recurisvely
+        @type element: Element
+        @param element: root element
+        @type parent: CProjectTreeNode
+        @param parent: parent of element
+        '''
         if parent is None:
             # ak nemame koren
             if (element.tag == UMLPROJECT_NAMESPACE+'node'):
@@ -227,6 +253,11 @@ class CProject(object):
                  
     
     def __GetNodeChilds(self, element):
+        '''
+        Get childs of element when creating project from xml data
+        @type element: Element
+        @param element: element for getting childs
+        '''
         result = []
         for childs in element:
             if (childs.tag == UMLPROJECT_NAMESPACE+'childs'):
@@ -241,6 +272,13 @@ class CProject(object):
     
     @staticmethod
     def __LoadData(element):
+        '''
+        Loads data of element to meaningful structure
+        @type element: Element
+        @param element: element
+        @rtype: dic
+        @return: Returns all data of element in dictionary
+        '''
         if element.tag == UMLPROJECT_NAMESPACE + 'dict':
             return dict([(item.get('name'), CProject.__LoadData(item)) for item in element])
         elif element.tag == UMLPROJECT_NAMESPACE + 'list':
@@ -249,7 +287,11 @@ class CProject(object):
             return unicode(element.text or '')
     
     def __LoadDiagram(self, element):
-        
+        '''
+        Loads diagram when creating project from xml data
+        @type element: Element
+        @param element: element representing diagram
+        '''
         id = element.get('id')
         diagram = self.GetById(id)
         if 'default' in element.attrib and element.attrib['default'].lower() in ('1', 'true'):
@@ -284,11 +326,22 @@ class CProject(object):
     
     
     def GetById(self, id):
+        '''
+        Returns data object by id
+        @type id: string
+        @param id: id of object
+        @rtype: CBase
+        @return: data object
+        '''
         id = id.lstrip('#')
         return self.__elements.get(id) or self.__connections.get(id) or self.__diagrams.get(id)
     
     def DeleteById(self, id):
-        print id
+        '''
+        Deletes data object by id
+        @type id: string
+        @param id: id of object
+        '''
         id = id.lstrip('#')
         try:
             self.__elements.pop(id)
@@ -305,18 +358,45 @@ class CProject(object):
         
     
     def GetProjectTreeRoot(self):
+        '''
+        Returns project tree root
+        @rtype: CProjectTreeNode
+        @return: project tree root
+        '''
         return self.__projectTreeRoot
     
     def GetElements(self):
+        '''
+        Returns all elements
+        @rtype: list
+        @return: list of all elements
+        '''
         return self.__elements
     
     def GetDiagrams(self):
+        '''
+        Returns all diagrams
+        @rtype: list
+        @return: list of all diagrams
+        '''
         return self.__diagrams
     
     def GetConnections(self):
+        '''
+        Returns all connections
+        @rtype: list
+        @return: list of all connections
+        '''
         return self.__connections
     
     def GetProjectTreeNodes(self, root = None):
+        '''
+        Returns all project tree nodes under given root in list
+        @type root: CProjectTreeNode
+        @param root: root of project tree nodes
+        @rtype: list
+        @return: list of all project tree nodes under given root
+        '''
         if root is None:
             root = self.__projectTreeRoot
         stack = [root]
@@ -328,6 +408,15 @@ class CProject(object):
         return result
     
     def GetProjectTreeNodeById(self, id, root = None):
+        '''
+        Returns project tree node by its id, search under given root
+        @type id: string
+        @param id: id of project tree node
+        @type root: CProjectTreeNode
+        @param root: root under which will be searched
+        @rtype: CProjectTreeNode
+        @return: project tree node by its id
+        '''
         if root is None:
             root = self.__projectTreeRoot
         stack = [root]
@@ -341,6 +430,11 @@ class CProject(object):
         
         
     def GetCounters(self):
+        '''
+        Returns project counters
+        @rtype: Element
+        @return: project counters
+        '''
         return self.__counters
         
     # ----------------------    
@@ -349,7 +443,12 @@ class CProject(object):
     
     # raise exception on failure
     def AddObject(self, obj):
-        print 'Adding object to project', str(obj)
+        '''
+        Adds object to project
+        @type obj: CBase
+        @param obj: Object to be added
+        @raise Exception: on failure
+        '''
         if isinstance(obj, CElement):
             # pridaj element
             
@@ -378,6 +477,14 @@ class CProject(object):
             self.__diagrams[diag.GetId()] = diag
         
     def AddProjectTreeNode(self, treeNode):
+        '''
+        Adds object tree node to project
+        @type obj: CProjectTreeNode
+        @param obj: Project tree node to be added
+        @raise Exception: on failure
+        @rtype: CProjectTreeNode
+        @return: added project tree node
+        '''
         # dostan objekt (ten by mal byt aj tak novy)
         obj = self.GetById(treeNode.GetId())
         if obj is None:
@@ -395,8 +502,6 @@ class CProject(object):
             # vytvor novy node
             
             newProjectTreeNode = CProjectTreeNode(obj, parent)
-            print 'new project tree node',newProjectTreeNode
-            
             parent.AddChild(newProjectTreeNode, treeNode.GetIndex())
             
             
@@ -404,7 +509,12 @@ class CProject(object):
             return newProjectTreeNode
         
     def AddView(self, view):
-        
+        '''
+        Adds view to project
+        @type obj: CBaseView
+        @param obj: View to be added
+        @raise Exception: on failure
+        '''
         # najdi objekt, ktoremu to patri
         obj = self.GetById(view.GetObject().GetId())
         if obj is None:
@@ -436,6 +546,11 @@ class CProject(object):
             diagram.AddConnectionView(newView, view.GetIndex())
     
     def DeleteObject(self, obj):
+        '''
+        Deletes given object from project
+        @type obj: CBase
+        @param obj: Object to be deleted
+        '''
         if isinstance(obj, CElement):
             # najdi element v projektovom strome
             node = self.GetProjectTreeNodeById(obj.GetId())
@@ -457,6 +572,11 @@ class CProject(object):
                 self.DeleteProjectTreeNode(node)
     
     def DeleteProjectTreeNode(self, treeNode):
+        '''
+        Deletes given project tree node from project
+        @type treeNode: CProjectTreeNode
+        @param treeNode: project tree node to be deleted
+        '''
         # najdi ho v projektovom strome
         node = self.GetProjectTreeNodeById(treeNode.GetId())
         # ak to nie je koren
@@ -477,6 +597,11 @@ class CProject(object):
             
     
     def DeleteView(self, view):
+        '''
+        Deletes given view from project
+        @type treeNode: CBaseView
+        @param treeNode: view to be deleted
+        '''
         # najdi diagram, do ktoreho patri
         diagram = self.GetById(view.GetParentDiagram().GetId())
         # vymaz ho z daneho diagramu
@@ -485,6 +610,16 @@ class CProject(object):
 
 
     def MoveProjectTreeNode(self, node, oldParent, newParent):
+        '''
+        Move project tree node from old parent to new parent
+        @type node: CProjectTreeNode
+        @param node: node to be moved
+        @type oldParent: CProjectTreeNode
+        @param oldParent: old parent of given node
+        @type newParent: CProjectTreeNode
+        @param newParent: new parent of given node
+        @raise Exception: on failure
+        '''
         # najdi node
         node = self.GetProjectTreeNodeById(node.GetId())
         if node is None:
@@ -508,36 +643,84 @@ class CProject(object):
             oldParent.DeleteChild(node)
 
     def ChangeOrderTreeNode(self, node, oldOrder, newOrder):
-        print 'CHANGE ORDER', node, oldOrder, newOrder
+        '''
+        Change order of node under its parent
+        @type node: CProjectTreeNode
+        @param node: node to be modified
+        @type oldOrder: int
+        @param oldOrder: old order of node
+        @type newOrder: int
+        @param newOrder: new order of node
+        '''
         node = self.GetProjectTreeNodeById(node.GetId())
         parent = node.GetParent()
         parent.ChangeOrderNode(node, newOrder)
     
     
     def ChangeOrderView(self, view, oldOrder, newOrder):
-        print 'CHANGE ORDER', view, oldOrder, newOrder
+        '''
+        Change order of view under its diagram
+        @type view: CBaseView
+        @param view: view to be modified
+        @type oldOrder: int
+        @param oldOrder: old order of view
+        @type newOrder: int
+        @param newOrder: new order of view
+        '''
         diagram = self.GetById(view.GetParentDiagram().GetId())
         view = diagram.GetViewById(view.GetObject().GetId())
         diagram.ChangeOrderView(view, newOrder)
 
 
     def ModifyObjectData(self, element, oldState, newState, path):
+        '''
+        Modifies data of given object
+        @type element: CBase
+        @param element: Element to be modified
+        @type oldState: list or dict
+        @param oldState: old state of data
+        @type newState: list or dict
+        @param newState: new state of data
+        @type path: list
+        @param path: path to given change
+        '''
         el = self.GetById(element.GetId())
         el.ModifyData(oldState, newState, path)
 
     def ModifyViewData(self, view, oldState, newState, path):
+        '''
+        Modifies data of given view
+        @type view: CBaseView
+        @param view: View to be modified
+        @type oldState: list or dict
+        @param oldState: old state of data
+        @type newState: list or dict
+        @param newState: new state of data
+        @type path: list
+        @param path: path to given change
+        '''
         diagram = self.GetById(view.GetParentDiagram().GetId())
         view = diagram.GetViewById(view.GetObject().GetId())
         view.ModifyData(oldState, newState, path)
 
     # updatni pocitadla,  vyber vyssie z nich
     def UpdateCounters(self, newCounters):
+        '''
+        Updates counters, choose higher from self counters and new counters
+        @type newCounters: Element
+        @param newCounters: new counters
+        '''
         for (old,new) in zip(self.__counters, newCounters):
             if int(old.get('value')) < int(new.get('value')):
                 old.set('value', new.get('value'))
 
 
     def GetSaveXml(self):
+        '''
+        Generates xml representation of project
+        @rtype: string
+        @return: xml representation of project
+        '''
         #assert self.__metamodel is not None
         
         def SaveDomainObjectInfo(data, name=None):

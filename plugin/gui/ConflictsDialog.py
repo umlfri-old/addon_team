@@ -9,11 +9,16 @@ from DiffDialog import CDiffDialog
 
 class CConflictsDialog(object):
     '''
-    classdocs
+    Class representing dialog for conflict solving
     '''
 
 
     def __init__(self, wTree):
+        '''
+        Constructor
+        @type wTree: gtk.Builder
+        @param wTree: gtk builder with objects needed to construct dialog
+        '''
         self.wTree = wTree
         self.conflictSolver = None
         self.baseWorkDiffer = None
@@ -30,7 +35,18 @@ class CConflictsDialog(object):
         self.wTree.get_object('showMergedProjectBtn').connect('clicked', self.on_show_merged_project_btn_clicked)
         self.wTree.get_object('conflictsTreeView').connect_after('cursor-changed', self.on_conflicts_tree_view_cursor_changed)
         
-    def SetAttributes(self, conflictSolver, baseWorkDiffer, baseNewDiffer, diffDialog):    
+    def SetAttributes(self, conflictSolver, baseWorkDiffer, baseNewDiffer, diffDialog):
+        '''
+        Sets all attributes
+        @type conflictSolver: CConflictSolver
+        @param conflictSolver: conflict solver
+        @type baseWorkDiffer: CDiffer
+        @param baseWorkDiffer: differ with diffs from base to work project
+        @type baseNewDiffer: CDiffer
+        @param baseNewDiffer: differ with diffs from base to new project
+        @type diffDialog: CDiffDialog
+        @param diffDialog: CDiffDialog instance, will be used for displaying diffs
+        '''    
         self.conflictSolver = conflictSolver
         self.baseWorkDiffer = baseWorkDiffer
         self.baseNewDiffer = baseNewDiffer
@@ -38,11 +54,13 @@ class CConflictsDialog(object):
         
     
     def Run(self):
+        '''
+        Runs dialog, sets response
+        '''
         self.__UpdateConflictsTreeView()
         while 1:
             response = self.wid.run()
             if response == 0:
-                print 'remaining conflicts',len(self.conflictSolver.GetUnresolvedConflicts())
                 if len(self.conflictSolver.GetUnresolvedConflicts()) > 0:
                     self.ShowError(self.wid, 'You must resolve all conflicts')
                 else:
@@ -56,10 +74,18 @@ class CConflictsDialog(object):
                 break
     
     def Response(self):
+        '''
+        Returns response
+        @rtype: bool
+        @return: True if dialog was closed with OK, False otherwise 
+        '''
         return self.response
     
     def on_show_mine_diff_btn_clicked(self, wid):
-        print 'showing mine diff'
+        '''
+        Shows mine diff
+        '''
+        
         if self.diffDialog is None:
             self.diffDialog = CDiffDialog(self.wTree)
         self.diffDialog.SetDiffer(self.baseWorkDiffer)
@@ -67,7 +93,10 @@ class CConflictsDialog(object):
         self.diffDialog.Run()
         
     def on_show_theirs_diff_btn_clicked(self, wid):
-        print 'showing theirs diff'
+        '''
+        Shows theirs diff
+        '''
+        
         if self.diffDialog is None:
             self.diffDialog = CDiffDialog(self.wTree)
         self.diffDialog.SetDiffer(self.baseNewDiffer)
@@ -77,6 +106,9 @@ class CConflictsDialog(object):
     
     
     def on_show_merged_project_btn_clicked(self, wid):
+        '''
+        Show merged project
+        '''
         falseDiffer = CDiffer(self.conflictSolver.GetMerger().GetProject(), self.conflictSolver.GetMerger().GetProject())
         if self.diffDialog is None:
             self.diffDialog = CDiffDialog(self.wTree)
@@ -87,16 +119,21 @@ class CConflictsDialog(object):
     
             
     def on_accept_mine_btn_clicked(self, wid):
-        print 'accepting mine'
+        
         self.__AcceptChanges(CConflictSolver.ACCEPT_MINE)
                 
     def on_accept_theirs_btn_clicked(self, wid):
-        print 'acceptin theirs'
+        
         self.__AcceptChanges(CConflictSolver.ACCEPT_THEIRS)
         
     def __AcceptChanges(self, solution):
+        '''
+        Applies conflict resolution for selected conflict
+        @type solution: CConflictSolver.resolution
+        @param solution: resolution enumeration
+        '''
         if self.conflictSolver is not None:
-            print 'BEFORE',len(self.conflictSolver.GetUnresolvedConflicts())
+
             conflictsTreeView = self.wTree.get_object('conflictsTreeView')
             
             treeselection = conflictsTreeView.get_selection()
@@ -105,7 +142,7 @@ class CConflictsDialog(object):
             if iter is not None:
                 conflict = model.get_value(iter, 1)
                 self.conflictSolver.ResolveConflict(conflict, solution)
-                print 'AFTER',len(self.conflictSolver.GetUnresolvedConflicts())
+
                 self.__UpdateConflictsTreeView()
                 
                 
@@ -126,6 +163,9 @@ class CConflictsDialog(object):
         return False
                 
     def __UpdateConflictsTreeView(self):
+        '''
+        Updates conflicts tree view
+        '''
         if self.conflictSolver is not None:
             conflictsListStore = self.wTree.get_object('conflictsListStore')
             conflictsListStore.clear()
@@ -134,6 +174,13 @@ class CConflictsDialog(object):
                 conflictsListStore.append([str(conflict), conflict])
                 
     def ShowError(self, parent, message):
+        '''
+        Shows error dialog
+        @type parent: gtk.Widget
+        @param parent: parent widget for error dialog
+        @type message: string
+        @param message: text message that will be displayed
+        '''
         md = gtk.MessageDialog(parent, 
             gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, 
             gtk.BUTTONS_CLOSE, message)

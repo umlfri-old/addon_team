@@ -15,13 +15,15 @@ from ConflictsDialog import CConflictsDialog
 
 class Gui(object):
     '''
-    classdocs
+    Class with graphical user interface
     '''
     
 
     def __init__(self, plugin):
         '''
         Constructor
+        @type plugin: Plugin
+        @param plugin: team plugin instance
         '''
         self.plugin = plugin
         #print 'constructing'
@@ -42,10 +44,14 @@ class Gui(object):
         
         self.wTree.connect_signals( dic )
         
-        #gtk.main()
 
 
     def CheckinMessageDialog(self):
+        '''
+        Runs checkin message dialog
+        @rtype: string
+        @return: message inserted or None
+        '''
         wid = self.wTree.get_object('checkinMessageDlg')
         text = self.wTree.get_object('checkinMessageTxt')
         buf = text.get_buffer()
@@ -62,6 +68,11 @@ class Gui(object):
         
     
     def DiffResultsDialog(self, differ):
+        '''
+        runs diff dialog
+        @type differ: CDiffer
+        @param differ: differ that holds displayed diffs
+        '''
         if self.diffDialog is None:
             self.diffDialog = CDiffDialog(self.wTree)
         self.diffDialog.SetDiffer(differ)
@@ -72,6 +83,17 @@ class Gui(object):
     
         
     def ConflictSolvingDialog(self, conflictSolver, baseWorkDiffer, baseNewDiffer):
+        '''
+        Runs conflict solving dialog
+        @type conflictSolver: CConflictSolver
+        @param conflictSolver: conflict solver instance
+        @type baseWorkDiffer: CDiffer
+        @param baseWorkDiffer: differ from base to work project
+        @type baseNewDiffer: CDiffer
+        @param baseNewDiffer: differ from base to new project
+        @rtype: bool
+        @return: Returns True if dialog was ended with OK, False otherwise
+        '''
         if self.diffDialog is None:
             self.diffDialog = CDiffDialog(self.wTree)
         if self.conflictSolvingDialog is None:
@@ -83,6 +105,13 @@ class Gui(object):
     
             
     def CheckoutDialog(self, implementations):
+        '''
+        Runs checkout dialog
+        @type implementations: list
+        @param implementations: list of description and identification of implementations
+        @rtype: tuple
+        @return: tuple with (selected implementation id, url of repository, checkout directory, selected revision or None) or None
+        '''
         wid = self.wTree.get_object('checkoutDlg')
         implementationListStore = self.wTree.get_object('implementationListStore')
         implementationListStore.clear()
@@ -109,6 +138,11 @@ class Gui(object):
         
     
     def ChooseRevisionDialog(self):
+        '''
+        Runs dialog for choosing revision
+        @rtype: string
+        @return: string with chosen revision or None
+        '''
         wid = self.wTree.get_object('chooseRevisionDlg')
         response = wid.run()
         wid.hide()
@@ -123,6 +157,11 @@ class Gui(object):
             return None
     
     def AuthDialog(self):
+        '''
+        Runs authorization dialog
+        @rtype: string, string
+        @return: username, password or None, None
+        '''
         wid = self.wTree.get_object('authDlg')
         response = wid.run()
         wid.hide()
@@ -134,6 +173,11 @@ class Gui(object):
             return None, None
     
     def LogsDialog(self, logs):
+        '''
+        Runs log dialog
+        @type logs: list
+        @param logs: Logs to be displayed
+        '''
         wid = self.wTree.get_object('logsDlg')
         logsListStore = self.wTree.get_object('logsListStore')
         logsListStore.clear()
@@ -176,6 +220,13 @@ class Gui(object):
     
     
     def ShowError(self, parent, message):
+        '''
+        Shows error dialog
+        @type parent: gtk.Widget
+        @param parent: parent widget for error dialog
+        @type message: string
+        @param message: text message that will be displayed
+        '''
         md = gtk.MessageDialog(parent, 
             gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, 
             gtk.BUTTONS_CLOSE, message)
@@ -183,6 +234,13 @@ class Gui(object):
         md.destroy()
         
     def ShowQuestion(self, question):
+        '''
+        Shows question dialog
+        @type question: string
+        @param question: question to be displayed
+        @rtype: bool
+        @return: True if answer is Yes, False otherwise
+        '''
         md = gtk.MessageDialog(None, gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_QUESTION, gtk.BUTTONS_YES_NO, question)
         response = md.run()
         md.destroy()

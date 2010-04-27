@@ -5,7 +5,9 @@ Created on 26.3.2010
 '''
 def dictToTuple(data):
     '''
-    Vytvori zo slovnika, kde su vnorene dalsie slovniky alebo listy, velky tuple, ktory sa da porovnavat potom
+    Creates tuple from dictionary, which is suitable for comparing
+    @type data: dic
+    @param data: dictionary tobe converted
     '''
     if type(data) ==  type({}):
         items = data.items()
@@ -32,7 +34,9 @@ def dictToTuple(data):
     
 def tupleToDict(data):
     '''
-    Spiatocna metoda
+    Invert method for dictToTuple
+    @type data: tuple
+    @param data: Tuple to be converted 
     '''
     
     if type(data) == type(()):

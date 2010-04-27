@@ -9,13 +9,23 @@ from imports.gtk2 import gtk
 
 class CDataDiffTreeView(object):
     '''
-    classdocs
+    Class representing tree view with data diff
     '''
 
 
     def __init__(self, objectOld, objectNew, differ, model, conflicts):
         '''
         Constructor
+        @type objectOld: CBase
+        @param objectOld: old object
+        @type objectNew: CBase
+        @param objectNew: new object
+        @type differ: CDiffer
+        @param differ: CDiffer instance holding diffs of given objects
+        @type model: gtk.TreeModel
+        @param model: model where diff will be held
+        @type conflicts: list
+        @param conflicts: list of conflicts, possible conflicts between objects
         '''
         self.objectOld = objectOld
         self.objectNew = objectNew
@@ -25,6 +35,9 @@ class CDataDiffTreeView(object):
         self.Create()
         
     def Create(self):
+        '''
+        Fills model with appropriate data
+        '''
         self.model.clear()
         if self.objectOld is None:
             self.__ShowData(self.objectNew, EDiffActions.INSERT)
@@ -37,7 +50,9 @@ class CDataDiffTreeView(object):
     
     
     def __ShowConflicts(self):
-        
+        '''
+        Shows conflicts
+        '''
         def func(model, path, iter, displayedConflicts):
             for dp in [c.GetDataPath() for c in displayedConflicts]:
                 found = True
@@ -67,6 +82,13 @@ class CDataDiffTreeView(object):
             self.model.foreach(func, displayedConflicts)
 
     def __ShowData(self, obj, action = None):
+        '''
+        Shows data of given object
+        @type obj: CBase
+        @param obj: object whose data will be displayed
+        @type action: EDiffActions
+        @param action: Diff action to be displayed
+        '''
         icon = None
         if action is not None:
             if action == EDiffActions.INSERT:
@@ -80,6 +102,19 @@ class CDataDiffTreeView(object):
         self.__Append(obj.GetData(), None, icon, None, None)
         
     def __Append(self, data, iter = None, icon = None, conflictIcon = None, diff=None):
+        '''
+        Appends data to model recursively
+        @type data: list or tuple
+        @param data: data to be appended
+        @type iter: gtk.TreeIter
+        @param iter: parent iter under which data will be appended
+        @type icon: gtk.gdk.Pixbuf
+        @param icon: icon to be displayed
+        @type conflictIcon: gtk.gdk.Pixbuf
+        @param conflictIcon: conflict icon to be displayed or None
+        @type diff: CDiffResult
+        @param diff: diff that will be associated with data
+        '''
         if type(data) == type({}):
             for k,v in data.items():
                 if type(v) == type([]):
@@ -98,6 +133,9 @@ class CDataDiffTreeView(object):
             
             
     def __ShowDiffs(self):
+        '''
+        Shows all diffs
+        '''
         diffs = self.differ.GetDataDiff().get(EDiffActions.MODIFY,[])
         # vyber iba diffy, ktore sa tykaju tychto elementov
         diffs = [d for d in diffs if d.GetElement() == (self.objectOld or self.objectNew)]
@@ -110,6 +148,11 @@ class CDataDiffTreeView(object):
                 self.__DataDiffModify(diff)
             
     def __DataDiffInsert(self, diff):
+        '''
+        Shows insert data diff
+        @type diff: CDiffResult
+        @param diff: diff
+        '''
         def func(model, path, iter, diff):
             found = True
             if len(path) == len(diff.GetDataPath()):
@@ -137,6 +180,11 @@ class CDataDiffTreeView(object):
         self.model.foreach(func, diff)
         
     def __DataDiffDelete(self, diff):
+        '''
+        Shows delete data diff
+        @type diff: CDiffResult
+        @param diff: diff
+        '''
         def func(model, path, iter, diff):
             
             # zobrazi aj vsetkym potomkom delete
@@ -193,6 +241,11 @@ class CDataDiffTreeView(object):
         
         
     def __DataDiffModify(self, diff):
+        '''
+        Shows modify data diff
+        @type diff: CDiffResult
+        @param diff: diff
+        '''
         def func(model, path, iter, diff):
             found = True
             
@@ -224,6 +277,13 @@ class CDataDiffTreeView(object):
         
         
     def __MarkParentAsModified(self, path, include = False):
+        '''
+        Marks parent of any diff as modified
+        @type path: tuple
+        @param path: path with diff
+        @type include: bool
+        @param include: True if path should be marked too, False otherwise
+        '''
         if include == False:
             path = path[0:-1]
         for i,x in enumerate(path):

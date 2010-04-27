@@ -8,18 +8,27 @@ from math import pi
 
 class CConnectionDrawing(CBaseDrawing):
     '''
-    classdocs
+    Class representing drawing of connection
     '''
 
 
     def __init__(self, connectionView, context):
         '''
         Constructor
+        @type connectionView: CConnectionView
+        @param connectionView: underlying connection view object
+        @type context: CairoContext
+        @param context: will be painted on this context
         '''
         super(CConnectionDrawing, self).__init__(context)
         self.connectionView = connectionView
         
     def Paint(self):
+        '''
+        Paints connection drawing
+        @rtype: cairo.Path
+        @return: returns path that was painted
+        '''
         sourceView = self.connectionView.GetSourceView()
         destView = self.connectionView.GetDestinationView()
         sourceViewCenter = (int(sourceView.GetPosition()['x']) + (self.defaultElementWidth + int(sourceView.GetSize()['dw'])) / 2,

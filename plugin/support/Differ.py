@@ -12,13 +12,17 @@ import copy
 
 class CDiffer(object):
     '''
-    classdocs
+    Class that provides diffing capabilities
     '''
 
 
     def __init__(self, project1, project2):
         '''
         Constructor
+        @type project1: CProject
+        @param project1: Old project included in diff
+        @type project2: CProject
+        @param project2: New project included in diff
         '''
         self.__project1 = project1
         self.__project2 = project2
@@ -32,6 +36,9 @@ class CDiffer(object):
         
         
     def __DiffProjects(self):
+        '''
+        Diffs projects, data diff, project tree diff, visual diff
+        '''
         result = []
         elements1 = self.__project1.GetElements().values()
         elements1.sort()
@@ -81,6 +88,11 @@ class CDiffer(object):
         
 
     def __MatchingDiagrams(self):
+        '''
+        Returns dictionary of matching diagrams from two projects
+        @rtype: dic
+        @return: Dictionary of matching diagrams
+        '''
         uniqueDiagramIds = list(set(self.__project1.GetDiagrams().keys()+self.__project2.GetDiagrams().keys()))
         result = {}
         for id in uniqueDiagramIds:
@@ -88,6 +100,15 @@ class CDiffer(object):
         return result
     
     def __MatchingViews(self, diagram1, diagram2):
+        '''
+        Returns dictionary of matching views in given diagrams
+        @type diagram1: CDiagram
+        @param diagram1: First diagram
+        @type diagram2: CDiagram
+        @param diagram2: Second diagram
+        @rtype: dic
+        @return: Dictionary of matching views
+        '''
         result = {}
         if diagram1 is None:
             diag2ViewIds = diagram2.GetViews().keys()
@@ -105,6 +126,15 @@ class CDiffer(object):
         return result
         
     def __ComputeDiff(self, opcodes, sequence1, sequence2):
+        '''
+        Computes diff between two sequences of whatever
+        @type opcodes: tuple
+        @param opcodes: Opcodes, result from sequence matcher
+        @type sequence1: tuple
+        @param sequence1: First sequence in comparison
+        @type sequence2: tuple
+        @param sequence2: Second sequence in comparison
+        '''
         for tag, i1, i2, j1, j2 in opcodes:
             print opcodes
             if (tag == EDiffActions.DELETE):
@@ -129,8 +159,17 @@ class CDiffer(object):
                 for si1, si2 in zip(sequence1[i1:i2], sequence2[j1:j2]):
                     self.dataDiff.extend(self.__DiffElementsData(si1, si2))
                     
-
+    
     def __DiffElementsData(self, el1, el2):
+        '''
+        Computes diff between data of two elements
+        @type el1: CBase
+        @param el1: First element in comparison
+        @type el2: CBase
+        @param el2: Second element in comparison
+        @rtype: list
+        @return: List of computed diffs
+        '''
         data1 = el1.GetData()
         
         data2 = el2.GetData()
@@ -149,6 +188,22 @@ class CDiffer(object):
         return result
     
     def __DiffData(self, el1, el2, tuple1, tuple2, result, dataPath):
+        '''
+        Computes diff between two tuples found in two elements recursive
+        @type el1: object
+        @param el1: any object from structure
+        @type el2: object
+        @param el2: any object from structure
+        @type tuple1: tuple
+        @param tuple1: first tuple in comparison
+        @type tuple2: tuple
+        @param tuple2: second tuple in comparison
+        @type result: list
+        @param result: parameter where result will be stored after execution
+        @type dataPath: list
+        @param dataPath: sequence path to given modification
+        
+        '''
         sm = SequenceMatcher(None, tuple1, tuple2)
         op = sm.get_opcodes()
         
@@ -162,7 +217,7 @@ class CDiffer(object):
                         d = tupleToDict((seq,))
                     else:
                         d = tupleToDict(seq)
-                    print seq, d
+                    
                     result.append(CDiffResult(EDiffActions.MODIFY, el1, d, None, dataPath, message="Deleted "+str(d)+" from "+str(el1)+" in path "+str(dataPath)))
             elif (tag == EDiffActions.INSERT):
                 for seq in tuple2[j1:j2]:
@@ -170,7 +225,7 @@ class CDiffer(object):
                         d = tupleToDict((seq,))
                     else:
                         d = tupleToDict(seq)
-                    print seq, d
+                    
                     result.append(CDiffResult(EDiffActions.MODIFY, el2, None, d, dataPath, message="Inserted "+str(d)+" into "+str(el2)+" in path "+str(dataPath)))
                 # nieco bolo pridane
                 pass
@@ -239,6 +294,15 @@ class CDiffer(object):
 
 
     def __DiffElementsLogical(self, el1, el2):
+        '''
+        Diff elements logical (data diff)
+        @type el1: CBase
+        @param el1: First object for comparison
+        @type el2: CBase
+        @param el2: Second object for comparison
+        @rtype: list
+        @return: list of diff result for given elements
+        '''
         if el1 is None and el2 is not None:
             return [CDiffResult(EDiffActions.INSERT, el2, message="Inserted "+str(el2))]
         elif el1 is not None and el2 is None:
@@ -247,6 +311,15 @@ class CDiffer(object):
             return self.__DiffElementsData(el1, el2) 
                     
     def __DiffElementsVisual(self, elView1, elView2):
+        '''
+        Diff elements visual
+        @type elView1: CBaseView
+        @param elView1: First view for comparison
+        @type elView2: CBaseView
+        @param elView2: Second view for comparison
+        @rtype: list
+        @return: list of diff result for given views
+        '''
         if elView1 is None and elView2 is not None:
             return [CDiffResult(EDiffActions.INSERT, elView2, message="Inserted "+str(elView2))]
         elif elView1 is not None and elView2 is None:
@@ -259,6 +332,15 @@ class CDiffer(object):
             return result
     
     def __DiffProjectTree(self, root1 = None, root2 = None):
+        '''
+        Diff project tree
+        @type root1: CProjectTreeNode
+        @param root1: Root of first project tree node
+        @type root2: CProjectTreeNode
+        @param root2: Root of second project tree node
+        @rtype: list
+        @return: list of diff result under given roots
+        '''
         if root1 is None:
             root1 = self.__project1.GetProjectTreeRoot()
         if root2 is None:
@@ -302,6 +384,15 @@ class CDiffer(object):
         
         
     def __DiffOrder(self, list1, list2):
+        '''
+        Computes order changes in given lists
+        @type list1: list
+        @param list1: First list to be compared
+        @type list2: list
+        @param list2: Second list to be compared
+        @rtype: list
+        @return: Diff results of order change in lists
+        '''
         reducedChilds1 = [c for c in list1 if c in list2]
                 
         reducedChilds2 = [c for c in list2 if c in list1]
@@ -348,6 +439,13 @@ class CDiffer(object):
     
     
     def __TreeNodesParents(self, project):
+        '''
+        Creates map of tree nodes and its parents
+        @type project: CProject
+        @param project: Project for which map has to be created
+        @rtype: dic
+        @return: map of tree nodes and its parents
+        '''
         nodes = project.GetProjectTreeNodes()
         result = {}
         for node in nodes:
@@ -355,6 +453,13 @@ class CDiffer(object):
         return result
     
     def __DiffListToDict(self, diffList):
+        '''
+        Creates dic from list of diffs, keys are diff actions
+        @type diffList: list
+        @param diffList: list of diff to be converted
+        @rtype: dic
+        @return: Dictionaty from list of diffs
+        '''
         result = {}
         for d in diffList:
             if d.GetAction() not in result:
@@ -365,16 +470,41 @@ class CDiffer(object):
         return result
     
     def GetProjectTreeDiff(self):
+        '''
+        Returns dic of project tree diffs
+        @rtype: dic
+        @return: dic of project tree diffs
+        '''
         return self.__DiffListToDict(self.projectTreeDiff)
     
     def GetDataDiff(self):
+        '''
+        Returns dic of data diffs
+        @rtype: dic
+        @return: dic of data diffs
+        '''
         return self.__DiffListToDict(self.dataDiff)
     
     def GetVisualDiff(self):
+        '''
+        Returns dic of visual diffs
+        @rtype: dic
+        @return: dic of visual diffs
+        '''
         return self.__DiffListToDict(self.visualDiff)
     
     def GetOldProject(self):
+        '''
+        Returns old project
+        @rtype: CProject
+        @return: old project
+        '''
         return self.__project1
     
     def GetNewProject(self):
+        '''
+        Returns new project
+        @rtype: CProject
+        @return: new project
+        '''
         return self.__project2

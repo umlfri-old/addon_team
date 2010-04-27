@@ -13,13 +13,15 @@ import os.path
 
 class CDiffDialog(object):
     '''
-    classdocs
+    Class representing diff dialog
     '''
 
 
     def __init__(self, wTree):
         '''
         Constructor
+        @type wTree: gtk.Builder
+        @param wTree: gtk builder with objects needed to construct dialog
         '''
         
         
@@ -31,12 +33,7 @@ class CDiffDialog(object):
         self.dialog = self.wTree.get_object('diffResultsDlg')
         self.drawingArea =self.wTree.get_object('diagramDiffDrawingArea')
         self.diffTxt = self.wTree.get_object('diffTxt')
-        
-        
-        
-        
-        
-        
+
         self.selection = None
         
         self.wTree.get_object('projectTreeTreeView').connect('cursor-changed', self.on_project_tree_view_cursor_changed)
@@ -56,6 +53,9 @@ class CDiffDialog(object):
         
       
     def Run(self):
+        '''
+        Runs dialog
+        '''
         self.__UpdateProjectTreeDiffTreeStore()
         
         self.__UpdateDataDiffTreeView(None, None)
@@ -69,12 +69,25 @@ class CDiffDialog(object):
         self.dialog.hide()  
 
     def SetDiffer(self, differ):
+        '''
+        Sets differ
+        @type differ: CDiffer
+        @param differ: differ
+        '''
         self.differ = differ
         
     def SetConflicts(self, conflicts):
+        '''
+        Sets conflicts
+        @type conflicts: list
+        @param conflicts: list with conflicts
+        '''
         self.conflicts = conflicts
         
     def __UpdateDiagramDiffDrawingArea(self):
+        '''
+        Updates diagram drawing
+        '''
         
         x, y, width, height = self.drawingArea.get_allocation()
         self.pixmap = gtk.gdk.Pixmap(self.drawingArea.window, width, height)
@@ -194,6 +207,8 @@ class CDiffDialog(object):
                 
                 self.oldDiagram = self.differ.GetOldProject().GetById(node.GetId())
                 
+                self.selection = None
+                
                 self.__UpdateDiagramDiffDrawingArea()
         
             obj = node.GetObject()
@@ -208,6 +223,11 @@ class CDiffDialog(object):
 #            self.diffLabel.set_text('')
     
     def __ShowDiffs(self, diffs):
+        '''
+        Shows diffs
+        @type diffs: list
+        @param diffs: diffs to be shown
+        '''
         self.diffTxt.get_buffer().set_text('')
         text = ''
         for diff in diffs:
@@ -219,7 +239,7 @@ class CDiffDialog(object):
         (model, iter) = sel.get_selected()
         diff = model.get_value(iter, 4)
 #        if diff is not None:
-        self.diffLabel.set_text([diff])
+        self.__ShowDiffs([diff])
 #        else:
 #            self.diffLabel.set_text('')
         

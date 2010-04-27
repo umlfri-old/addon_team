@@ -12,13 +12,19 @@ from DiffResult import CDiffResult
 
 class CConflicter(object):
     '''
-    classdocs
+    Class that checks for conflicts between base, new and work project
     '''
 
 
     def __init__(self, newProject, baseProject, workProject):
         '''
         Constructor
+        @type newProject: CProject
+        @param newProject: new project
+        @type baseProject: CProject
+        @param baseProject: base project
+        @type workProject: CProject
+        @param workProject: work project
         '''
         self.__new = newProject
         self.__base = baseProject
@@ -37,19 +43,43 @@ class CConflicter(object):
         self.__TryMerge()
         
     def GetConflicting(self):
+        '''
+        Getter for all conflicts
+        @rtype: list
+        @return: list of conflicts
+        '''
         return self.conflicting
         
     
     def GetMerging(self):
+        '''
+        Getter for diffs that are possible to merge
+        @rtype: list
+        @return: list of all diffs that are possible to merge
+        '''
         return self.merging
     
     def GetBaseWorkDiffer(self):
+        '''
+        Getter for base to work differ
+        @rtype: CDiffer
+        @return: base to work differ
+        '''
         return self.__baseWorkDiffer
     
     def GetBaseNewDiffer(self):
+        '''
+        Getter for base to new differ
+        @rtype: CDiffer
+        @return: base to new differ
+        '''
         return self.__baseNewDiffer
         
     def __TryMerge(self):
+        '''
+        Method tries to merge all diffs from new and work project to base project,
+        if it is not possible adds new conflict 
+        '''
         # pokus sa zakomponovat zmeny z new a worku do base
         # ak to nepojde vyhlas to za konflikt a ponukni pouzivatelovi riesenie
         
@@ -57,7 +87,6 @@ class CConflicter(object):
             # prejdi data diffy z base do work
             result = self.__FindConflictsForDataDiff(diff, self.__baseNewDiffer, self.__work)
             for c in result:
-                print 'stage 1 base-work', c, diff
                 self.__DataConflict(diff, c)
                 
         for diff in self.__baseWorkDiffer.projectTreeDiff:
@@ -78,7 +107,6 @@ class CConflicter(object):
             # prejdi data diffy z base do new
             result = self.__FindConflictsForDataDiff(diff, self.__baseWorkDiffer, self.__new)
             for c in result:
-                print 'stage 1 base-new', diff, c
                 self.__DataConflict(c, diff)
                 
         for diff in self.__baseNewDiffer.projectTreeDiff:
@@ -154,6 +182,17 @@ class CConflicter(object):
                 
     
     def __RelatedElements(self, diff, base, other):
+        '''
+        Returns related elements for object in diff
+        @type diff: CDiffResult
+        @param diff: diff for which we find related elements
+        @type base: CProject
+        @param base: 
+        @type other: CProject
+        @param other: 
+        @rtype: list
+        @return: related elements
+        '''
         p = other
         relatedElements = []
         
@@ -193,6 +232,17 @@ class CConflicter(object):
         
         
     def __FindConflictsForDataDiff(self, diff, otherDiffer, project):
+        '''
+        Finds if data diff is not in conflict with diffs in other differ
+        @type diff: CDiffResult
+        @param diff: checking diff
+        @type otherDiffer: CDiffer
+        @param otherDiffer: other differ to search for conflicting diffs
+        @type project: CProject
+        @param project: Project for searching in elements
+        @rtype: list
+        @return: List of conflicting diffs in other differ
+        '''
         result = []
         
         relatedElements = []
@@ -216,7 +266,6 @@ class CConflicter(object):
                 # prejdi vsetky data diffy z druheho, kde som tiez upravoval
                 if d.GetElement() == diff.GetElement() and d.GetDataPath() == diff.GetDataPath() and d.GetNewState() != diff.GetNewState():
                     # ak som upravoval na rovnakom mieste datovu zlozku
-                    print 'modyfing same data of elements different way'
                     result.append(d)
 
 
@@ -226,13 +275,11 @@ class CConflicter(object):
                 # prejdi vsetky data diffy z druheho, ktore som vymazal
                 if d.GetElement() == diff.GetElement() or d.GetElement() in [p.GetObject() for p in relatedElements]:
                     # upravoval som vymazany element
-                    print 'modifying data of deleted element'
                     result.append(d)
                     
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
                 if d.GetElement().GetObject() == diff.GetElement() or d.GetElement() in relatedElements:
-                    # upravoval som vymazany element
-                    print 'modifying data of deleted element'
+                    # upravoval som vymazany element                    
                     result.append(d)
                     
             
@@ -242,14 +289,12 @@ class CConflicter(object):
                 # prejdi vsetky vymazane elementy
                 if d.GetElement() in relatedElements:
                     # pozri ci je na ceste k vlozenemu elementu
-                    print 'insert element under deleted element'
                     result.append(d)
                     
             for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
                 # prejdi vsetky vymazane elementy
                 if d.GetElement() in [p.GetObject() for p in relatedElements]:
                     # pozri ci je na ceste k vlozenemu elementu
-                    print 'insert element under deleted element'
                     result.append(d)
         
         elif diff.GetAction() == EDiffActions.DELETE:
@@ -258,11 +303,23 @@ class CConflicter(object):
         return result
     
     def __MergeDataDiff(self, diff):
-        
+        '''
+        Append diff to merging
+        @type diff: CDiffResult
+        @param diff: diff to be appended
+        '''
         self.merging.append(diff)
     
     def __DataConflict(self, baseWorkDiff, baseNewDiff, relatedObjects = None):
-        print 'data conflict'
+        '''
+        Creates and append new data conflict to conflicting
+        @type baseWorkDiff: CDiffResult
+        @param baseWorkDiff: first diff in conflict
+        @type baseNewDiff: CDiffResult
+        @param baseNewDiff: second diff in conflict
+        @type relatedObjects: list
+        @param relatedObjects: related objects for conflict
+        '''
         conflict = CConflict(baseWorkDiff, baseNewDiff, 'Data Conflict', relatedObjects)
         if conflict not in self.conflicting:
             self.conflicting.append(conflict)    
@@ -272,6 +329,17 @@ class CConflicter(object):
     
     
     def __FindConflictsForProjectTreeDiff(self, diff, otherDiffer, project):
+        '''
+        Finds if project tree diff is not in conflict with diffs in other differ
+        @type diff: CDiffResult
+        @param diff: checking diff
+        @type otherDiffer: CDiffer
+        @param otherDiffer: other differ to search for conflicting diffs
+        @type project: CProject
+        @param project: Project for searching in elements
+        @rtype: list
+        @return: List of conflicting diffs in other differ
+        '''
         result = []
         if diff.GetAction() == EDiffActions.INSERT:
             # ak som pridaval project tree node
@@ -282,7 +350,6 @@ class CConflicter(object):
                 # prejdi vsetky vymazane elementy
                 if d.GetElement() in parents:
                     # pozri ci je na ceste k vlozenemu elementu
-                    print 'insert project tree node under deleted element'
                     result.append(d)
             
         elif diff.GetAction() == EDiffActions.DELETE:
@@ -295,10 +362,8 @@ class CConflicter(object):
                 # prejdi vsetky vymazane elementy
                 if d.GetElement() in parents:
                     # pozri ci je na ceste k presunutemu elementu
-                    print 'move project tree node under deleted node'
                     result.append(d)
                 if d.GetElement() == diff.GetElement():
-                    print 'moveing deleted node'
                     result.append(d)
                     
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.MOVE, []):
@@ -306,15 +371,12 @@ class CConflicter(object):
                 if d.GetElement() == diff.GetElement():
                     if d.GetNewState() != diff.GetNewState():
                         # ak som presunul ten isty element na ine miesto
-                        print 'move project tree node under different parents'
                         result.append(d)
                         
             for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
                 if d.GetElement() == diff.GetElement().GetObject():
-                    print 'moving deleted object'
                     result.append(d)
                 if d.GetElement() in [p.GetObject() for p in parents]:
-                    print 'moving under deleted object'
                     result.append(d)
         
         elif diff.GetAction() == EDiffActions.ORDER_CHANGE:
@@ -322,42 +384,61 @@ class CConflicter(object):
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
                 if d.GetElement() == diff.GetElement():
                     # zmenil som poradie na vymazanom elemente
-                    print 'change order of deleted node'
                     result.append(d)
                 if d.GetElement() in parents:
-                    print 'change order under deleted node'
                     result.append(d)
                     
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.ORDER_CHANGE, []):
                 if d.GetElement() == diff.GetElement():
                     if d.GetNewState() != diff.GetNewState():
                         # presunutie toho isteho elementu na rozne miesto
-                        print 'change order of same nodes differently'
                         result.append(d)
                         
             for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
                 if d.GetElement() == diff.GetElement().GetObject():
-                    print 'change order of deleted object'
                     result.append(d)
                 if d.GetElement() in [p.GetObject() for p in parents]:
-                    print 'change order under deleted object'
                     result.append(d)
        
         
         return result
        
     def __MergeProjectTreeDiff(self, diff):
-        
+        '''
+        Append diff to merging
+        @type diff: CDiffResult
+        @param diff: diff to be appended
+        '''
         self.merging.append(diff)
         
     
     def __ProjectTreeConflict(self, baseWorkDiff, baseNewDiff, relatedObjects = None):
+        '''
+        Creates and append new project tree conflict to conflicting
+        @type baseWorkDiff: CDiffResult
+        @param baseWorkDiff: first diff in conflict
+        @type baseNewDiff: CDiffResult
+        @param baseNewDiff: second diff in conflict
+        @type relatedObjects: list
+        @param relatedObjects: related objects for conflict
+        '''
         conflict = CConflict(baseWorkDiff, baseNewDiff, 'Project tree Conflict', relatedObjects)
         if conflict not in self.conflicting:
             self.conflicting.append(conflict)
             
     
     def __FindConflictsForVisualDiff(self, diff, otherDiffer, project):
+        '''
+        Finds if visual diff is not in conflict with diffs in other differ
+        @type diff: CDiffResult
+        @param diff: checking diff
+        @type otherDiffer: CDiffer
+        @param otherDiffer: other differ to search for conflicting diffs
+        @type project: CProject
+        @param project: Project for searching in elements
+        @rtype: list
+        @return: List of conflicting diffs in other differ
+        '''
         result = []
         # zisti vsetky elementy vo vztahu
         #print diff
@@ -381,17 +462,14 @@ class CConflicter(object):
             #parents = project.GetProjectTreeNodeById(diff.GetElement().GetParentDiagram().GetId()).GetAllParents()
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE,[]):
                 if d.GetElement().GetObject() == diff.GetElement().GetParentDiagram() or d.GetElement() in relatedElements:
-                    print 'insert view under deleted diagram'
                     result.append(d)
             
             for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
                 if d.GetElement() == diff.GetElement().GetParentDiagram() or d.GetElement() in [p.GetObject() for p in relatedElements]:
-                    print 'insert view under deleted diagram'
                     result.append(d)
                     
             for d in otherDiffer.GetVisualDiff().get(EDiffActions.DELETE, []):
                 if d.GetElement() in relatedViews:
-                    print 'deleted view for inserted connection'
                     result.append(d)
             
         elif diff.GetAction() == EDiffActions.DELETE:
@@ -401,24 +479,20 @@ class CConflicter(object):
             
             for d in otherDiffer.GetVisualDiff().get(EDiffActions.DELETE,[]):
                 if d.GetElement() == diff.GetElement() or d.GetElement() in relatedViews:
-                    print 'modifying deleted view'
                     result.append(d)
                     
                     
             #parents = project.GetProjectTreeNodeById(diff.GetElement().GetParentDiagram().GetId()).GetAllParents()
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
                 if d.GetElement().GetObject() == diff.GetElement().GetParentDiagram() or d.GetElement() in relatedElements:
-                    print 'modifying view in deleted diagram'
                     result.append(d)
                     
             for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
                 if d.GetElement() == diff.GetElement().GetParentDiagram()  or d.GetElement() in [p.GetObject() for p in relatedElements]:
-                    print 'modifying view in deleted diagram'
                     result.append(d)
                     
             for d in otherDiffer.GetVisualDiff().get(EDiffActions.MODIFY,[]):
                 if d.GetElement() == diff.GetElement() and d.GetDataPath() == diff.GetDataPath() and d.GetNewState() != diff.GetNewState():
-                    print 'modifying same visual data of views differently'
                     result.append(d)
                     
             
@@ -426,7 +500,6 @@ class CConflicter(object):
             for d in otherDiffer.GetVisualDiff().get(EDiffActions.ORDER_CHANGE, []):
                 if d.GetElement() == diff.GetElement():
                     if d.GetNewState() != diff.GetNewState():
-                        print 'changing order of same views differently'
                         result.append(d)
             
             
@@ -434,37 +507,36 @@ class CConflicter(object):
                         
             for d in otherDiffer.GetVisualDiff().get(EDiffActions.DELETE,[]):
                 if d.GetElement() == diff.GetElement():
-                    print 'changing order of deleted view'
                     result.append(d)
             
             for d in otherDiffer.GetProjectTreeDiff().get(EDiffActions.DELETE, []):
                 if d.GetElement().GetObject() == diff.GetElement().GetParentDiagram() or d.GetElement() in relatedElements:
-                    print 'changing order of view in deleted diagram'
                     result.append(d)
                     
             for d in otherDiffer.GetDataDiff().get(EDiffActions.DELETE, []):
                 if d.GetElement() == diff.GetElement().GetParentDiagram() or d.GetElement() in [p.GetObject() for p in relatedElements]:
-                    print 'changing order of view in deleted diagram'
                     result.append(d)
         return result
     
     
     def __MergeVisualDiff(self, diff):
-        
+        '''
+        Append diff to merging
+        @type diff: CDiffResult
+        @param diff: diff to be appended
+        '''
         self.merging.append(diff)
     
     def __VisualConflict(self, baseWorkDiff, baseNewDiff, relatedObjects = None):
+        '''
+        Creates and append new visual conflict to conflicting
+        @type baseWorkDiff: CDiffResult
+        @param baseWorkDiff: first diff in conflict
+        @type baseNewDiff: CDiffResult
+        @param baseNewDiff: second diff in conflict
+        @type relatedObjects: list
+        @param relatedObjects: related objects for conflict
+        '''
         conflict = CConflict(baseWorkDiff, baseNewDiff, 'Visual Conflict', relatedObjects)
         if conflict not in self.conflicting:
             self.conflicting.append(conflict)    
-        
-        
-        
-
-        
-        
-        
-    def __str__(self):
-        return 'new: '+str(self.__new.GetProjectTreeRoot()) \
-            + 'old: '+str(self.__base.GetProjectTreeRoot()) \
-            + 'work: '+str(self.__work.GetProjectTreeRoot())

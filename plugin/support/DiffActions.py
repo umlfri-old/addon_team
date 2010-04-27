@@ -6,7 +6,7 @@ Created on 24.3.2010
 
 class EDiffActions(object):
     '''
-    classdocs
+    Enumeration of diff actions
     '''
 
 
