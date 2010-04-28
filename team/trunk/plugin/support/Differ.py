@@ -323,7 +323,7 @@ class CDiffer(object):
         if elView1 is None and elView2 is not None:
             return [CDiffResult(EDiffActions.INSERT, elView2, message="Inserted "+str(elView2))]
         elif elView1 is not None and elView2 is None:
-            return [CDiffResult(EDiffActions.DELETE, elView1, message="Inserted "+str(elView1))]
+            return [CDiffResult(EDiffActions.DELETE, elView1, message="Deleted "+str(elView1))]
         else:
             tuple1 = dictToTuple(elView1.GetViewData())
             tuple2 = dictToTuple(elView2.GetViewData())
