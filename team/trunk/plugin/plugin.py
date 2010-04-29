@@ -60,12 +60,13 @@ class Plugin(object):
         self.pluginAdapter.AddNotification('team-ask-compatible', self.AskCompatible)
         self.pluginAdapter.AddNotification('team-load-project', self.LoadProjectFile)
         self.pluginAdapter.AddNotification('team-ask-server-cert', self.AskServerCert)
+        self.pluginAdapter.AddNotification('team-get-team-menu-id', self.RegisterImplementationMenu)
         
         self.pluginAdapter.Notify('team-register-for-checkout')
         
-        
+        self.rootMenuId = 'team-menu-root'
         # add menu
-        self.teamMenuRoot = self.pluginGuiManager.GetMainMenu().AddMenuItem(str(uuid.uuid1()) ,None, -2,'Team',None,None)
+        self.teamMenuRoot = self.pluginGuiManager.GetMainMenu().AddMenuItem(self.rootMenuId ,None, -2,'Team',None,None)
         #add submenu
         self.teamMenuRoot.AddSubmenu()
         self.teamMenuSubmenu = self.teamMenuRoot.GetSubmenu()
@@ -79,6 +80,7 @@ class Plugin(object):
         self.logsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.ShowLogs,6,'Show logs',None,None)
         
         self.__ResetMenuSensitivity()
+        self.RegisterImplementationMenu()
         self.ProjectOpened()
 
                     
@@ -98,6 +100,12 @@ class Plugin(object):
         if response:
             self.pluginAdapter.Notify('team-make-compatible')
       
+    def RegisterImplementationMenu(self):
+        '''
+        Hook executed when implementation wants to add submenu to team menu
+        '''
+        self.pluginAdapter.Notify('team-send-team-menu-id', self.rootMenuId)
+        
     def ProjectOpened(self):
         '''
         Hook executed when project file is opened. Checks if plugin can run, resets menu sensitivity, notify implementations.
