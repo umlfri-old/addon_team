@@ -136,24 +136,23 @@ class CDiffer(object):
         @param sequence2: Second sequence in comparison
         '''
         for tag, i1, i2, j1, j2 in opcodes:
-            print opcodes
             if (tag == EDiffActions.DELETE):
                 # ak z prveho nieco zmizlo
                 for si in sequence1[i1:i2]:
-                    newDiffResult = CDiffResult(EDiffActions.DELETE, si, message="Deleted "+str(si))
+                    newDiffResult = CDiffResult(EDiffActions.DELETE, si, message=_("Deleted ")+str(si))
                     self.dataDiff.append(newDiffResult)
             elif (tag == EDiffActions.INSERT):
                 # ak v druhom nieco pribudlo
                 for si in sequence2[j1:j2]:
-                    newDiffResult = CDiffResult(EDiffActions.INSERT, si, message="Inserted "+str(si))
+                    newDiffResult = CDiffResult(EDiffActions.INSERT, si, message=_("Inserted ")+str(si))
                     self.dataDiff.append(newDiffResult)
             elif (tag == EDiffActions.REPLACE):
                 #replace nemoze byt
                 #muselo iba ubudnut alebo pribudnut
                 for si1 in sequence1[i1:i2]:
-                    self.dataDiff.append(CDiffResult(EDiffActions.DELETE, si1, message="Deleted " +str(si1)))
+                    self.dataDiff.append(CDiffResult(EDiffActions.DELETE, si1, message=_("Deleted ") +str(si1)))
                 for si2 in sequence2[j1:j2]:                    
-                    self.dataDiff.append(CDiffResult(EDiffActions.INSERT, si2, message="Inserted "+str(si2)))
+                    self.dataDiff.append(CDiffResult(EDiffActions.INSERT, si2, message=_("Inserted ")+str(si2)))
             if (tag == EDiffActions.EQUAL):
                 # ak sa tvaria rovnako, chod do hlbky, porovnaj data
                 for si1, si2 in zip(sequence1[i1:i2], sequence2[j1:j2]):
@@ -218,7 +217,7 @@ class CDiffer(object):
                     else:
                         d = tupleToDict(seq)
                     
-                    result.append(CDiffResult(EDiffActions.MODIFY, el1, d, None, dataPath, message="Deleted "+str(d)+" from "+str(el1)+" in path "+str(dataPath)))
+                    result.append(CDiffResult(EDiffActions.MODIFY, el1, d, None, dataPath, message=_("Deleted ")+str(d)+_(" from ")+str(el1)+_(" in path ")+str(dataPath)))
             elif (tag == EDiffActions.INSERT):
                 for seq in tuple2[j1:j2]:
                     if type(seq[0]) == type(''):
@@ -226,7 +225,7 @@ class CDiffer(object):
                     else:
                         d = tupleToDict(seq)
                     
-                    result.append(CDiffResult(EDiffActions.MODIFY, el2, None, d, dataPath, message="Inserted "+str(d)+" into "+str(el2)+" in path "+str(dataPath)))
+                    result.append(CDiffResult(EDiffActions.MODIFY, el2, None, d, dataPath, message=_("Inserted ")+str(d)+_(" into ")+str(el2)+_(" in path ")+str(dataPath)))
                 # nieco bolo pridane
                 pass
             elif (tag == EDiffActions.REPLACE):
@@ -265,7 +264,7 @@ class CDiffer(object):
                                 d2 = tupleToDict(seq2)
                             #print seq1, d1
                             #print seq2, d2
-                            result.append(CDiffResult(EDiffActions.MODIFY, el1, d1, d2, myPath, message="Modified "+str(d1)+" from "+str(el1)+" in path "+str(dataPath)+" : New value "+str(d2)))
+                            result.append(CDiffResult(EDiffActions.MODIFY, el1, d1, d2, myPath, message=_("Modified ")+str(d1)+_(" from ")+str(el1)+_(" in path ")+str(dataPath)+_(" : New value ")+str(d2)))
                         else:
                             # ak sa da este pokracovat
                             myPath = copy.deepcopy(dataPath)
@@ -304,9 +303,9 @@ class CDiffer(object):
         @return: list of diff result for given elements
         '''
         if el1 is None and el2 is not None:
-            return [CDiffResult(EDiffActions.INSERT, el2, message="Inserted "+str(el2))]
+            return [CDiffResult(EDiffActions.INSERT, el2, message=_("Inserted ")+str(el2))]
         elif el1 is not None and el2 is None:
-            return [CDiffResult(EDiffActions.DELETE, el1, message="Deleted "+str(el1))]
+            return [CDiffResult(EDiffActions.DELETE, el1, message=_("Deleted ")+str(el1))]
         else:
             return self.__DiffElementsData(el1, el2) 
                     
@@ -321,9 +320,9 @@ class CDiffer(object):
         @return: list of diff result for given views
         '''
         if elView1 is None and elView2 is not None:
-            return [CDiffResult(EDiffActions.INSERT, elView2, message="Inserted "+str(elView2))]
+            return [CDiffResult(EDiffActions.INSERT, elView2, message=_("Inserted ")+str(elView2))]
         elif elView1 is not None and elView2 is None:
-            return [CDiffResult(EDiffActions.DELETE, elView1, message="Deleted "+str(elView1))]
+            return [CDiffResult(EDiffActions.DELETE, elView1, message=_("Deleted ")+str(elView1))]
         else:
             tuple1 = dictToTuple(elView1.GetViewData())
             tuple2 = dictToTuple(elView2.GetViewData())
@@ -353,9 +352,9 @@ class CDiffer(object):
         result = []
         for e in set(map1.keys()+map2.keys()):
             if e not in map1:
-                result.append(CDiffResult(EDiffActions.INSERT, e, None, e.GetParent(), message="Inserted "+str(e)+" under parent "+str(e.GetParent())))
+                result.append(CDiffResult(EDiffActions.INSERT, e, None, e.GetParent(), message=_("Inserted ")+str(e)+_(" under parent ")+str(e.GetParent())))
             elif e not in map2:
-                result.append(CDiffResult(EDiffActions.DELETE, e, e.GetParent(), message="Deleted "+str(e)+" under parent "+str(e.GetParent())))
+                result.append(CDiffResult(EDiffActions.DELETE, e, e.GetParent(), message=_("Deleted ")+str(e)+_(" under parent ")+str(e.GetParent())))
             elif map2[e] != map1[e]:
                 oldParent = self.__project1.GetProjectTreeNodeById(e.GetId()).GetParent()
                 newParent = self.__project2.GetProjectTreeNodeById(e.GetId()).GetParent()
@@ -363,7 +362,7 @@ class CDiffer(object):
                                           e, 
                                           oldParent, 
                                           newParent,
-                                          message="Moved "+str(e)+" from parent "+str(oldParent)+ " under parent "+str(newParent)))
+                                          message=_("Moved ")+str(e)+_(" from parent ")+str(oldParent)+ _(" under parent ")+str(newParent)))
         for parent in set(map1.values()+map2.values()):
             if parent is not None:
                 
@@ -425,7 +424,7 @@ class CDiffer(object):
             newOriginalIndex = list2.index(rc)
             if index1 != index2:
                 result.append(CDiffResult(EDiffActions.ORDER_CHANGE, rc, oldOriginalIndex, newOriginalIndex,
-                                          message = "Changed order of "+str(rc)+ "from index "+str(oldOriginalIndex)+ " to index "+str(newOriginalIndex)))
+                                          message = _("Changed order of ")+str(rc)+ _("from index ")+str(oldOriginalIndex)+ _(" to index ")+str(newOriginalIndex)))
         
         return result
                 

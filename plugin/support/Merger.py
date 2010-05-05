@@ -40,7 +40,7 @@ class CMerger(object):
         while len(diffs) > 0 :
             diff  = diffs.pop()
             if stopper.get(diff, -1) == len(diffs):
-                raise Exception('Unable to merge all diffs', [str(d) for d in diffs])
+                raise Exception(_('Unable to merge all diffs'), [str(d) for d in diffs])
             stopper[diff] = len(diffs)
             
             ok = self.MergeDiff(diff)

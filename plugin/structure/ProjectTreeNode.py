@@ -257,7 +257,7 @@ class CProjectTreeNode(object):
             pass
     
     def __str__(self):
-        return 'Project tree node of \"'+str(self.__objectRepresentation)+'\"'
+        return _('Project tree node of \"')+str(self.__objectRepresentation)+'\"'
     
     def __hash__(self):
         return hash(self.GetId()) + hash(self.__class__)

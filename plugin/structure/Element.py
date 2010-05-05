@@ -60,4 +60,4 @@ class CElement(CBase):
             r.update(newState)
             
     def __str__(self):
-        return "Element "+self.GetName()
+        return _("Element ")+self.GetName()

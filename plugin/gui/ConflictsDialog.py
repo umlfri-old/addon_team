@@ -62,7 +62,7 @@ class CConflictsDialog(object):
             response = self.wid.run()
             if response == 0:
                 if len(self.conflictSolver.GetUnresolvedConflicts()) > 0:
-                    self.ShowError(self.wid, 'You must resolve all conflicts')
+                    self.ShowError(self.wid, _('You must resolve all conflicts'))
                 else:
                     self.wid.hide()
                     self.response = True

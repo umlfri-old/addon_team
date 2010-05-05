@@ -174,4 +174,4 @@ class CDiagram(CBase):
         
         
     def __str__(self):
-        return 'Diagram '+self.GetName()
+        return _('Diagram ')+self.GetName()

@@ -64,7 +64,7 @@ class CBaseView(object):
         return self.viewData
     
     def __str__(self):
-        return "View represenation of \""+str(self.__objectRepresentation)+ "\" on diagram \""+str(self.__parentDiagram)+"\""
+        return _("View represenation of \"")+str(self.__objectRepresentation)+ _("\" on diagram \"")+str(self.__parentDiagram)+"\""
     
     def __cmp__(self, other):
         return cmp(hash(self), hash(other))

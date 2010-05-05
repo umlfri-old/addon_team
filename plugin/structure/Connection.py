@@ -87,4 +87,4 @@ class CConnection(CBase):
         self.__updateSourceDestination()
         
     def __str__(self):
-        return 'Connection object (source: \"'+str(self.__source)+'\", destination:\"'+str(self.__destination)+'\")'
+        return _('Connection object (source: \"')+str(self.__source)+_('\", destination:\"')+str(self.__destination)+'\")'
