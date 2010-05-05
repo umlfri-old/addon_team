@@ -100,7 +100,7 @@ class CBase(object):
         return hash(self) != hash(other)
     
     def __str__(self):
-        return "Object: " + str(self.GetName())
+        return _("Object: ") + str(self.GetName())
     
     def __cmp__(self, other):
         return cmp(hash(self), hash(other))

@@ -69,7 +69,7 @@ class CProjectTreeDiffTreeView(object):
         '''
         Adds connections to project tree model
         '''
-        self.connectionsIter = self.model.append(None, ['Connections', None, None, None, None, None])
+        self.connectionsIter = self.model.append(None, [_('Connections'), None, None, None, None, None])
         for c in self.projectOld.GetConnections().values():
             self.model.append(self.connectionsIter, [c.GetSource().GetName()+' -> '+c.GetDestination().GetName(), None, None, c, None, None])
             

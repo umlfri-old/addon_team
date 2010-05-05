@@ -11,13 +11,20 @@ from support import *
 from zipfile import is_zipfile, ZIP_DEFLATED, ZipFile
 import uuid
 from cStringIO import StringIO
+import os
+import gettext
+import locale
+import sys
+from imports.gtk2 import gtk
 
 class Plugin(object):
     '''
     Team plugin for UML .FRI
     '''
     
-    incompatibleText = 'Project is under version control, but is incompatible with Team plugin. Would you like to make it compatible? (There will be no physical changes to project file)'
+    
+    localeDir = os.path.join(os.path.dirname(__file__),'locale')
+    localeDomain = 'team_plugin'
     
     def __init__(self, interface):
         '''
@@ -37,8 +44,24 @@ class Plugin(object):
         self.implementations = {}
         
         
-        self.gui = Gui(self)
         
+        
+        # localization
+        try:
+            trans = gettext.translation(self.localeDomain, self.localeDir,[self.FindLanguage()])
+            trans.install(unicode=True)
+        except IOError, e:
+            print e
+            # if no localization is found, fallback to en
+            trans = gettext.translation(self.localeDomain, self.localeDir,['en'])
+            trans.install(unicode=True)
+        if self.localeDir is not None:
+            gtk.glade.bindtextdomain(self.localeDomain, self.localeDir.encode(sys.getfilesystemencoding()))
+            gtk.glade.textdomain(self.localeDomain)
+        
+        
+        self.gui = Gui(self)
+        self.incompatibleText = _('Project is under version control, but is incompatible with Team plugin. Would you like to make it compatible? (There will be no physical changes to project file)')
         
         self.interface.StartAutocommit()
         
@@ -71,18 +94,33 @@ class Plugin(object):
         self.teamMenuRoot.AddSubmenu()
         self.teamMenuSubmenu = self.teamMenuRoot.GetSubmenu()
         
-        self.diffMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.DiffProject,0,'Diff project',None,None)
-        self.updateMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Update,1,'Update',None,None)
-        self.checkinMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkin,2,'Checkin',None,None)
-        self.revertMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Revert,3,'Revert',None,None)
-        self.solveConflictsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.SolveConflictsInOpenedProject ,4,'Solve conflicts',None,None)
-        self.checkoutMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkout,5,'Checkout',None,None)
-        self.logsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.ShowLogs,6,'Show logs',None,None)
+        self.diffMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.DiffProject,0,_('Diff project'),None,None)
+        self.updateMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Update,1,_('Update'),None,None)
+        self.checkinMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkin,2,_('Checkin'),None,None)
+        self.revertMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Revert,3,_('Revert'),None,None)
+        self.solveConflictsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.SolveConflictsInOpenedProject ,4,_('Solve conflicts'),None,None)
+        self.checkoutMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkout,5,_('Checkout'),None,None)
+        self.logsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.ShowLogs,6,_('Show logs'),None,None)
         
         self.__ResetMenuSensitivity()
         self.RegisterImplementationMenu()
         self.ProjectOpened()
 
+        
+    def FindLanguage(self):
+        '''
+        Finds locale set language
+        '''
+        for e in ('LANGUAGE', 'LC_ALL', 'LC_MESSAGES', 'LANG'):
+            if e in os.environ:
+                return os.environ[e]
+        tmp = locale.getdefaultlocale()
+        if tmp[0] is None:
+            return 'POSIX'
+        elif tmp[1] is None:
+            return tmp[0]
+        else:
+            return '.'.join(tmp)    
                     
     def LoadProjectFile(self, fileName):
         '''
@@ -136,7 +174,7 @@ class Plugin(object):
         @type exc: Exception
         @param exc: Exception instance  
         '''
-        self.pluginGuiManager.DisplayWarning(str(exc))
+        self.pluginGuiManager.DisplayWarning(_('Error occured:\n')+str(exc))
             
             
     def ReceiveLog(self, logs):
@@ -156,7 +194,7 @@ class Plugin(object):
         @param message: Message to display in dialog
         @param *param: additional parameters, will be send back in notify 
         '''
-        response = self.gui.ShowQuestion(message+'\nAccept server certificate?')
+        response = self.gui.ShowQuestion(message+_('\nAccept server certificate?'))
         if response:
             self.pluginAdapter.Notify(actionId, None, None, response, *param)
     
@@ -281,7 +319,7 @@ class Plugin(object):
         '''
         project = self.__LoadApplicationProject()
         if project is None:
-            self.pluginGuiManager.DisplayWarning('No project loaded')
+            self.pluginGuiManager.DisplayWarning(_('No project loaded'))
             return
 
         self.pluginAdapter.Notify('team-get-file-data', None, None, False, 'diff-project', 'diff-project')
@@ -293,7 +331,7 @@ class Plugin(object):
         '''
         project = self.__LoadApplicationProject()
         if project is None:
-            self.pluginGuiManager.DisplayWarning('No project loaded')
+            self.pluginGuiManager.DisplayWarning(_('No project loaded'))
             return
         
         myProject1 = CProject(project)
@@ -361,7 +399,7 @@ class Plugin(object):
         project = self.__LoadApplicationProject()
         
         if project is None:
-            self.pluginGuiManager.DisplayWarning('No project loaded')
+            self.pluginGuiManager.DisplayWarning(_('No project loaded'))
             return
         
         project.Save()
@@ -387,7 +425,7 @@ class Plugin(object):
         '''
         project = self.__LoadApplicationProject()
         if project is None:
-            self.pluginGuiManager.DisplayWarning('No project loaded')
+            self.pluginGuiManager.DisplayWarning(_('No project loaded'))
             return
         
         project.Save()
@@ -403,7 +441,7 @@ class Plugin(object):
         '''
         project = self.__LoadApplicationProject()
         if project is None:
-            self.pluginGuiManager.DisplayWarning('No project loaded')
+            self.pluginGuiManager.DisplayWarning(_('No project loaded'))
             return
         
         self.pluginAdapter.Notify('team-revert')

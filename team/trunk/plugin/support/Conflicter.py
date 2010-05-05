@@ -130,14 +130,14 @@ class CConflicter(object):
                 if len(intersection) == 0:
                     self.__MergeDataDiff(diff)
                 else:
-                    self.__DataConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message="Let "+diff.GetElement() + " in place"), list(intersection))
+                    self.__DataConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message=_("Let ")+diff.GetElement() + _(" in place")), list(intersection))
         
         for diff in self.__baseWorkDiffer.projectTreeDiff:
             if diff not in [c.GetBaseWorkDiff() for c in self.conflicting]:
                 if diff.GetElement().GetParent() not in [c.GetBaseWorkDiff().GetElement() for c in self.conflicting if c.GetBaseWorkDiff().GetAction() == EDiffActions.DELETE]:
                     self.__MergeProjectTreeDiff(diff)
                 else:
-                    self.__ProjectTreeConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message="Let "+diff.GetElement() + " in place"), [diff.GetElement().GetParent()])
+                    self.__ProjectTreeConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message=_("Let ")+diff.GetElement() + _(" in place")), [diff.GetElement().GetParent()])
      
         for diff in self.__baseWorkDiffer.visualDiff:
             if diff not in [c.GetBaseWorkDiff() for c in self.conflicting]:
@@ -148,7 +148,7 @@ class CConflicter(object):
                 if len(intersection) == 0:
                     self.__MergeDataDiff(diff)
                 else:
-                    self.__VisualConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message="Let "+diff.GetElement() + " in place"), list(intersection))
+                    self.__VisualConflict(diff, CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message=_("Let ")+diff.GetElement() + _(" in place")), list(intersection))
                 
         for diff in self.__baseNewDiffer.dataDiff:
             if diff not in [c.GetBaseNewDiff() for c in self.conflicting]:
@@ -159,14 +159,14 @@ class CConflicter(object):
                 if len(intersection) == 0:
                     self.__MergeDataDiff(diff)
                 else:
-                    self.__DataConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message="Let "+diff.GetElement() + " in place"), diff, list(intersection))
+                    self.__DataConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message=_("Let ")+diff.GetElement() + _(" in place")), diff, list(intersection))
                 
         for diff in self.__baseNewDiffer.projectTreeDiff:
             if diff not in [c.GetBaseNewDiff() for c in self.conflicting]:
                 if diff.GetElement().GetParent() not in [c.GetBaseNewDiff().GetElement() for c in self.conflicting if c.GetBaseNewDiff().GetAction() == EDiffActions.DELETE]:
                     self.__MergeProjectTreeDiff(diff)
                 else:
-                    self.__ProjectTreeConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message="Let "+diff.GetElement() + " in place"), diff, [diff.GetElement().GetParent()])
+                    self.__ProjectTreeConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message=_("Let ")+diff.GetElement() + _(" in place")), diff, [diff.GetElement().GetParent()])
                 
         for diff in self.__baseNewDiffer.visualDiff:
             if diff not in [c.GetBaseNewDiff() for c in self.conflicting]:
@@ -178,7 +178,7 @@ class CConflicter(object):
                 if len(intersection) == 0:
                     self.__MergeDataDiff(diff)
                 else:
-                    self.__VisualConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message="Let "+diff.GetElement() + " in place"), diff, list(intersection))
+                    self.__VisualConflict(CDiffResult(EDiffActions.LET, diff.GetElement(), diff.GetPreviousState(), diff.GetNewState(), diff.GetDataPath(), message=_("Let ")+diff.GetElement() + _(" in place")), diff, list(intersection))
                 
     
     def __RelatedElements(self, diff, base, other):
@@ -320,7 +320,7 @@ class CConflicter(object):
         @type relatedObjects: list
         @param relatedObjects: related objects for conflict
         '''
-        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Data Conflict', relatedObjects)
+        conflict = CConflict(baseWorkDiff, baseNewDiff, _('Data Conflict'), relatedObjects)
         if conflict not in self.conflicting:
             self.conflicting.append(conflict)    
         
@@ -422,7 +422,7 @@ class CConflicter(object):
         @type relatedObjects: list
         @param relatedObjects: related objects for conflict
         '''
-        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Project tree Conflict', relatedObjects)
+        conflict = CConflict(baseWorkDiff, baseNewDiff, _('Project tree Conflict'), relatedObjects)
         if conflict not in self.conflicting:
             self.conflicting.append(conflict)
             
@@ -537,6 +537,6 @@ class CConflicter(object):
         @type relatedObjects: list
         @param relatedObjects: related objects for conflict
         '''
-        conflict = CConflict(baseWorkDiff, baseNewDiff, 'Visual Conflict', relatedObjects)
+        conflict = CConflict(baseWorkDiff, baseNewDiff, _('Visual Conflict'), relatedObjects)
         if conflict not in self.conflicting:
             self.conflicting.append(conflict)    

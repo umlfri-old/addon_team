@@ -55,7 +55,7 @@ class Gui(object):
         wid = self.wTree.get_object('checkinMessageDlg')
         text = self.wTree.get_object('checkinMessageTxt')
         buf = text.get_buffer()
-        buf.set_text('<Checkin message>')
+        buf.set_text(_('<Checkin message>'))
         response = wid.run()
         wid.hide()
         if response == 0:
@@ -192,7 +192,6 @@ class Gui(object):
     
     
     def on_revisionTxt_grab_focus(self, arg):
-        print 'grab focus'
         radio  = self.wTree.get_object('specifyRevisionRadioBtn')
         radio.set_active(True)
     

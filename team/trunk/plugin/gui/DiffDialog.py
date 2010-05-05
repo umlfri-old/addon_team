@@ -115,7 +115,6 @@ class CDiffDialog(object):
         
         
         if self.selection is not None and self.selection != []:
-            print 'selection', len(self.selection), self.selection
             for sel in self.selection:
                 if sel is not None:
                     self.context.new_path()
