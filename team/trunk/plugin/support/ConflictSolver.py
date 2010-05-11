@@ -62,7 +62,7 @@ class CConflictSolver(object):
         @type resolution: CConflictSolver.resolutions
         @param resolution: Desired resolution
         '''
-        # pokus sa vyriesit konflikt a pozor na zavisle konflikty
+        
         if conflict not in self.__resolvedConflicts:
         
             relatedConflicts = self.FindRelatedConflicts(conflict)
@@ -100,7 +100,7 @@ class CConflictSolver(object):
         @type conflict: CConflict
         @param conflict: Base conflict
         '''
-        #najdi vsetky zavisle konflikty
+        
         result = [conflict]
         
         baseWorkDiff = conflict.GetBaseWorkDiff()

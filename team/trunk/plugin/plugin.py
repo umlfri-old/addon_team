@@ -260,7 +260,6 @@ class Plugin(object):
         @param fileName: path to existing file
         '''
         if is_zipfile(fileName):
-            # uloz zipko
             fZip = ZipFile(fileName, 'w', ZIP_DEFLATED)
             fZip.writestr('content.xml', xml)
             fZip.close()
@@ -341,7 +340,6 @@ class Plugin(object):
         self.DiffProjects(myProject1, myProject2)
         self.receivedFileData.pop('diff-project')
         
-#       
 
     def DiffRevisions(self, rev1, rev2):
         '''
@@ -359,7 +357,6 @@ class Plugin(object):
         fd1 = self.receivedFileData.get('diff-revisions1',None)
         fd2 = self.receivedFileData.get('diff-revisions2',None)
         if fd1 is None or fd2 is None:
-            # este tam nie su vsetky data, pockaj si na ne
             pass
         else:
             project1 = CProject(None, self.__GetProjectXmlFromFileData(fd1))
@@ -454,7 +451,6 @@ class Plugin(object):
         '''
         result = self.gui.CheckoutDialog(self.implementations)
         if result is not None:
-            # vyber implementaciu
             implId = result[0]
             url = result[1]
             directory = result[2]

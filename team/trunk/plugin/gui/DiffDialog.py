@@ -216,10 +216,8 @@ class CDiffDialog(object):
             self.__UpdateDataDiffTreeView(oldObj, newObj)
             
         diff = model.get_value(iter, 5)
-#        if diff is not None:
+
         self.__ShowDiffs([diff])
-#        else:
-#            self.diffLabel.set_text('')
     
     def __ShowDiffs(self, diffs):
         '''
@@ -237,9 +235,7 @@ class CDiffDialog(object):
         sel = treeView.get_selection()
         (model, iter) = sel.get_selected()
         diff = model.get_value(iter, 4)
-#        if diff is not None:
+
         self.__ShowDiffs([diff])
-#        else:
-#            self.diffLabel.set_text('')
         
         

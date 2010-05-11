@@ -6,7 +6,6 @@ Created on 27.2.2010
 from difflib import *
 from DiffResult import CDiffResult
 from DiffActions import EDiffActions
-#from DictDiffer import CDictDiffer
 from dictToTuple import dictToTuple, tupleToDict
 import copy
 
@@ -27,7 +26,7 @@ class CDiffer(object):
         self.__project1 = project1
         self.__project2 = project2
         
-        #sprav diff projektov
+        
         self.visualDiff = []
         self.projectTreeDiff = []
         self.dataDiff = []
@@ -64,24 +63,24 @@ class CDiffer(object):
         
         connectionsOpcodes = smConnections.get_opcodes()
         
-        # logicky diff
+        
         self.__ComputeDiff(diagramsOpcodes, diagrams1, diagrams2)
         self.__ComputeDiff(elementsOpcodes, elements1, elements2)
         self.__ComputeDiff(connectionsOpcodes, connections1, connections2)
         
-        # diff projektoveho stromu
+        
         self.projectTreeDiff.extend(self.__DiffProjectTree())
         
-        # vizualny diff vsetkych elementov
+        
         for id,diagrams in self.__MatchingDiagrams().items():
             
-            # pozri zmenu poradia
+            
             if diagrams[0] is not None and diagrams[1] is not None:
                 elViews1 = diagrams[0].GetElementViewsOrdered()
                 elViews2 = diagrams[1].GetElementViewsOrdered()
                 self.visualDiff.extend(self.__DiffOrder(elViews1, elViews2))
             
-            # pozri pridane, odobrane prvky a zmenu pozicii
+            
             matchingViews = self.__MatchingViews(diagrams[0], diagrams[1])
             for id, views in matchingViews.items():
                 self.visualDiff.extend(self.__DiffElementsVisual(views[0], views[1]))
@@ -137,24 +136,23 @@ class CDiffer(object):
         '''
         for tag, i1, i2, j1, j2 in opcodes:
             if (tag == EDiffActions.DELETE):
-                # ak z prveho nieco zmizlo
+                
                 for si in sequence1[i1:i2]:
                     newDiffResult = CDiffResult(EDiffActions.DELETE, si, message=_("Deleted ")+str(si))
                     self.dataDiff.append(newDiffResult)
             elif (tag == EDiffActions.INSERT):
-                # ak v druhom nieco pribudlo
+                
                 for si in sequence2[j1:j2]:
                     newDiffResult = CDiffResult(EDiffActions.INSERT, si, message=_("Inserted ")+str(si))
                     self.dataDiff.append(newDiffResult)
             elif (tag == EDiffActions.REPLACE):
-                #replace nemoze byt
-                #muselo iba ubudnut alebo pribudnut
+                
                 for si1 in sequence1[i1:i2]:
                     self.dataDiff.append(CDiffResult(EDiffActions.DELETE, si1, message=_("Deleted ") +str(si1)))
                 for si2 in sequence2[j1:j2]:                    
                     self.dataDiff.append(CDiffResult(EDiffActions.INSERT, si2, message=_("Inserted ")+str(si2)))
             if (tag == EDiffActions.EQUAL):
-                # ak sa tvaria rovnako, chod do hlbky, porovnaj data
+                
                 for si1, si2 in zip(sequence1[i1:i2], sequence2[j1:j2]):
                     self.dataDiff.extend(self.__DiffElementsData(si1, si2))
                     
@@ -178,9 +176,9 @@ class CDiffer(object):
         tuple2 = dictToTuple(data2)
         
         result = []
-        # dictionaries 
+         
         if data1 == data2:
-            #klasicke porovnanie dvoch dict, ak nahodou su celkom rovnake
+            
             pass
         else:
             self.__DiffData(el1, el2, tuple1, tuple2, result, [])
@@ -210,7 +208,7 @@ class CDiffer(object):
             if (tag == EDiffActions.EQUAL):
                 pass
             elif (tag == EDiffActions.DELETE):
-                # nieco bolo vymazane
+        
                 for seq in tuple1[i1:i2]:
                     if type(seq[0]) == type(''):
                         d = tupleToDict((seq,))
@@ -226,10 +224,10 @@ class CDiffer(object):
                         d = tupleToDict(seq)
                     
                     result.append(CDiffResult(EDiffActions.MODIFY, el2, None, d, dataPath, message=_("Inserted ")+str(d)+_(" into ")+str(el2)+_(" in path ")+str(dataPath)))
-                # nieco bolo pridane
+        
                 pass
             elif (tag == EDiffActions.REPLACE):
-                #nieco bolo zmenene
+                
                 if (j2 - j1 > i2 - i1):
                     r = j2 - j1
                 else :
@@ -250,7 +248,7 @@ class CDiffer(object):
                     
                     try:
                         if type(seq1[0]) == type('') and type(seq1[1]) == type(u''):
-                            # ak som na konci
+                
                             myPath = copy.deepcopy(dataPath)
                             myPath.append(seq1[0])
                             if type(seq1[0]) == type(''):
@@ -262,14 +260,11 @@ class CDiffer(object):
                                 d2 = tupleToDict((seq2,))
                             else:
                                 d2 = tupleToDict(seq2)
-                            #print seq1, d1
-                            #print seq2, d2
                             result.append(CDiffResult(EDiffActions.MODIFY, el1, d1, d2, myPath, message=_("Modified ")+str(d1)+_(" from ")+str(el1)+_(" in path ")+str(dataPath)+_(" : New value ")+str(d2)))
                         else:
-                            # ak sa da este pokracovat
                             myPath = copy.deepcopy(dataPath)
                             if type(seq1[0]) == type(''):
-                                # ak je to kluc v slovniku
+                
                                 myPath.append(seq1[0])
                             elif type(tuple1[0]) != type(''):
                                 if len(seq1) == 1:
@@ -348,7 +343,7 @@ class CDiffer(object):
         map1 = self.__TreeNodesParents(self.__project1)
         map2 = self.__TreeNodesParents(self.__project2)
         
-        # najdi nove, vymazane a presunute pod ineho rodica
+        
         result = []
         for e in set(map1.keys()+map2.keys()):
             if e not in map1:
@@ -398,25 +393,6 @@ class CDiffer(object):
         
         result = []
         
-#        movesUp = []
-#        movesDown = []
-#        for rc in reducedChilds1:
-#            index1 = reducedChilds1.index(rc)
-#            index2 = reducedChilds2.index(rc)
-#            if index1 < index2:
-#                movesUp.append((rc, index1, index2))
-#            elif index1 > index2:
-#                movesDown.append((rc, index1, index2))
-#        
-#        if len(movesDown) == 0 and len(movesUp) == 0:
-#            pass
-#        elif len(movesDown) < len(movesUp):
-#            for m in movesDown:
-#                result.append(CDiffResult(EDiffActions.ORDER_CHANGE, m[0], list1.index(m[0]), list2.index(m[0])))
-#        else :
-#            
-#            for m in movesUp:
-#                result.append(CDiffResult(EDiffActions.ORDER_CHANGE, m[0], list1.index(m[0]), list2.index(m[0])))
         for rc in reducedChilds1:
             index1 = reducedChilds1.index(rc)
             index2 = reducedChilds2.index(rc)
@@ -429,12 +405,7 @@ class CDiffer(object):
         return result
                 
                 
-#    def diffDiagrams(self, diagram1, diagram2):
-#        result = []
-#        matchingViews = self.__matchingViews(diagram1, diagram2)
-#        for id, views in matchingViews.items():
-#            result.extend(self.diffElementsVisual(views[0], views[1]))
-#        return result
+
     
     
     def __TreeNodesParents(self, project):

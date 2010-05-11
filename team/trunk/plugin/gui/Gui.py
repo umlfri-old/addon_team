@@ -26,7 +26,7 @@ class Gui(object):
         @param plugin: team plugin instance
         '''
         self.plugin = plugin
-        #print 'constructing'
+        
         self.wTree = gtk.Builder()
         gladeFile = os.path.join(os.path.dirname(__file__), "gui.glade")
         self.wTree.add_from_file( gladeFile )
@@ -211,8 +211,7 @@ class Gui(object):
             rev1 = model.get_value(iter1, 0)
             rev2 = model.get_value(iter2, 0)
             
-#            project1 = self.plugin.LoadProject(rev1)
-#            project2 = self.plugin.LoadProject(rev2)
+
             self.plugin.DiffRevisions(rev1, rev2)
         
     

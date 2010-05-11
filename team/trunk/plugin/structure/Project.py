@@ -9,7 +9,7 @@ from Connection import CConnection
 from ElementView import CElementView
 from ConnectionView import CConnectionView
 from imports.etree import etree
-#from lib.consts import UMLPROJECT_NAMESPACE
+
 from imports.Indent import Indent
 from ProjectTreeNode import CProjectTreeNode
 from Base import CBase
@@ -51,9 +51,7 @@ class CProject(object):
         @type project: IProject
         @param project: Project from plugin system
         '''
-        #self.__saveVersion = (1,1,0)
-        #self.__metamodelUri = project.GetMetamodel().GetUri()
-        #self.__metamodelVersion = project.GetMetamodel().GetVersion()
+        
         
         root = project.GetRoot()
         if root is not None:
@@ -71,7 +69,7 @@ class CProject(object):
         if root is not None:
             
             if root.GetClass().find('Element') != -1:
-                # ak je to element
+                
                 
                 id = root.GetId().lstrip('#')
                 if self.GetById(id) is None:
@@ -93,7 +91,7 @@ class CProject(object):
                     
                     self.__LoadProjectRecursive(e, newProjectTreeNode)
             elif root.GetClass().find('Diagram') != -1:
-                #ak je to diagram
+                
                 id = root.GetId().lstrip('#')
                 newDiagram = CDiagram(id, root.GetType())
                 newDiagram.SetData(root.GetSaveInfo())
@@ -101,7 +99,7 @@ class CProject(object):
                 treeParent.AddChild(newProjectTreeNode)
                 visualElements = root.GetElements()
                 for ve in visualElements:
-                    # nacitaj vizualne elementy
+                    
                     veo = ve.GetObject()
                     size = (unicode(ve.GetSize()[0] - ve.GetMinimalSize()[0]), unicode(ve.GetSize()[1] - ve.GetMinimalSize()[1]))
                     
@@ -116,7 +114,7 @@ class CProject(object):
                     
                 visualConnections = root.GetConnections()
                 for vc in visualConnections:
-                    #nacitaj vizualne spojenia
+                    
                     vco = vc.GetObject()
                     connectionViewObject = self.GetById(vco.GetId().lstrip('#'))
                     if connectionViewObject is None:
@@ -184,7 +182,7 @@ class CProject(object):
                 self.__metamodelUri = uri
                 self.__metamodelVersion = version
             if element.tag == UMLPROJECT_NAMESPACE + 'objects':
-                #nacitaj objekty
+                
                 for subelement in element:
                     if subelement.tag == UMLPROJECT_NAMESPACE + 'object':
                         id = subelement.get('id')
@@ -193,7 +191,7 @@ class CProject(object):
                         newElement.SetData(CProject.__LoadData(subelement[0]))
                         self.__elements[id] = newElement
             elif element.tag == UMLPROJECT_NAMESPACE + 'connections':
-                #nacitaj spojenia
+                
                 for connection in element:
                     if connection.tag == UMLPROJECT_NAMESPACE + 'connection':
                         id = connection.get('id')
@@ -204,7 +202,7 @@ class CProject(object):
                         newConnection.SetData(CProject.__LoadData(connection[0])) 
                         self.__connections[id] = newConnection
             elif element.tag == UMLPROJECT_NAMESPACE + 'diagrams':
-                #nacitaj diagramy
+                
                 for diagram in element:
                     if diagram.tag == UMLPROJECT_NAMESPACE + 'diagram':
                         id = diagram.get('id')
@@ -214,7 +212,7 @@ class CProject(object):
                         self.__diagrams[id] = newDiagram
             elif element.tag == UMLPROJECT_NAMESPACE + 'projecttree':
                 
-                #nacitaj strom projektu
+                
                 projectTreeRoot = element[0]
                 self.__CreateProjectTree(projectTreeRoot, None)
             
@@ -231,7 +229,7 @@ class CProject(object):
         @param parent: parent of element
         '''
         if parent is None:
-            # ak nemame koren
+            
             if (element.tag == UMLPROJECT_NAMESPACE+'node'):
                 id = element.get('id')
                 newProjectTreeNode = CProjectTreeNode(self.GetById(id), parent)
@@ -297,20 +295,20 @@ class CProject(object):
         if 'default' in element.attrib and element.attrib['default'].lower() in ('1', 'true'):
             self.__defaultDiagram = diagram
         for item in element:
-            # nacitaj elementy a spojenia z diagramu
+            
             if item.tag == UMLPROJECT_NAMESPACE+ 'element':
-            #nacitaj element
+            
                 position = (unicode(item.get('x')), unicode(item.get('y')))
                 size = (unicode(item.get('dw')), unicode(item.get('dh')))
                 elId = item.get('id')
                 elementView = CElementView(self.GetById(elId), diagram ,position, size)
                 diagram.AddElementView(elementView)
             elif item.tag == UMLPROJECT_NAMESPACE + 'connection':
-            #nacitaj spojenie
+            
                 conId = item.get('id')
                 connectionView = CConnectionView(self.GetById(conId), diagram)
                 for subitem in item:
-                    #nacitaj sprostosti zo spojenia
+                    
                     if subitem.tag == UMLPROJECT_NAMESPACE + 'point':
                         point = (unicode(subitem.get('x')), unicode(subitem.get('y')))
                         connectionView.AddPoint(point)
@@ -450,28 +448,26 @@ class CProject(object):
         @raise Exception: on failure
         '''
         if isinstance(obj, CElement):
-            # pridaj element
+            
             
             self.__elements[obj.GetId()] = obj
         
         elif isinstance(obj, CConnection):
-            # pridaj spojenie
-            # najdi zdroj a ciel v aktualnom projekte, lebo nemusia to byt tie iste objekty
+            
             source = self.GetById(obj.GetSource().GetId())
             if source is None:
                 raise Exception('Source not found')
             dest = self.GetById(obj.GetDestination().GetId())
             if dest is None:
                 raise Exception('Destination not found')
-            # vytvor novy connection
+            
             con = CConnection(obj.GetId(), obj.GetType(), source, dest)
-            # skopiruj mu data
+            
             con.SetData(obj.GetData())
             self.__connections[con.GetId()] = con
             
         elif isinstance(obj, CDiagram):
-            # pridaj diagram
-            # vytvor ho
+            
             diag = CDiagram(obj.GetId(), obj.GetType())
             diag.SetData(obj.GetData())
             self.__diagrams[diag.GetId()] = diag
@@ -485,21 +481,21 @@ class CProject(object):
         @rtype: CProjectTreeNode
         @return: added project tree node
         '''
-        # dostan objekt (ten by mal byt aj tak novy)
+        
         obj = self.GetById(treeNode.GetId())
         if obj is None:
             raise Exception('Project tree node object not found')
-        # zisti rodica
+        
         parent = self.GetProjectTreeNodeById(treeNode.GetParent().GetId())
         
         if parent is None:
-#            parent = self.AddProjectTreeNode(treeNode.GetParent())
+
             raise Exception ('Project tree node parent not found')
         
         if self.GetProjectTreeNodeById(obj.GetId()) is None:
         
         
-            # vytvor novy node
+
             
             newProjectTreeNode = CProjectTreeNode(obj, parent)
             parent.AddChild(newProjectTreeNode, treeNode.GetIndex())
@@ -515,34 +511,29 @@ class CProject(object):
         @param obj: View to be added
         @raise Exception: on failure
         '''
-        # najdi objekt, ktoremu to patri
+        
         obj = self.GetById(view.GetObject().GetId())
         if obj is None:
             raise Exception ('View object not found')
-        # najdi diagram, do ktoreh sa ma pridat
+        
         diagram = self.GetById(view.GetParentDiagram().GetId())
         if diagram is None:
             raise Exception ('Diagram for view not found')
         
         if isinstance(obj, CElement):
-            # ak je to element
-            # vytvor novy element view
             newView = CElementView(obj, diagram, view.GetPosition(), view.GetSize())
-            # pridaj ho do diagramu
+        
             diagram.AddElementView(newView, view.GetIndex())
         elif isinstance(obj, CConnection):
-            # ak je to spojenie
-            
-            # vytvor novy connection view
             newView = CConnectionView(obj, diagram)
-            # skopiruj body
+        
             for point in view.GetPoints():
                 newView.AddPoint(point)
                 
-            # skopiruj labels
+            
             for label in view.GetLabels():
                 newView.AddLabel(label)
-            # pridaj do diagramu
+            
             diagram.AddConnectionView(newView, view.GetIndex())
     
     def DeleteObject(self, obj):
@@ -552,21 +543,21 @@ class CProject(object):
         @param obj: Object to be deleted
         '''
         if isinstance(obj, CElement):
-            # najdi element v projektovom strome
+            
             node = self.GetProjectTreeNodeById(obj.GetId())
             if node is not None:
                 self.DeleteProjectTreeNode(node)
         
         elif isinstance(obj, CConnection):
-            # odober spojenie, vyhod ho zo zoznamu spojeni
+            
             self.DeleteById(obj.GetId())
-            # vymaz spojenie view zo vsetkych diagramov
+            
             for d in self.__diagrams.values():
                 
                 d.DeleteViewById(obj.GetId())
                 
         elif isinstance(obj, CDiagram):
-            # najdi diagram v projektovom strome
+            
             node = self.GetProjectTreeNodeById(obj.GetId())
             if node is not None:
                 self.DeleteProjectTreeNode(node)
@@ -577,22 +568,22 @@ class CProject(object):
         @type treeNode: CProjectTreeNode
         @param treeNode: project tree node to be deleted
         '''
-        # najdi ho v projektovom strome
+        
         node = self.GetProjectTreeNodeById(treeNode.GetId())
-        # ak to nie je koren
+        
         if node is not self.__projectTreeRoot:
-            # najdi parenta
+            
             if node is not None:
                 parent = node.GetParent()
                 
-                # vymaz vsetkych potomkov
+                
                 childs = parent.DeleteChild(node)
-                # vymaz vsetky objekty predstavujuce potomkov 
+                 
                 for ch in childs:
                     self.DeleteById(ch.GetId())
-                    # vymaz objekt zo vsetkych diagramov
+                    
                     for d in self.__diagrams.values():
-                        # vymaz ho zo vsetkych diagramov
+                        
                         d.DeleteViewById(ch.GetId())
             
     
@@ -602,9 +593,9 @@ class CProject(object):
         @type treeNode: CBaseView
         @param treeNode: view to be deleted
         '''
-        # najdi diagram, do ktoreho patri
+        
         diagram = self.GetById(view.GetParentDiagram().GetId())
-        # vymaz ho z daneho diagramu
+        
         if diagram is not None:
             diagram.DeleteViewById(view.GetObject().GetId())
 
@@ -620,26 +611,26 @@ class CProject(object):
         @param newParent: new parent of given node
         @raise Exception: on failure
         '''
-        # najdi node
+        
         node = self.GetProjectTreeNodeById(node.GetId())
         if node is None:
             raise Exception ('Project tree node not found')
         
-        # najdi stareho rodica
+        
         oldParent = self.GetProjectTreeNodeById(oldParent.GetId())
         if oldParent is None:
             raise Exception ('Old parent not found')
-        # najdi noveho rodica
+        
         newParent = self.GetProjectTreeNodeById(newParent.GetId())
         if newParent is None:
             raise Exception ('New parent not found')
         
         if newParent.GetChild(node.GetId()) is None:
-            # uz tam taky existuje, netreba tam dalsi
+            
             newParent.AddChild(node)
             
             
-            # vymaz ho zo stareho rodica
+            
             oldParent.DeleteChild(node)
 
     def ChangeOrderTreeNode(self, node, oldOrder, newOrder):
@@ -703,7 +694,7 @@ class CProject(object):
         view = diagram.GetViewById(view.GetObject().GetId())
         view.ModifyData(oldState, newState, path)
 
-    # updatni pocitadla,  vyber vyssie z nich
+    
     def UpdateCounters(self, newCounters):
         '''
         Updates counters, choose higher from self counters and new counters
@@ -721,7 +712,7 @@ class CProject(object):
         @rtype: string
         @return: xml representation of project
         '''
-        #assert self.__metamodel is not None
+        
         
         def SaveDomainObjectInfo(data, name=None):
             if isinstance(data, dict):
@@ -739,7 +730,7 @@ class CProject(object):
                 element.text = data
             else:
                 pass
-                #raise ProjectError("unknown data format")
+                
             if name:
                 element.set('name', name)
             return element
@@ -835,11 +826,7 @@ class CProject(object):
         savetree(self.__projectTreeRoot, projtreeNode)
         rootNode.append(projtreeNode)
         
-#        for type in self.GetMetamodel().GetElementFactory().IterTypes():
-#            counterNode.append(etree.Element(UMLPROJECT_NAMESPACE+'count', id = type.GetId(), value = unicode(type.GetCounter())))
-#        for type in self.GetMetamodel().GetDiagramFactory():
-#            counterNode.append(etree.Element(UMLPROJECT_NAMESPACE+'count', id = type.GetId(), value = unicode(type.GetCounter())))
-#        
+
         rootNode.append(counterNode)
         
 

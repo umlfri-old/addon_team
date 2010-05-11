@@ -37,7 +37,7 @@ class CElement(CBase):
             r = r[item]
         
         if oldState is None:
-            # pridanie
+            
             
             if type(r) == type([]):
                 if type(newState) == type([]):
@@ -52,7 +52,7 @@ class CElement(CBase):
                 
             
         elif newState is None:
-            # odobratie
+            
             
             r[path[len(path)-1]].remove(oldState)
         else:

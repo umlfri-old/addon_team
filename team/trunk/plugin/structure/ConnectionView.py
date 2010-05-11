@@ -84,18 +84,18 @@ class CConnectionView(CBaseView):
         @param path: path to modification
         '''
         if oldState is None:
-            #pridanie
+            
             if type(newState) is type([]):
                 self.viewData[path[0]].extend(newState)
             else:
                 self.viewData[path[0]].append(newState)
         elif newState is None:
-            #vymazanie
+            
             
             self.viewData[path[0]].remove(oldState)
             
         else:
-            #uprava
+            
             self.viewData[path[0]][path[1]].update(newState)
             
     

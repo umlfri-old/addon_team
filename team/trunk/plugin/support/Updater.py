@@ -86,7 +86,7 @@ class CUpdater(object):
         
         self.__conflicter = CConflicter(self.__updProject, self.__baseProject, self.__mineProject)
         if len(self.__conflicter.GetConflicting()) == 0:
-            # ok nechaj vsetko tak
+            
             pass
         else:
             self.__isInConflict = True
