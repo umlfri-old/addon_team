@@ -214,7 +214,7 @@ class CProjectTreeNode(object):
         @rtype: list
         @return: List of all childs and itself of child
         '''
-        #vymaze child a vrati vsetky jeho deti, aby mohli byt vymazane
+        
         result = [child]
         ch = child.GetChildsOrdered()
         

@@ -204,7 +204,7 @@ class CProjectTreeDiffTreeView(object):
                 
                 self.__MarkParentAsModified(path, True)
                 
-                #self.diffs.remove(diff)
+                
                 return True
         
         self.model.foreach(func1, diff)
@@ -243,7 +243,7 @@ class CProjectTreeDiffTreeView(object):
                 
                 self.__MarkParentAsModified(path, True)
                 
-                #self.diffs.remove(diff)
+                
                 return True
         
         self.model.foreach(func1, diff)
@@ -279,7 +279,7 @@ class CProjectTreeDiffTreeView(object):
                 
                 model.set_value(iter, 0, self.projectNew.GetById(diff.GetElement().GetId()).GetName())
                 model.set_value(iter, 2, icon)
-                #model.set_value(iter, 5, diff)
+                
                 self.__MarkParentAsModified(path)
             
         self.model.foreach(func, diff)

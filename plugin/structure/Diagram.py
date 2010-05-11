@@ -20,7 +20,7 @@ class CDiagram(CBase):
         @type type: string
         @param type: Type of object
         '''
-        # parent constructor
+        
         super(CDiagram, self).__init__(id, type)
         
         self.__elementsViews = {}

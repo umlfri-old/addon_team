@@ -11,7 +11,7 @@ def dictToTuple(data):
     '''
     if type(data) ==  type({}):
         items = data.items()
-        # zoradit, aby sa to dalo porovnavat
+        
         items.sort()
         return tuple([(item[0], dictToTuple(item[1])) for item in items])
     elif type(data) == type([]) or type(data) == type(()):

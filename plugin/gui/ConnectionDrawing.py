@@ -40,10 +40,10 @@ class CConnectionDrawing(CBaseDrawing):
         for point in self.connectionView.GetPoints():
             self.context.line_to(int(point['x']), int(point['y']))
         self.context.line_to(destViewCenter[0],destViewCenter[1])
-        #self.context.stroke()
+        
         
         self.context.arc(destViewCenter[0], destViewCenter[1], 5, 0, 2*pi)
-        #self.context.fill()
+        
         
         for label in self.connectionView.GetLabels():
             self.context.save()

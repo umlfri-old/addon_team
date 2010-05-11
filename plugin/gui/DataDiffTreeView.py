@@ -137,7 +137,8 @@ class CDataDiffTreeView(object):
         Shows all diffs
         '''
         diffs = self.differ.GetDataDiff().get(EDiffActions.MODIFY,[])
-        # vyber iba diffy, ktore sa tykaju tychto elementov
+        
+        # choose diff concerning elements
         diffs = [d for d in diffs if d.GetElement() == (self.objectOld or self.objectNew)]
         for diff in diffs:
             if diff.GetPreviousState() is None:
@@ -187,7 +188,7 @@ class CDataDiffTreeView(object):
         '''
         def func(model, path, iter, diff):
             
-            # zobrazi aj vsetkym potomkom delete
+            # show delete to all descendants
             def func2(model, path, iter, subpath):
                 if path[0:len(subpath)] == subpath:
                     model.set_value(iter, 2, icon)
@@ -213,7 +214,7 @@ class CDataDiffTreeView(object):
             if found:
                 iconfile = os.path.join(os.path.dirname(__file__),'..','icons' ,"delete.png")
                 icon = gtk.gdk.pixbuf_new_from_file(iconfile)
-                # nasiel som parenta
+                
                 r = self.objectOld.GetData()
                 for item in diff.GetDataPath()[0:len(diff.GetDataPath())]:
                     r = r[item]
