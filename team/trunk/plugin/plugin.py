@@ -397,7 +397,7 @@ class pluginMain:
             self.pluginGuiManager.display_warning(_('No project loaded'))
             return
         
-        project.Save()
+        project.save()
         
         updateToRevision = self.gui.ChooseRevisionDialog()
         if updateToRevision is not None:
@@ -423,7 +423,7 @@ class pluginMain:
             self.pluginGuiManager.display_warning(_('No project loaded'))
             return
         
-        project.Save()
+        project.save()
         
         msg = self.gui.CheckinMessageDialog()
         self.interface.notify('team-checkin', None, None, False, msg)
