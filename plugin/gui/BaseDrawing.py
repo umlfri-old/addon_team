@@ -4,7 +4,7 @@ Created on 13.4.2010
 @author: Peterko
 '''
 
-class CBaseDrawing(object):
+class CBaseDrawing:
     '''
     Base class for drawing objects
     '''

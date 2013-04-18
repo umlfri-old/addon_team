@@ -11,11 +11,16 @@
 	</Author>
 
 	<Icon path="icon.png" />
+
 	<Description>
 		This plugin is essential for "team" work.
     </Description>
 
-	<Plugin>
-		<Code os="all" language="python" path="plugin" />
+    <Dependencies>
+        <AddOn uri="urn:umlfri.org:starters:python" />
+    </Dependencies>
+
+    <Plugin>
+		<Code os="all" language="pythonNew" path="plugin" />
 	</Plugin>
 </AddOn>
