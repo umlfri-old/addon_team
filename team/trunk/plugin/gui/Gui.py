@@ -13,7 +13,7 @@ import os.path
 from DiffDialog import CDiffDialog
 from ConflictsDialog import CConflictsDialog
 
-class Gui(object):
+class Gui:
     '''
     Class with graphical user interface
     '''

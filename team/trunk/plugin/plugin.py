@@ -5,7 +5,6 @@ Created on 27.2.2010
 '''
 
 from gui import Gui
-
 from structure import *
 from support import *
 from zipfile import is_zipfile, ZIP_DEFLATED, ZipFile
@@ -16,8 +15,9 @@ import gettext
 import locale
 import sys
 from imports.gtk2 import gtk
+from org.umlfri.api.mainLoops import GtkMainLoop
 
-class Plugin(object):
+class pluginMain:
     '''
     Team plugin for UML .FRI
     '''
@@ -34,10 +34,8 @@ class Plugin(object):
         '''
         # load interface
         self.interface = interface
-        self.interface.SetGtkMainloop()
-        
-        self.pluginAdapter = self.interface.GetAdapter()
-        self.pluginGuiManager = self.pluginAdapter.GetGuiManager()
+        self.interface.set_main_loop(GtkMainLoop())
+        self.pluginGuiManager = self.interface.gui_manager
         
         
         self.receivedFileData = {}
@@ -63,44 +61,44 @@ class Plugin(object):
         self.gui = Gui(self)
         self.incompatibleText = _('Project is under version control, but is incompatible with Team plugin. Would you like to make it compatible? (There will be no physical changes to project file)')
         
-        self.interface.StartAutocommit()
+        self.interface.transaction.autocommit = True
         
-        self.pluginAdapter.AddNotification('project-opened', self.ProjectOpened)
+        self.interface.add_notification('project-opened', self.ProjectOpened)
         
-        self.pluginAdapter.AddNotification('team-exception', self.TeamException)
+        self.interface.add_notification('team-exception', self.TeamException)
         
-        self.pluginAdapter.AddNotification('team-send-supported', self.ReceiveSupported)
+        self.interface.add_notification('team-send-supported', self.ReceiveSupported)
         
-        self.pluginAdapter.AddNotification('team-send-log', self.ReceiveLog)
-        self.pluginAdapter.AddNotification('team-send-file-data', self.ReceiveFileData)
-        self.pluginAdapter.AddNotification('team-continue-diff-project', self.ContinueDiffProject)
-        self.pluginAdapter.AddNotification('team-continue-diff-revisions', self.ContinueDiffRevisions)
+        self.interface.add_notification('team-send-log', self.ReceiveLog)
+        self.interface.add_notification('team-send-file-data', self.ReceiveFileData)
+        self.interface.add_notification('team-continue-diff-project', self.ContinueDiffProject)
+        self.interface.add_notification('team-continue-diff-revisions', self.ContinueDiffRevisions)
         
-        self.pluginAdapter.AddNotification('team-get-authorization', self.GetAuthorization)
-        self.pluginAdapter.AddNotification('team-send-result', self.ReceiveResult)
-        self.pluginAdapter.AddNotification('team-solve-conflicts', self.SolveConflicts)
-        self.pluginAdapter.AddNotification('team-send-register-implementation-for-checkout', self.RegisterImplementationForCheckout)
-        self.pluginAdapter.AddNotification('team-ask-compatible', self.AskCompatible)
-        self.pluginAdapter.AddNotification('team-load-project', self.LoadProjectFile)
-        self.pluginAdapter.AddNotification('team-ask-server-cert', self.AskServerCert)
-        self.pluginAdapter.AddNotification('team-get-team-menu-id', self.RegisterImplementationMenu)
+        self.interface.add_notification('team-get-authorization', self.GetAuthorization)
+        self.interface.add_notification('team-send-result', self.ReceiveResult)
+        self.interface.add_notification('team-solve-conflicts', self.SolveConflicts)
+        self.interface.add_notification('team-send-register-implementation-for-checkout', self.RegisterImplementationForCheckout)
+        self.interface.add_notification('team-ask-compatible', self.AskCompatible)
+        self.interface.add_notification('team-load-project', self.LoadProjectFile)
+        self.interface.add_notification('team-ask-server-cert', self.AskServerCert)
+        self.interface.add_notification('team-get-team-menu-id', self.RegisterImplementationMenu)
         
-        self.pluginAdapter.Notify('team-register-for-checkout')
+        self.interface.notify('team-register-for-checkout')
         
         self.rootMenuId = 'team-menu-root'
         # add menu
-        self.teamMenuRoot = self.pluginGuiManager.GetMainMenu().AddMenuItem(self.rootMenuId ,None, -2,'Team',None,None)
+        self.teamMenuRoot = self.pluginGuiManager.main_menu.add_menu_item(self.rootMenuId ,None, -2,'Team',None,None)
         #add submenu
-        self.teamMenuRoot.AddSubmenu()
-        self.teamMenuSubmenu = self.teamMenuRoot.GetSubmenu()
+        self.teamMenuRoot.add_submenu()
+        self.teamMenuSubmenu = self.teamMenuRoot.submenu
         
-        self.diffMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.DiffProject,0,_('Diff project'),None,None)
-        self.updateMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Update,1,_('Update'),None,None)
-        self.checkinMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkin,2,_('Checkin'),None,None)
-        self.revertMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Revert,3,_('Revert'),None,None)
-        self.solveConflictsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.SolveConflictsInOpenedProject ,4,_('Solve conflicts'),None,None)
-        self.checkoutMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.Checkout,5,_('Checkout'),None,None)
-        self.logsMenu = self.teamMenuSubmenu.AddMenuItem(str(uuid.uuid1()),self.ShowLogs,6,_('Show logs'),None,None)
+        self.diffMenu = self.teamMenuSubmenu.add_menu_item(str(uuid.uuid1()),self.DiffProject,0,_('Diff project'),None,None)
+        self.updateMenu = self.teamMenuSubmenu.add_menu_item(str(uuid.uuid1()),self.Update,1,_('Update'),None,None)
+        self.checkinMenu = self.teamMenuSubmenu.add_menu_item(str(uuid.uuid1()),self.Checkin,2,_('Checkin'),None,None)
+        self.revertMenu = self.teamMenuSubmenu.add_menu_item(str(uuid.uuid1()),self.Revert,3,_('Revert'),None,None)
+        self.solveConflictsMenu = self.teamMenuSubmenu.add_menu_item(str(uuid.uuid1()),self.SolveConflictsInOpenedProject ,4,_('Solve conflicts'),None,None)
+        self.checkoutMenu = self.teamMenuSubmenu.add_menu_item(str(uuid.uuid1()),self.Checkout,5,_('Checkout'),None,None)
+        self.logsMenu = self.teamMenuSubmenu.add_menu_item(str(uuid.uuid1()),self.ShowLogs,6,_('Show logs'),None,None)
         
         self.__ResetMenuSensitivity()
         self.RegisterImplementationMenu()
@@ -128,7 +126,7 @@ class Plugin(object):
         @type fileName: string
         @param fileName: path to file  
         '''
-        self.pluginAdapter.LoadProject(fileName)
+        self.interface.load_project(fileName)
        
     def AskCompatible(self):    
         '''
@@ -136,13 +134,13 @@ class Plugin(object):
         '''
         response = self.gui.ShowQuestion(self.incompatibleText)
         if response:
-            self.pluginAdapter.Notify('team-make-compatible')
+            self.interface.notify('team-make-compatible')
       
     def RegisterImplementationMenu(self):
         '''
         Hook executed when implementation wants to add submenu to team menu
         '''
-        self.pluginAdapter.Notify('team-send-team-menu-id', self.rootMenuId)
+        self.interface.notify('team-send-team-menu-id', self.rootMenuId)
         
     def ProjectOpened(self):
         '''
@@ -151,10 +149,10 @@ class Plugin(object):
         self.__ResetMenuSensitivity()
         
         if self.__CanRunPlugin():
-            fileName = self.__LoadApplicationProject().GetFileName()
+            fileName = self.__LoadApplicationProject().file_name
             
-            self.pluginAdapter.Notify('team-project-opened', fileName)
-            self.pluginAdapter.Notify('team-get-supported')
+            self.interface.notify('team-project-opened', fileName)
+            self.interface.notify('team-get-supported')
         
             
     
@@ -165,7 +163,7 @@ class Plugin(object):
         @type result: string
         @param result: String to be displayed 
         '''
-        self.pluginGuiManager.DisplayWarning(result)
+        self.pluginGuiManager.display_warning(result)
     
     
     def TeamException(self, exc):
@@ -174,7 +172,7 @@ class Plugin(object):
         @type exc: Exception
         @param exc: Exception instance  
         '''
-        self.pluginGuiManager.DisplayWarning(_('Error occured:\n')+str(exc))
+        self.pluginGuiManager.display_warning(_('Error occured:\n')+str(exc))
             
             
     def ReceiveLog(self, logs):
@@ -196,7 +194,7 @@ class Plugin(object):
         '''
         response = self.gui.ShowQuestion(message+_('\nAccept server certificate?'))
         if response:
-            self.pluginAdapter.Notify(actionId, None, None, response, *param)
+            self.interface.notify(actionId, None, None, response, *param)
     
     def ReceiveSupported(self, supported): 
         '''
@@ -205,13 +203,13 @@ class Plugin(object):
         @param supported: list with supported methods in implementation
         '''
         
-        self.diffMenu.SetSensitive('diff' in supported)
-        self.updateMenu.SetSensitive('update' in supported)
-        self.checkinMenu.SetSensitive('checkin' in supported)
-        self.revertMenu.SetSensitive('revert' in supported)
-        self.logsMenu.SetSensitive('log' in supported)  
+        self.diffMenu.enabled = ('diff' in supported)
+        self.updateMenu.enabled = ('update' in supported)
+        self.checkinMenu.enabled = ('checkin' in supported)
+        self.revertMenu.enabled = ('revert' in supported)
+        self.logsMenu.enabled = ('log' in supported)
         
-        self.solveConflictsMenu.SetSensitive('resolve' in supported) 
+        self.solveConflictsMenu.enabled = ('resolve' in supported)
     
     
     def ReceiveFileData(self, data, idData):
@@ -229,13 +227,13 @@ class Plugin(object):
         '''
         Resets menu sensitivity
         '''
-        self.diffMenu.SetSensitive(False)
-        self.updateMenu.SetSensitive(False)
-        self.checkinMenu.SetSensitive(False)
-        self.revertMenu.SetSensitive(False)
-        self.solveConflictsMenu.SetSensitive(False)
-        self.checkoutMenu.SetSensitive(False or self.implementations != {})
-        self.logsMenu.SetSensitive(False)
+        self.diffMenu.enabled = False
+        self.updateMenu.enabled = False
+        self.checkinMenu.enabled = False
+        self.revertMenu.enabled = False
+        self.solveConflictsMenu.enabled = False
+        self.checkoutMenu.enabled = (False or self.implementations != {})
+        self.logsMenu.enabled = False
         
     def __CanRunPlugin(self):
         '''
@@ -246,7 +244,7 @@ class Plugin(object):
         p = self.__LoadApplicationProject()
         if p is None:
             return False
-        elif p.GetFileName() is None:
+        elif p.file_name is None:
             return False
         else:
             return True
@@ -309,7 +307,7 @@ class Plugin(object):
         @rtype: IProject
         @return: Project
         '''
-        return self.pluginAdapter.GetProject()
+        return self.interface.project
     
     
     def DiffProject(self, arg):
@@ -318,10 +316,10 @@ class Plugin(object):
         '''
         project = self.__LoadApplicationProject()
         if project is None:
-            self.pluginGuiManager.DisplayWarning(_('No project loaded'))
+            self.pluginGuiManager.display_warning(_('No project loaded'))
             return
 
-        self.pluginAdapter.Notify('team-get-file-data', None, None, False, 'diff-project', 'diff-project')
+        self.interface.notify('team-get-file-data', None, None, False, 'diff-project', 'diff-project')
         
         
     def ContinueDiffProject(self):
@@ -330,7 +328,7 @@ class Plugin(object):
         '''
         project = self.__LoadApplicationProject()
         if project is None:
-            self.pluginGuiManager.DisplayWarning(_('No project loaded'))
+            self.pluginGuiManager.display_warning(_('No project loaded'))
             return
         
         myProject1 = CProject(project)
@@ -345,8 +343,8 @@ class Plugin(object):
         '''
         Begin diff of two revision, notify implementation to get file data
         '''
-        self.pluginAdapter.Notify('team-get-file-data', None, None,False,'diff-revisions1', 'diff-revisions', rev1)
-        self.pluginAdapter.Notify('team-get-file-data', None, None,False,'diff-revisions2', 'diff-revisions', rev2)
+        self.interface.notify('team-get-file-data', None, None,False,'diff-revisions1', 'diff-revisions', rev1)
+        self.interface.notify('team-get-file-data', None, None,False,'diff-revisions2', 'diff-revisions', rev2)
         
 
         
@@ -387,7 +385,7 @@ class Plugin(object):
         '''    
         username, password = self.gui.AuthDialog()
         if username is not None and password is not None:
-            self.pluginAdapter.Notify(actionId, username, password, *params)
+            self.interface.notify(actionId, username, password, *params)
         
     def Update(self, arg):
         '''
@@ -396,7 +394,7 @@ class Plugin(object):
         project = self.__LoadApplicationProject()
         
         if project is None:
-            self.pluginGuiManager.DisplayWarning(_('No project loaded'))
+            self.pluginGuiManager.display_warning(_('No project loaded'))
             return
         
         project.Save()
@@ -408,7 +406,7 @@ class Plugin(object):
             else:
                 revision = updateToRevision
             
-            self.pluginAdapter.Notify('team-update', None, None, False, revision)
+            self.interface.notify('team-update', None, None, False, revision)
             
             
                 
@@ -422,13 +420,13 @@ class Plugin(object):
         '''
         project = self.__LoadApplicationProject()
         if project is None:
-            self.pluginGuiManager.DisplayWarning(_('No project loaded'))
+            self.pluginGuiManager.display_warning(_('No project loaded'))
             return
         
         project.Save()
         
         msg = self.gui.CheckinMessageDialog()
-        self.pluginAdapter.Notify('team-checkin', None, None, False, msg)
+        self.interface.notify('team-checkin', None, None, False, msg)
             
                         
             
@@ -438,10 +436,10 @@ class Plugin(object):
         '''
         project = self.__LoadApplicationProject()
         if project is None:
-            self.pluginGuiManager.DisplayWarning(_('No project loaded'))
+            self.pluginGuiManager.display_warning(_('No project loaded'))
             return
         
-        self.pluginAdapter.Notify('team-revert')
+        self.interface.notify('team-revert')
         
     
         
@@ -455,14 +453,14 @@ class Plugin(object):
             url = result[1]
             directory = result[2]
             revision = result[3]
-            self.pluginAdapter.Notify('team-checkout',None, None, False, implId, url, directory, revision)
+            self.interface.notify('team-checkout',None, None, False, implId, url, directory, revision)
             
       
     def SolveConflictsInOpenedProject(self, arg):
         '''
         Notify implementation about solving conflicts
         '''
-        self.pluginAdapter.Notify('team-solve-conflicts-in-opened-project')      
+        self.interface.notify('team-solve-conflicts-in-opened-project')
             
     def SolveConflicts(self, triple, prFile):
         '''
@@ -487,14 +485,14 @@ class Plugin(object):
             if resolved:
                 self.__SaveProjectXmlToExistingFile(newXml, prFile)
             
-                self.pluginAdapter.Notify('team-resolve')
+                self.interface.notify('team-resolve')
                 
                     
         else:
             # not in conflict
             # save merged file
             self.__SaveProjectXmlToExistingFile(updater.GetNewXml(), prFile)
-            self.pluginAdapter.Notify('team-resolve')
+            self.interface.notify('team-resolve')
             
                 
                 
@@ -505,10 +503,10 @@ class Plugin(object):
         '''
         project = self.__LoadApplicationProject()
         if project is None:
-            self.interface.GetAdapter().DisplayWarning('No project loaded')
+            self.interface.adapter.display_warning('No project loaded')
             return
         
-        self.pluginAdapter.Notify('team-get-log', None, None, False)
+        self.interface.notify('team-get-log', None, None, False)
         
     def RegisterImplementationForCheckout(self, id, description):
         '''
@@ -546,8 +544,3 @@ class Plugin(object):
                 return False, 'None'
         else:
             return False, 'None'
-                
-    
-        
-# select plugin main object
-pluginMain = Plugin

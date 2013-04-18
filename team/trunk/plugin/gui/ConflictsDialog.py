@@ -7,7 +7,7 @@ from support import *
 from imports.gtk2 import gtk
 from DiffDialog import CDiffDialog
 
-class CConflictsDialog(object):
+class CConflictsDialog:
     '''
     Class representing dialog for conflict solving
     '''
