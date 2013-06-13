@@ -14,6 +14,8 @@ from imports.Indent import Indent
 from ProjectTreeNode import CProjectTreeNode
 from Base import CBase
 
+from org.umlfri.api.model import ElementObject
+
 UMLPROJECT_NAMESPACE = '{http://umlfri.kst.fri.uniza.sk/xmlschema/umlproject.xsd}'
 
 
@@ -53,7 +55,7 @@ class CProject(object):
         '''
         
         
-        root = project.GetRoot()
+        root = project.root
         if root is not None:
             self.__LoadProjectRecursive(root, None)
    
@@ -68,13 +70,11 @@ class CProject(object):
         '''
         if root is not None:
             
-            if root.GetClass().find('Element') != -1:
-                
-                
-                id = root.GetId().lstrip('#')
+            if root is ElementObject:
+                id = root.__id__.lstrip('#')
                 if self.GetById(id) is None:
-                    newElement = CElement(id, root.GetType())
-                    newElement.SetData(root.GetSaveInfo())
+                    newElement = CElement(id, root.object.type)
+                    newElement.SetData(root.object.all_values)
                     self.__elements[id] = newElement
                 else:
                     newElement = self.GetById(id)
@@ -83,79 +83,79 @@ class CProject(object):
                     self.__projectTreeRoot = newProjectTreeNode
                 else :
                     treeParent.AddChild(newProjectTreeNode)
-                childs = root.GetChilds()
-                diagrams = root.GetDiagrams()
-                connections = root.GetConnections()
-                
+                childs = root.object.children
+                diagrams = root.diagram
+                connections = root.connections
+
                 for e in childs+connections+diagrams:
-                    
+
                     self.__LoadProjectRecursive(e, newProjectTreeNode)
-            elif root.GetClass().find('Diagram') != -1:
-                
-                id = root.GetId().lstrip('#')
-                newDiagram = CDiagram(id, root.GetType())
-                newDiagram.SetData(root.GetSaveInfo())
+            elif 'Diagram' in root.__class__.__name__:
+
+                id = root.__id__.lstrip('#')
+                newDiagram = CDiagram(id, root.type)
+                newDiagram.SetData(root.all_values)
                 newProjectTreeNode = CProjectTreeNode(newDiagram, treeParent)
                 treeParent.AddChild(newProjectTreeNode)
-                visualElements = root.GetElements()
+                visualElements = root.elemets
                 for ve in visualElements:
-                    
-                    veo = ve.GetObject()
-                    size = (unicode(ve.GetSize()[0] - ve.GetMinimalSize()[0]), unicode(ve.GetSize()[1] - ve.GetMinimalSize()[1]))
-                    
-                    elementViewObject = self.GetById(veo.GetId().lstrip('#'))
+
+                    veo = ve.object
+                    size = (unicode(ve.size[0] - ve.minimal_size[0]), unicode(ve.size[1] - ve.minimal_size[1]))
+
+                    elementViewObject = self.GetById(veo.__id__.lstrip('#'))
                     if elementViewObject is None:
-                        evoId = veo.GetId().lstrip('#')
-                        elementViewObject = CElement(evoId, veo.GetType())
-                        elementViewObject.SetData(veo.GetSaveInfo())
+                        evoId = veo.__id__.lstrip('#')
+                        elementViewObject = CElement(evoId, veo.object.type)
+                        elementViewObject.SetData(veo.object.all_values)
                         self.__elements[evoId] = elementViewObject
-                    newElementView = CElementView(elementViewObject, newDiagram, (unicode(ve.GetPosition()[0]), unicode(ve.GetPosition()[1])), size)
+                    newElementView = CElementView(elementViewObject, newDiagram, (unicode(ve.position[0]), unicode(ve.position[1])), size)
                     newDiagram.AddElementView(newElementView)
-                    
-                visualConnections = root.GetConnections()
+
+                visualConnections = root.connections
                 for vc in visualConnections:
-                    
-                    vco = vc.GetObject()
-                    connectionViewObject = self.GetById(vco.GetId().lstrip('#'))
+
+                    vco = vc.object
+                    connectionViewObject = self.GetById(vco.__id__.lstrip('#'))
                     if connectionViewObject is None:
-                        cvoId = vco.GetId().lstrip('#')
-                        connectionViewObject = CConnection(cvoId, vco.GetType(), self.GetById(vco.GetSource().GetId().lstrip('#')), self.GetById(vco.GetDestination().GetId().lstrip('#')))
-                        connectionViewObject.SetData(vco.GetSaveInfo())
+                        cvoId = vco.__id__.lstrip('#')
+                        connectionViewObject = CConnection(cvoId, vco.type, self.GetById(vco.source.__id__.lstrip('#')), self.GetById(vco.destination.__id__.lstrip('#')))
+                        connectionViewObject.SetData(vco.all_values)
                         self.__connections[cvoId] = connectionViewObject
                     newConnectionView = CConnectionView(connectionViewObject, newDiagram)
-                    for point in vc.GetPoints()[1:len(vc.GetPoints())-1]:
+                    for point in vc.points[1:len(vc.points)-1]:
                         newConnectionView.AddPoint((unicode(point[0]), unicode(point[1])))
-                    for label in vc.GetAllLabelPositions():
-                        
+                    for label in vc.all_label_positions:
+
                         newConnectionView.AddLabel(label)
                     newDiagram.AddConnectionView(newConnectionView)
-                    
+
                 self.__diagrams[id] = newDiagram
-            elif root.GetClass().find('Connection') != -1:
-                id = root.GetId().lstrip('#')
+            elif 'Connection' in root.__class__.__name__:
+                id = root.__id__.lstrip('#')
                 if self.GetById(id) is None:
-                    source = root.GetSource()
+                    source = root.source
                     
-                    dest = root.GetDestination()
+                    dest = root.destination
                     
-                    mySource = self.GetById(source.GetId().lstrip('#'))
+                    mySource = self.GetById(source.__id__.lstrip('#'))
                     
                     if mySource is None:
-                        sourceId = source.GetId().lstrip('#')
-                        mySource = CElement(sourceId, source.GetType())
-                        mySource.SetData(source.GetSaveInfo())
+                        sourceId = source.__id__.lstrip('#')
+                        mySource = CElement(sourceId, source.type)
+                        mySource.SetData(source.all_values)
                         
                         self.__elements[sourceId] = mySource
-                    myDest = self.GetById(dest.GetId().lstrip('#'))
+                    myDest = self.GetById(dest.__id__.lstrip('#'))
                     
                     if myDest is None:
-                        destId = dest.GetId().lstrip('#')
-                        myDest = CElement(destId, dest.GetType())
-                        myDest.SetData(dest.GetSaveInfo())
+                        destId = dest.__id__.lstrip('#')
+                        myDest = CElement(destId, dest.type)
+                        myDest.SetData(dest.all_values)
                         
                         self.__elements[destId] = myDest
-                    newConnection = CConnection(id, root.GetType(), mySource, myDest)
-                    newConnection.SetData(root.GetSaveInfo())
+                    newConnection = CConnection(id, root.type, mySource, myDest)
+                    newConnection.SetData(root.all_values)
                     self.__connections[id] = newConnection 
             
            
